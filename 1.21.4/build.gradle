@@ -1,0 +1,9 @@
+ext {
+    post_twenty_five = true
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:1.21.4"
+    mappings "net.fabricmc:yarn:1.21.4+build.8:v2"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:0.114.1+1.21.4"
+}

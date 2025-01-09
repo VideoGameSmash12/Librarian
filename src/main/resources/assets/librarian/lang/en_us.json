@@ -1,0 +1,22 @@
+{
+  "librarian.saved_hotbars.tab": "Saved Hotbars (Page %1$s)",
+
+  "librarian.messages.backup_failed.action_bar": "Failed to back up hotbar page: %1$s",
+  "librarian.messages.backup_success.action_bar": "%1$s backed up to %2$s",
+  "librarian.messages.backup_success.toast.title": "Backup successful",
+  "librarian.messages.backup_success.toast.description": ".minecraft/hotbars/backups",
+  "librarian.messages.backup_failed.toast.title": "Backup failed",
+  "librarian.messages.backup_failed.toast.description": "Check logs for more info",
+  "librarian.messages.cache_cleared.action_bar": "The hotbar cache has been cleared",
+  "librarian.messages.cache_cleared.toast.title": "Hotbar cache cleared",
+  "librarian.messages.cache_cleared.toast.description": "Unused, please check back later",
+  "librarian.messages.load_failed.action_bar": "Failed to load hotbar page: %1$s",
+  "librarian.messages.load_failed.toast.title": "Load failed",
+  "librarian.messages.load_failed.toast.description": "Check logs for more info",
+  "librarian.messages.navigation.action_bar": "Hotbar selected: %1$s",
+  "librarian.messages.navigation.toast.title": "Hotbar selected",
+  "librarian.messages.reload.toast.title": "Hotbar reloaded",
+  "librarian.messages.save_failed.action_bar": "Failed to save hotbar page: %1$s",
+  "librarian.messages.save_failed.toast.title": "Save failed",
+  "librarian.messages.save_failed.toast.description": "Check logs for more info"
+}

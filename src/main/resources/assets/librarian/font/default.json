@@ -1,0 +1,13 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "librarian:font/backup.png",
+      "ascent": 7,
+      "height": 9,
+      "chars": [
+        "\uD83D\uDCBE"
+      ]
+    }
+  ]
+}
