@@ -1,6 +1,18 @@
 pluginManagement {
     repositories {
         maven {
+            name = 'Ornithe Releases'
+            url = 'https://maven.ornithemc.net/releases'
+        }
+        maven {
+            name = 'Ornithe Snapshots'
+            url = 'https://maven.ornithemc.net/snapshots'
+        }
+        maven {
+            name = "legacy-fabric"
+            url = "https://maven.legacyfabric.net/"
+        }
+        maven {
             name = 'Fabric'
             url = 'https://maven.fabricmc.net/'
         }
@@ -8,5 +20,7 @@ pluginManagement {
     }
 }
 
+include "1.12.2_Ornithe"
+include "1.12.2_LegacyFabric"
 include "1.14"
 include "1.21.4"

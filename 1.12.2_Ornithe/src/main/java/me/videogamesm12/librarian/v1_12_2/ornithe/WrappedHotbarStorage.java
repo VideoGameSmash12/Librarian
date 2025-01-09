@@ -1,0 +1,41 @@
+package me.videogamesm12.librarian.v1_12_2.ornithe;
+
+import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
+import me.videogamesm12.librarian.util.FNF;
+import net.minecraft.client.HotbarManager;
+import net.minecraft.client.Minecraft;
+
+import java.io.File;
+import java.math.BigInteger;
+
+public class WrappedHotbarStorage extends HotbarManager implements IWrappedHotbarStorage
+{
+	private final BigInteger page;
+	private final File location;
+
+	public WrappedHotbarStorage(BigInteger page)
+	{
+		super(Minecraft.getInstance(), new File(FNF.getHotbarFolder(), FNF.getPageFileName(page)));
+
+		this.page = page;
+		this.location = new File(FNF.getHotbarFolder(), FNF.getPageFileName(page));
+	}
+
+	@Override
+	public File getLocation()
+	{
+		return location;
+	}
+
+	@Override
+	public BigInteger getPageNumber()
+	{
+		return page;
+	}
+
+	@Override
+	public void load()
+	{
+		super.load();
+	}
+}

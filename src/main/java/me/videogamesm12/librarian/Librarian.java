@@ -66,6 +66,21 @@ public class Librarian implements ClientModInitializer
 		return Optional.ofNullable(getAddon(clazz));
 	}
 
+	public <T extends IAddon> Optional<T> getOptionalAddon(String clazz)
+	{
+		Class<T> glass;
+
+		try
+		{
+			glass = (Class<T>) Class.forName(clazz, false, getClass().getClassLoader());
+			return getOptionalAddon(glass);
+		}
+		catch (NoClassDefFoundError | ClassNotFoundException ex)
+		{
+			return Optional.empty();
+		}
+	}
+
 	public IWrappedHotbarStorage getCurrentPage()
 	{
 		return getHotbarPage(currentPageNumber);

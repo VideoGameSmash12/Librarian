@@ -1,5 +1,6 @@
 {
   "librarian.saved_hotbars.tab": "Saved Hotbars (Page %1$s)",
+  "librarian.saved_toolbars.tab": "Saved Toolbars (Page %1$s)",
 
   "librarian.messages.backup_failed.action_bar": "Failed to back up hotbar page: %1$s",
   "librarian.messages.backup_success.action_bar": "%1$s backed up to %2$s",

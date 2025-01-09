@@ -16,8 +16,5 @@
     "librarian-listener": [
       "me.videogamesm12.librarian.listener.EventLogger"
     ]
-  },
-  "depends": {
-    "fabric": "*"
   }
 }

@@ -37,7 +37,6 @@ allprojects {
 
     ext {
         mc_mappings_version = "";
-        pre_fabric = true
         post_seventeen = false
         seventeen = false
         post_twenty_five = false

@@ -1,0 +1,9 @@
+plugins {
+    id "legacy-looming" version '1.9-SNAPSHOT'
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:1.12.2"
+    mappings legacy.yarn("1.12.2", 541)
+    modImplementation "net.legacyfabric.legacy-fabric-api:legacy-fabric-api:1.9.4+1.12.2"
+}
