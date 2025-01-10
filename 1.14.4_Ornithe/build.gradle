@@ -1,0 +1,9 @@
+plugins {
+    id 'ploceus' version '1.9-SNAPSHOT'
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:1.14.4"
+    mappings ploceus.featherMappings("6")
+    ploceus.dependOsl("0.16.1")
+}
