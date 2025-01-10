@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "librarian-resources-1_14_4-legacyfabric",
+  "id": "librarian-resources-1_14_4",
   "version": "${version}",
   "name": "Librarian Hooks",
   "description": "",
