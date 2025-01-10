@@ -21,10 +21,13 @@ import java.util.*;
 @Getter
 public class Librarian implements ClientModInitializer
 {
+	private static final List<String> requiredApi = Arrays.asList("fabric", "legacy-fabric-api", "osl");
+
 	@Getter
 	private static Librarian instance;
 	@Getter
 	private static Logger logger = LogManager.getLogger("Librarian");
+
 
 	private IMechanicFactory mechanic;
 	private List<AbstractEventListener> listeners = new ArrayList<>();
@@ -42,7 +45,8 @@ public class Librarian implements ClientModInitializer
 
 		// We need a mechanic to manufacture the nitty-gritty version-specific code.
 		mechanic = FabricLoader.getInstance().getEntrypoints("librarian-mechanic", IMechanicFactory.class).stream()
-				.findAny().orElseThrow(() -> new IllegalStateException("This version of Minecraft is not supported"));
+				.findAny().orElseThrow(() -> new IllegalStateException("You are either running a version of Minecraft"
+							+ " that is not supported or are missing a mod that Librarian depends on for your version."));
 
 		// Event listeners can be specified for various different events
 		listeners.addAll(FabricLoader.getInstance().getEntrypoints("librarian-listener", AbstractEventListener.class));
