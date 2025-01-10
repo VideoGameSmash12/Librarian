@@ -1,0 +1,8 @@
+plugins {
+    id "legacy-looming" version '1.9-SNAPSHOT'
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:1.13.2"
+    mappings legacy.yarn("1.13.2", 541)
+}

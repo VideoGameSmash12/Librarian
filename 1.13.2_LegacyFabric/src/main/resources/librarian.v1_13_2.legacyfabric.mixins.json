@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.videogamesm12.librarian.v1_13_2.legacyfabric.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "client": [
+    "ButtonWidgetMixin",
+    "CreativeInventoryScreenMixin",
+    "HandledScreenAccessor",
+    "HotbarStorageAccessor",
+    "HotbarStorageMixin",
+    "MinecraftClientMixin"
+  ]
+}
