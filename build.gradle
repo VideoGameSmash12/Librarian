@@ -36,7 +36,6 @@ allprojects {
     apply plugin: 'fabric-loom'
 
     ext {
-        mc_mappings_version = "";
         post_seventeen = false
         seventeen = false
         post_twenty_five = false
@@ -58,9 +57,16 @@ allprojects {
     }
 
     repositories {
-        maven {
-            name "viaversion"
-            url "https://repo.viaversion.com/"
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = "Modrinth"
+                    url = "https://api.modrinth.com/maven"
+                }
+            }
+            filter {
+                includeGroup "maven.modrinth"
+            }
         }
     }
 

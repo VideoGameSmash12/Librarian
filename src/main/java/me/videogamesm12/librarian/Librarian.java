@@ -49,8 +49,13 @@ public class Librarian implements ClientModInitializer
 
 		// Add-ons
 		FabricLoader.getInstance().getEntrypoints("librarian-addon", IAddon.class).stream().filter(addon ->
-				addon.getClass().isAnnotationPresent(AddonMeta.class) && Arrays.stream(addon.getClass().getAnnotation(AddonMeta.class).requiredMods()).allMatch(id ->
-						FabricLoader.getInstance().isModLoaded(id))).forEach(addon -> addons.put(addon.getClass(), addon));
+		{
+			if (!addon.getClass().isAnnotationPresent(AddonMeta.class)) return false;
+			AddonMeta meta = addon.getClass().getAnnotation(AddonMeta.class);
+
+			return Arrays.stream(meta.requiredMods()).allMatch(mod -> FabricLoader.getInstance().isModLoaded(mod))
+					&& Arrays.stream(meta.incompatibleMods()).noneMatch(mod -> FabricLoader.getInstance().isModLoaded(mod));
+		}).forEach(addon -> addons.put(addon.getClass(), addon));
 
 		// Initialize our add-ons
 		addons.values().forEach(IAddon::init);

@@ -1,0 +1,174 @@
+package me.videogamesm12.librarian.v1_16_5.listeners;
+
+import com.google.common.eventbus.Subscribe;
+import com.mojang.blaze3d.platform.GlStateManager;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import me.videogamesm12.librarian.api.AbstractEventListener;
+import me.videogamesm12.librarian.api.event.*;
+import me.videogamesm12.librarian.util.FNF;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.render.DiffuseLighting;
+import net.minecraft.client.toast.Toast;
+import net.minecraft.client.toast.ToastManager;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.item.ItemStack;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
+import org.lwjgl.opengl.GL11;
+
+public class ToastNotifier extends AbstractEventListener
+{
+	private static final Identifier BACKGROUND = new Identifier("librarian", "textures/gui/sprites/toasts/background.png");
+	private static final ItemStack BOOKSHELF = new ItemStack(Registry.ITEM.get(new Identifier("minecraft:bookshelf")));
+
+	@Subscribe
+	public void onBackupOutcome(BackupOutcomeEvent event)
+	{
+		if (event.getPath() != null)
+		{
+			addOrUpdateNotification(new TranslatableText("librarian.messages.backup_success.toast.title"),
+					new LiteralText(event.getStorage().getLocation().getName()), LibrarianToast.Type.BACKUP);
+		}
+		else
+		{
+			addOrUpdateNotification(new TranslatableText("librarian.messages.backup_failed.toast.title"),
+					new TranslatableText("librarian.messages.backup_failed.toast.description"), LibrarianToast.Type.BACKUP_FAILURE);
+		}
+	}
+
+	@Subscribe
+	public void onNavigation(NavigationEvent event)
+	{
+		addOrUpdateNotification(new TranslatableText("librarian.messages.navigation.toast.title"),
+				new LiteralText(FNF.getPageFileName(event.getNewPage())), LibrarianToast.Type.NAVIGATION);
+	}
+
+	@Subscribe
+	public void onLoadFailure(LoadFailureEvent event)
+	{
+		addOrUpdateNotification(new TranslatableText("librarian.messages.load_failed.toast.title"),
+				new TranslatableText("librarian.messages.load_failed.toast.description"), LibrarianToast.Type.LOAD_FAILURE);
+	}
+
+	@Subscribe
+	public void onSaveFailure(SaveFailureEvent event)
+	{
+		addOrUpdateNotification(new TranslatableText("librarian.messages.save_failed.toast.title"),
+				new TranslatableText("librarian.messages.save_failed.toast.description"), LibrarianToast.Type.SAVE_FAILURE);
+	}
+
+	@Subscribe
+	public void onRefresh(ReloadPageEvent event)
+	{
+		addOrUpdateNotification(new TranslatableText("librarian.messages.reload.toast.title"),
+				new LiteralText(FNF.getPageFileName(event.getCurrentPage())), LibrarianToast.Type.RELOAD);
+	}
+
+	@Subscribe
+	public void onCacheClear(CacheClearEvent event)
+	{
+		addOrUpdateNotification(new TranslatableText("librarian.messages.cache_cleared.toast.title"), null,
+				LibrarianToast.Type.CACHE_CLEARED);
+	}
+
+	private void addOrUpdateNotification(Text title, Text description, LibrarianToast.Type type)
+	{
+		final LibrarianToast toast = MinecraftClient.getInstance().getToastManager().getToast(LibrarianToast.class, type);
+
+		if (toast == null)
+		{
+			MinecraftClient.getInstance().getToastManager().add(new LibrarianToast(title, description, type));
+		}
+		else
+		{
+			toast.setTitle(title);
+			toast.setDescription(description);
+		}
+	}
+
+	@Getter
+	public static class LibrarianToast implements Toast
+	{
+		@Setter
+		private Text title;
+		@Setter
+		private Text description;
+		private final Type type;
+
+		private long time;
+		private boolean justUpdated = true;
+
+		public LibrarianToast(Text title, Text description, Type type)
+		{
+			this.title = title;
+			this.description = description;
+			this.type = type;
+		}
+
+		@Override
+		public Visibility draw(MatrixStack matrices, ToastManager manager, long startTime)
+		{
+			if (justUpdated)
+			{
+				this.time = startTime;
+				justUpdated = false;
+			}
+
+			// Background comes first
+			MinecraftClient.getInstance().getTextureManager().bindTexture(BACKGROUND);
+			GL11.glColor3f(1.0F, 1.0F, 1.0F);
+			DrawableHelper.drawTexture(matrices, 0, 0, 0, 0, 160, 32, 160, 32);
+
+			// Icons come second
+			type.draw(matrices);
+
+			// Text comes last
+			TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+			textRenderer.draw(matrices, title, 30, description != null ? 7 : 12, type.getTextColor());
+			if (description != null)
+				textRenderer.draw(matrices, description, 30, 18, 0xFFFFFF);
+
+			return startTime - this.time >= 5000L ? Visibility.HIDE : Visibility.SHOW;
+		}
+
+		@Getter
+		@RequiredArgsConstructor
+		public enum Type
+		{
+			BACKUP(0x00FF00, new Identifier("librarian", "textures/gui/sprites/toasts/backup.png")),
+			BACKUP_FAILURE(0xFF0000, new Identifier("librarian", "textures/gui/sprites/toasts/backup_failure.png")),
+			CACHE_CLEARED(0x00AAFF, new Identifier("librarian", "textures/gui/sprites/toasts/cache_cleared.png")),
+			LOAD_FAILURE(0xFF0000, new Identifier("librarian", "textures/gui/sprites/toasts/failure.png")),
+			SAVE_FAILURE(0xFF0000, new Identifier("librarian", "textures/gui/sprites/toasts/failure.png")),
+			RELOAD(0x00AAFF, new Identifier("librarian", "textures/gui/sprites/toasts/reload.png")),
+			NAVIGATION(0x00FF00, null);
+
+			private final int textColor;
+			private final Identifier texture;
+
+			public void draw(MatrixStack matrices)
+			{
+				if (texture != null)
+				{
+					GlStateManager.enableBlend();
+					MinecraftClient.getInstance().getTextureManager().bindTexture(texture);
+					GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+					DrawableHelper.drawTexture(matrices, 6, 6, 0, 0, 20, 20, 20, 20);
+					GlStateManager.enableBlend();
+				}
+				else
+				{
+					DiffuseLighting.enable();
+					MinecraftClient.getInstance().getItemRenderer().renderGuiItemIcon(BOOKSHELF, 9, 8);
+				}
+			}
+		}
+	}
+}

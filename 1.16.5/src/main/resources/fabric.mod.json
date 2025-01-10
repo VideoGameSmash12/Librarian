@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "librarian-resources-1_16_5",
+  "version": "${version}",
+  "name": "Librarian Hooks",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "GPL-3.0",
+  "icon": "assets/librarian/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "librarian-mechanic": [
+      "me.videogamesm12.librarian.v1_16_5.Mechanic"
+    ],
+    "librarian-addon": [
+      "me.videogamesm12.librarian.v1_16_5.addon.FabricAPIAddon",
+      "me.videogamesm12.librarian.v1_16_5.addon.FabricClientCommandAPIAddon"
+    ],
+    "librarian-listener": [
+      "me.videogamesm12.librarian.v1_16_5.listeners.ActionBarNotifier",
+      "me.videogamesm12.librarian.v1_16_5.listeners.ToastNotifier"
+    ]
+  },
+  "mixins": [
+    "librarian.v1_16_5.mixins.json"
+  ],
+  "accessWidener": "librarian.v1_16_5.accesswidener",
+  "depends": {
+    "minecraft": "1.16.5",
+    "fabric": "*"
+  }
+}

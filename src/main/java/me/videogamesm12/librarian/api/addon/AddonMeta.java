@@ -7,4 +7,6 @@ import java.lang.annotation.RetentionPolicy;
 public @interface AddonMeta
 {
 	String[] requiredMods();
+
+	String[] incompatibleMods() default {};
 }
