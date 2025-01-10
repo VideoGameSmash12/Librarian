@@ -22,12 +22,11 @@ import java.util.*;
 public class Librarian implements ClientModInitializer
 {
 	private static final List<String> requiredApis = Arrays.asList("fabric", "legacy-fabric-api", "osl");
+	@Getter
+	private static final Logger logger = LogManager.getLogger("Librarian");
 
 	@Getter
 	private static Librarian instance;
-	@Getter
-	private static Logger logger = LogManager.getLogger("Librarian");
-
 
 	private IMechanicFactory mechanic;
 	private List<AbstractEventListener> listeners = new ArrayList<>();
