@@ -7,6 +7,7 @@ import me.videogamesm12.librarian.api.event.CacheClearEvent;
 import me.videogamesm12.librarian.api.event.NavigationEvent;
 import me.videogamesm12.librarian.api.event.ReloadPageEvent;
 import me.videogamesm12.librarian.v1_19_4.addon.FabricAPIAddon;
+import net.fabricmc.fabric.impl.client.itemgroup.FabricCreativeGuiComponents;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.minecraft.client.gui.screen.Screen;
@@ -14,6 +15,7 @@ import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemGroups;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -94,6 +96,11 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			backupButton.active = Librarian.getInstance().getCurrentPage().exists();
 		}
 		if (previousButton != null) previousButton.visible = group == ItemGroups.HOTBAR;
+
+		// Avoid overlaps - https://github.com/FabricMC/fabric/pull/2742
+		((ScreenAccessor) this).getDrawables().stream().filter(entry ->
+				entry instanceof FabricCreativeGuiComponents.ItemGroupButtonWidget).forEach(button ->
+				((ButtonWidget) button).visible = group != ItemGroups.HOTBAR);
 	}
 
 	@ModifyArg(method = "drawForeground", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;draw(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/text/Text;FFI)I", ordinal = 0))

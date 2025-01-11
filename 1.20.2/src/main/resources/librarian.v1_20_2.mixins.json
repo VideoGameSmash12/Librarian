@@ -12,6 +12,7 @@
     "HandledScreenAccessor",
     "HotbarStorageAccessor",
     "HotbarStorageMixin",
-    "MinecraftClientMixin"
+    "MinecraftClientMixin",
+    "ScreenAccessor"
   ]
 }
