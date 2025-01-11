@@ -18,7 +18,7 @@
     ],
     "librarian-listener": [
       "me.videogamesm12.librarian.v1_21_4.listeners.ActionBarNotifier",
-      "me.videogamesm12.librarian.v1_21_4.listeners.EventToaster"
+      "me.videogamesm12.librarian.v1_21_4.listeners.ToastNotifier"
     ]
   },
   "mixins": [

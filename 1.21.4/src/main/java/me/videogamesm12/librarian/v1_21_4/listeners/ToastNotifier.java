@@ -18,7 +18,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
-public class EventToaster extends AbstractEventListener
+public class ToastNotifier extends AbstractEventListener
 {
 	private static final Identifier BACKGROUND = Identifier.of("librarian", "toasts/background");
 	private static final ItemStack BOOKSHELF = new ItemStack(Registries.ITEM.get(Identifier.ofVanilla("bookshelf")));
