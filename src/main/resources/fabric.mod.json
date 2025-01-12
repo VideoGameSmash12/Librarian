@@ -3,9 +3,15 @@
   "id": "librarian",
   "version": "${version}",
   "name": "Librarian",
-  "description": "",
-  "authors": [],
-  "contact": {},
+  "description": "General improvements to the Saved Hotbar system",
+  "authors": [
+    "videogamesm12"
+  ],
+  "contact": {
+    "homepage": "https://github.com/VideoGameSmash12/Librarian",
+    "sources": "https://github.com/VideoGameSmash12/Librarian",
+    "issues": "https://github.com/VideoGameSmash12/Librarian/issues"
+  },
   "license": "GPL-3.0",
   "icon": "assets/librarian/icon.png",
   "environment": "client",

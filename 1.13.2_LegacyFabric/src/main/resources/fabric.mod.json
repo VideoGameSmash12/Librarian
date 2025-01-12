@@ -2,10 +2,16 @@
   "schemaVersion": 1,
   "id": "librarian-resources-1_13_2-legacyfabric",
   "version": "${version}",
-  "name": "Librarian Hooks",
-  "description": "",
-  "authors": [],
-  "contact": {},
+  "name": "Librarian Hooks (Legacy Fabric 1.13.2)",
+  "description": "Version-specific code for 1.13.2 under Legacy Fabric.",
+  "authors": [
+    "videogamesm12"
+  ],
+  "contact": {
+    "homepage": "https://github.com/VideoGameSmash12/Librarian",
+    "sources": "https://github.com/VideoGameSmash12/Librarian/tree/master/1.13.2_LegacyFabric",
+    "issues": "https://github.com/VideoGameSmash12/Librarian/issues"
+  },
   "license": "GPL-3.0",
   "icon": "assets/librarian/icon.png",
   "environment": "client",
@@ -26,5 +32,11 @@
   },
   "breaks": {
     "osl": "*"
+  },
+  "custom": {
+    "modmenu": {
+      "badges": ["library"],
+      "parent": "librarian"
+    }
   }
 }

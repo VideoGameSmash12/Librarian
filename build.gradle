@@ -92,11 +92,6 @@ allprojects {
             expand "version": rootProject.version
         }
     }
-
-    /*task sourcesJar(type: Jar, dependsOn: classes) {
-        archiveClassifier.set("sources")
-        from sourceSets.main.allSource
-    }*/
 }
 
 subprojects {

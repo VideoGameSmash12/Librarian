@@ -2,10 +2,16 @@
   "schemaVersion": 1,
   "id": "librarian-resources-1_14_4",
   "version": "${version}",
-  "name": "Librarian Hooks",
-  "description": "",
-  "authors": [],
-  "contact": {},
+  "name": "Librarian Hooks (1.14.4)",
+  "description": "Version-specific code for 1.14.4.",
+  "authors": [
+    "videogamesm12"
+  ],
+  "contact": {
+    "homepage": "https://github.com/VideoGameSmash12/Librarian",
+    "sources": "https://github.com/VideoGameSmash12/Librarian/tree/master/1.14.4",
+    "issues": "https://github.com/VideoGameSmash12/Librarian/issues"
+  },
   "license": "GPL-3.0",
   "icon": "assets/librarian/icon.png",
   "environment": "client",
@@ -34,5 +40,11 @@
   },
   "breaks": {
     "osl": "*"
+  },
+  "custom": {
+    "modmenu": {
+      "badges": ["library"],
+      "parent": "librarian"
+    }
   }
 }
