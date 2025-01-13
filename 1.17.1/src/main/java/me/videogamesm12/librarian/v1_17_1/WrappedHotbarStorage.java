@@ -3,6 +3,7 @@ package me.videogamesm12.librarian.v1_17_1;
 import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
 import me.videogamesm12.librarian.util.FNF;
 import me.videogamesm12.librarian.v1_17_1.mixin.HotbarStorageAccessor;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.HotbarStorage;
 
@@ -16,10 +17,12 @@ public class WrappedHotbarStorage extends HotbarStorage implements IWrappedHotba
 
 	public WrappedHotbarStorage(BigInteger page)
 	{
-		super(new File(FNF.getHotbarFolder(), FNF.getPageFileName(page)), MinecraftClient.getInstance().getDataFixer());
+		super(new File(page.equals(BigInteger.ZERO) ? FabricLoader.getInstance().getGameDir().toFile() :
+				FNF.getHotbarFolder(), FNF.getPageFileName(page)), MinecraftClient.getInstance().getDataFixer());
 
 		this.page = page;
-		this.location = new File(FNF.getHotbarFolder(), FNF.getPageFileName(page));
+		this.location = new File(page.equals(BigInteger.ZERO) ? FabricLoader.getInstance().getGameDir().toFile() :
+				FNF.getHotbarFolder(), FNF.getPageFileName(page));
 	}
 
 	@Override
