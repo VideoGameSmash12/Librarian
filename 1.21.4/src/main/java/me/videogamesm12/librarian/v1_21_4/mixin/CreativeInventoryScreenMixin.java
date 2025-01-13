@@ -25,6 +25,7 @@ import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
+import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -161,7 +162,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 				case 2 ->
 				{
 					// R
-					if (keyCode == 82)
+					if (keyCode == GLFW.GLFW_KEY_R)
 					{
 						Librarian.getInstance().reloadCurrentPage();
 						cir.setReturnValue(true);
@@ -171,13 +172,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 				case 4 ->
 				{
 					// LEFT ARROW
-					if (keyCode == 263)
+					if (keyCode == GLFW.GLFW_KEY_LEFT)
 					{
 						Librarian.getInstance().previousPage();
 						cir.setReturnValue(true);
 					}
 					// RIGHT ARROW
-					else if (keyCode == 262)
+					else if (keyCode == GLFW.GLFW_KEY_RIGHT)
 					{
 						Librarian.getInstance().nextPage();
 						cir.setReturnValue(true);
@@ -187,13 +188,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 				case 1 ->
 				{
 					// LEFT ARROW
-					if (keyCode == 263)
+					if (keyCode == GLFW.GLFW_KEY_LEFT)
 					{
 						Librarian.getInstance().advanceBy(-5);
 						cir.setReturnValue(true);
 					}
 					// RIGHT ARROW
-					else if (keyCode == 262)
+					else if (keyCode == GLFW.GLFW_KEY_RIGHT)
 					{
 						Librarian.getInstance().advanceBy(5);
 						cir.setReturnValue(true);
@@ -203,13 +204,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 				case 5 ->
 				{
 					// LEFT ARROW
-					if (keyCode == 263)
+					if (keyCode == GLFW.GLFW_KEY_LEFT)
 					{
 						Librarian.getInstance().advanceBy(-10);
 						cir.setReturnValue(true);
 					}
 					// RIGHT ARROW
-					else if (keyCode == 262)
+					else if (keyCode == GLFW.GLFW_KEY_RIGHT)
 					{
 						Librarian.getInstance().advanceBy(10);
 						cir.setReturnValue(true);

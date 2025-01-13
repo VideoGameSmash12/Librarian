@@ -22,6 +22,7 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
+import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -149,10 +150,10 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			switch (modifiers)
 			{
 				// CTRL
-				case 2:
+				case GLFW.GLFW_MOD_CONTROL:
 				{
 					// R
-					if (keyCode == 82)
+					if (keyCode == GLFW.GLFW_KEY_R)
 					{
 						Librarian.getInstance().reloadCurrentPage();
 						cir.setReturnValue(true);
@@ -160,16 +161,16 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					break;
 				}
 				// ALT
-				case 4:
+				case GLFW.GLFW_MOD_ALT:
 				{
 					// LEFT ARROW
-					if (keyCode == 263)
+					if (keyCode == GLFW.GLFW_KEY_LEFT)
 					{
 						Librarian.getInstance().previousPage();
 						cir.setReturnValue(true);
 					}
 					// RIGHT ARROW
-					else if (keyCode == 262)
+					else if (keyCode == GLFW.GLFW_KEY_RIGHT)
 					{
 						Librarian.getInstance().nextPage();
 						cir.setReturnValue(true);
@@ -177,16 +178,16 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					break;
 				}
 				// SHIFT
-				case 1:
+				case GLFW.GLFW_MOD_SHIFT:
 				{
 					// LEFT ARROW
-					if (keyCode == 263)
+					if (keyCode == GLFW.GLFW_KEY_LEFT)
 					{
 						Librarian.getInstance().advanceBy(-5);
 						cir.setReturnValue(true);
 					}
 					// RIGHT ARROW
-					else if (keyCode == 262)
+					else if (keyCode == GLFW.GLFW_KEY_RIGHT)
 					{
 						Librarian.getInstance().advanceBy(5);
 						cir.setReturnValue(true);
@@ -194,16 +195,16 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					break;
 				}
 				// ALT + SHIFT
-				case 5:
+				case GLFW.GLFW_MOD_ALT + GLFW.GLFW_MOD_SHIFT:
 				{
 					// LEFT ARROW
-					if (keyCode == 263)
+					if (keyCode == GLFW.GLFW_KEY_LEFT)
 					{
 						Librarian.getInstance().advanceBy(-10);
 						cir.setReturnValue(true);
 					}
 					// RIGHT ARROW
-					else if (keyCode == 262)
+					else if (keyCode == GLFW.GLFW_KEY_RIGHT)
 					{
 						Librarian.getInstance().advanceBy(10);
 						cir.setReturnValue(true);

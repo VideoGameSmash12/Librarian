@@ -35,7 +35,7 @@ public abstract class HotbarStorageMixin
 	}
 
 	@Inject(method = "load", at = @At(value = "INVOKE",
-			target = "Lorg/apache/logging/log4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V", shift = At.Shift.AFTER))
+			target = "Lorg/apache/logging/log4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V", shift = At.Shift.AFTER, remap = false))
 	private void hookLoadFailure(CallbackInfo ci, @Local Exception ex)
 	{
 		if (WrappedHotbarStorage.class.isAssignableFrom(getClass()))
@@ -45,7 +45,7 @@ public abstract class HotbarStorageMixin
 	}
 
 	@Inject(method = "save", at = @At(value = "INVOKE",
-			target = "Lorg/apache/logging/log4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V", shift = At.Shift.AFTER))
+			target = "Lorg/apache/logging/log4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V", shift = At.Shift.AFTER, remap = false))
 	private void hookSaveFailure(CallbackInfo ci, @Local Exception ex)
 	{
 		if (WrappedHotbarStorage.class.isAssignableFrom(getClass()))
