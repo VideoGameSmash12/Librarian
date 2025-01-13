@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "librarian-resources-1_8_9-legacyfabric",
+  "version": "${version}",
+  "name": "Librarian Hooks (Legacy Fabric 1.8.9)",
+  "description": "Version-specific code for 1.8.9 under Legacy Fabric.",
+  "authors": [
+    "videogamesm12"
+  ],
+  "contact": {
+    "homepage": "https://github.com/VideoGameSmash12/Librarian",
+    "sources": "https://github.com/VideoGameSmash12/Librarian/tree/master/1.12.2_LegacyFabric",
+    "issues": "https://github.com/VideoGameSmash12/Librarian/issues"
+  },
+  "license": "GPL-3.0",
+  "icon": "assets/librarian/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "me.videogamesm12.librarian.v1_8_9.legacyfabric.CursedLibrarian"
+    ],
+    "librarian-mechanic": [
+      "me.videogamesm12.librarian.v1_8_9.legacyfabric.Mechanic"
+    ],
+    "librarian-listener": [
+      "me.videogamesm12.librarian.v1_8_9.legacyfabric.listeners.ActionBarNotifier"
+    ]
+  },
+  "mixins": [
+    "librarian.v1_8_9.legacyfabric.mixins.json"
+  ],
+  "depends": {
+    "minecraft": "1.8.9",
+    "legacy-fabric-api": "*"
+  },
+  "custom": {
+    "modmenu": {
+      "badges": ["library"],
+      "parent": "librarian"
+    }
+  }
+}

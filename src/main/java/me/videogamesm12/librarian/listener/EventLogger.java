@@ -11,7 +11,7 @@ import me.videogamesm12.librarian.api.event.*;
  */
 public class EventLogger extends AbstractEventListener
 {
-	@Subscribe
+	/*@Subscribe
 	public void onBackupOutcome(BackupOutcomeEvent event)
 	{
 		// The backup was successful
@@ -59,5 +59,5 @@ public class EventLogger extends AbstractEventListener
 	public void onCacheClear(CacheClearEvent event)
 	{
 		Librarian.getLogger().info("All loaded hotbar pages have been cleared from the cache");
-	}
+	}*/
 }
