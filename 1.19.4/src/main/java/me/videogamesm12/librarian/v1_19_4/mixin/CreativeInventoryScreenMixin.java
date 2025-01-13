@@ -1,6 +1,9 @@
 package me.videogamesm12.librarian.v1_19_4.mixin;
 
 import com.google.common.eventbus.Subscribe;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.sugar.Local;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.IMechanicFactory;
 import me.videogamesm12.librarian.api.event.CacheClearEvent;
@@ -10,11 +13,18 @@ import me.videogamesm12.librarian.v1_19_4.addon.FabricAPIAddon;
 import net.fabricmc.fabric.impl.client.itemgroup.FabricCreativeGuiComponents;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.option.HotbarStorage;
+import net.minecraft.client.option.HotbarStorageEntry;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemGroups;
+import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,6 +36,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+
+import java.util.Objects;
 
 @Mixin(CreativeInventoryScreen.class)
 public abstract class CreativeInventoryScreenMixin extends Screen
@@ -209,6 +222,53 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					break;
 				}
 			}
+		}
+	}
+
+	@WrapMethod(method = "onHotbarKeyPress")
+	private static void checkForAccidentalOverwrites(MinecraftClient client, int index, boolean restore, boolean save, Operation<Void> original)
+	{
+		if (save)
+		{
+			final HotbarStorage storage = client.getCreativeHotbarStorage();
+			final HotbarStorageEntry storageEntry = storage.getSavedHotbar(index);
+
+			if (storageEntry.isEmpty())
+			{
+				original.call(client, index, restore, save);
+				return;
+			}
+
+			boolean confirm = false;
+
+			for (int i = 0; i < PlayerInventory.getHotbarSize(); i++)
+			{
+				ItemStack inventoryStack = Objects.requireNonNull(client.player).getInventory().getStack(i);
+				ItemStack hotbarEntry = storageEntry.get(i);
+
+				if (!hotbarEntry.isEmpty() && !inventoryStack.isItemEqual(hotbarEntry))
+				{
+					confirm = true;
+					break;
+				}
+			}
+
+			if (confirm)
+			{
+				MinecraftClient.getInstance().setScreen(new ConfirmScreen((value) ->
+				{
+					if (value) original.call(client, index, restore, save);
+					MinecraftClient.getInstance().setScreen(null);
+				}, Text.translatable("librarian.messages.possible_overwrite_detected.title"), Text.translatable("librarian.messages.possible_overwrite_detected.description")));
+			}
+			else
+			{
+				original.call(client, index, restore, save);
+			}
+		}
+		else
+		{
+			original.call(client, index, restore, save);
 		}
 	}
 

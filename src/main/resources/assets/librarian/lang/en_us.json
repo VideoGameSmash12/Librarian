@@ -16,6 +16,8 @@
   "librarian.messages.load_failed.toast.description": "Check logs for more info",
   "librarian.messages.navigation.action_bar": "Hotbar selected: %1$s",
   "librarian.messages.navigation.toast.title": "Hotbar selected",
+  "librarian.messages.possible_overwrite_detected.title": "Possible accidental overwrite detected",
+  "librarian.messages.possible_overwrite_detected.description": "You are attempting to overwrite an existing hotbar row with data that doesn't exactly match. Are you sure you want to continue?",
   "librarian.messages.reload.toast.title": "Hotbar reloaded",
   "librarian.messages.save_failed.action_bar": "Failed to save hotbar page: %1$s",
   "librarian.messages.save_failed.toast.title": "Save failed",
