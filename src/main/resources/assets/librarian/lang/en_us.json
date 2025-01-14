@@ -18,6 +18,8 @@
   "librarian.messages.navigation.toast.title": "Hotbar selected",
   "librarian.messages.possible_overwrite_detected.title": "Possible accidental overwrite detected",
   "librarian.messages.possible_overwrite_detected.description": "You are attempting to overwrite an existing hotbar row with data that doesn't exactly match. Are you sure you want to continue?",
+  "librarian.messages.rebuild.prompt.title": "Rebuild Hotbars?",
+  "librarian.messages.rebuild.prompt.description": "Librarian offers the ability to clean up your saved hotbar pages by reading all of them at once and then rebuilding them from scratch whilst removing any duplicate items.\n\nAll of your pages will be backed up right before any permanent changes happen, but you should still take care to make sure that your instance has enough memory allocated to handle everything and that nothing could possibly interrupt this process. Are you sure you want to continue?",
   "librarian.messages.reload.toast.title": "Hotbar reloaded",
   "librarian.messages.save_failed.action_bar": "Failed to save hotbar page: %1$s",
   "librarian.messages.save_failed.toast.title": "Save failed",

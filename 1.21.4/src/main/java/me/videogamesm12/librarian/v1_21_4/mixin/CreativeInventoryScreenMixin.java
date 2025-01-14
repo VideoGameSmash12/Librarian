@@ -8,6 +8,7 @@ import me.videogamesm12.librarian.api.IMechanicFactory;
 import me.videogamesm12.librarian.api.event.CacheClearEvent;
 import me.videogamesm12.librarian.api.event.NavigationEvent;
 import me.videogamesm12.librarian.api.event.ReloadPageEvent;
+import me.videogamesm12.librarian.util.FNF;
 import me.videogamesm12.librarian.v1_21_4.addon.FabricAPIAddon;
 import net.fabricmc.fabric.impl.client.itemgroup.FabricCreativeGuiComponents;
 import net.kyori.adventure.key.Key;
@@ -166,6 +167,17 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					{
 						Librarian.getInstance().reloadCurrentPage();
 						cir.setReturnValue(true);
+					}
+				}
+				// CTRL + SHIFT
+				case 3 ->
+				{
+					if (keyCode == GLFW.GLFW_KEY_R)
+					{
+						MinecraftClient.getInstance().setScreen(new ConfirmScreen((bool) -> {
+							if (bool) Librarian.getInstance().getMechanic().overhaulHotbars(FNF.getAllPageFiles());
+							MinecraftClient.getInstance().setScreen(null);
+						}, Text.translatable("librarian.messages.rebuild.prompt.title"), Text.translatable("librarian.messages.rebuild.prompt.description")));
 					}
 				}
 				// ALT

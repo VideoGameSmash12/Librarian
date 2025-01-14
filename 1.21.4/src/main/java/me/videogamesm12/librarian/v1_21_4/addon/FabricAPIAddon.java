@@ -5,12 +5,16 @@ import lombok.Getter;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.addon.AddonMeta;
 import me.videogamesm12.librarian.api.addon.IAddon;
+import me.videogamesm12.librarian.util.FNF;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
 @AddonMeta(requiredMods = "fabric")
@@ -82,6 +86,14 @@ public class FabricAPIAddon implements IAddon
 						Librarian.getInstance().getCurrentPage().backup();
 						return 0;
 					}))
+					.then(ClientCommandManager.literal("rebuild").executes((context ->
+					{
+						MinecraftClient.getInstance().setScreen(new ConfirmScreen((bool) -> {
+							if (bool) Librarian.getInstance().getMechanic().overhaulHotbars(FNF.getAllPageFiles());
+							MinecraftClient.getInstance().setScreen(null);
+						}, Text.translatable("librarian.messages.rebuild.prompt.title"), Text.translatable("librarian.messages.rebuild.prompt.description")));
+						return 0;
+					})))
 					.then(ClientCommandManager.literal("cache")
 							.then(ClientCommandManager.literal("list"))
 							.then(ClientCommandManager.literal("clear")

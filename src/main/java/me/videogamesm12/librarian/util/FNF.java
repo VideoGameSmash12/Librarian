@@ -5,7 +5,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.io.File;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class FNF
 {
@@ -51,5 +52,20 @@ public class FNF
 	public static String getBackupFileName(BigInteger page)
 	{
 		return String.format("%s [%s].nbt", getPageFileName(page), dateFormat.format(new Date()));
+	}
+
+	public static List<File> getAllPageFiles()
+	{
+		List<File> files = new ArrayList<>();
+
+		File hotbarNbt = new File(FabricLoader.getInstance().getGameDir().toFile(), "hotbar.nbt");
+		if (hotbarNbt.exists())
+		{
+			files.add(hotbarNbt);
+		}
+
+		files.addAll(Arrays.stream(Objects.requireNonNull(getHotbarFolder().listFiles())).filter(File::isFile).collect(Collectors.toList()));
+
+		return files;
 	}
 }
