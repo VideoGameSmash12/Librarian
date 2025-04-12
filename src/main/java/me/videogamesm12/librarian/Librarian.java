@@ -29,8 +29,8 @@ public class Librarian implements ClientModInitializer
 	private static Librarian instance;
 
 	private IMechanicFactory mechanic;
-	private List<AbstractEventListener> listeners = new ArrayList<>();
-	private Map<Class<? extends IAddon>, IAddon> addons = new HashMap<>();
+	private final List<AbstractEventListener> listeners = new ArrayList<>();
+	private final Map<Class<? extends IAddon>, IAddon> addons = new HashMap<>();
 
 	private BigInteger currentPageNumber = BigInteger.ZERO;
 	private final Map<BigInteger, IWrappedHotbarStorage> map = new HashMap<>();

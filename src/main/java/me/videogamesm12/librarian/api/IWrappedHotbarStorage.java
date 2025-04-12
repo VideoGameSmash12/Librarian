@@ -9,6 +9,13 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 
+/**
+ * <h1>IWrappedHotbarStorage</h1>
+ * <p>Wrapper class for HotbarStorage (or, depending on the mappings being used, HotbarManager) instances with extra
+ * code for Librarian-specific functions.</p>
+ * <p>Because it is impossible to create constructors in classes through mixins, often times this will be implemented
+ * into wrapper classes that extend the </p>
+ */
 public interface IWrappedHotbarStorage
 {
 	File getLocation();

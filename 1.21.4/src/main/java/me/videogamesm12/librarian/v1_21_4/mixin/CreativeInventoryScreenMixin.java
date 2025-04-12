@@ -24,6 +24,7 @@ import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
@@ -159,7 +160,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			switch (modifiers)
 			{
 				// CTRL
-				case 2 ->
+				case GLFW.GLFW_MOD_CONTROL ->
 				{
 					// R
 					if (keyCode == GLFW.GLFW_KEY_R)
@@ -169,7 +170,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					}
 				}
 				// ALT
-				case 4 ->
+				case GLFW.GLFW_MOD_ALT ->
 				{
 					// LEFT ARROW
 					if (keyCode == GLFW.GLFW_KEY_LEFT)
@@ -185,7 +186,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					}
 				}
 				// SHIFT
-				case 1 ->
+				case GLFW.GLFW_MOD_SHIFT ->
 				{
 					// LEFT ARROW
 					if (keyCode == GLFW.GLFW_KEY_LEFT)
