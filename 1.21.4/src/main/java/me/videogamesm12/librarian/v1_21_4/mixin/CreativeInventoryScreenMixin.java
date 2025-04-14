@@ -16,9 +16,11 @@ import net.fabricmc.fabric.impl.client.itemgroup.FabricCreativeGuiComponents;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
+import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.option.HotbarStorage;
@@ -35,7 +37,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -48,14 +49,8 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Shadow protected abstract void setSelectedTab(ItemGroup group);
 
 	@Unique
-	private static boolean inEditMode = false;
-
-	@Unique
 	private IMechanicFactory mechanic;
 
-	@Unique
-	private Text label = Text.translatable("librarian.saved_hotbars.tab",
-			Librarian.getInstance().getCurrentPageNumber());
 	@Unique
 	private String lastSuccessfulChange = null;
 
@@ -86,31 +81,63 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		int y = ((HandledScreenAccessor) this).getY() + 4;
 
 		// Adds "rename hotbar" text field
-		Librarian.getInstance().getCurrentPage().getMetadata().map(HotbarPageMetadata::getName).ifPresentOrElse(
-				name -> label = mechanic.createText(name),
-				() -> label = Text.translatable("librarian.saved_hotbars.tab",
-						Librarian.getInstance().getCurrentPageNumber()));
 		renameHotbarField = new TextFieldWidget(textRenderer, ((HandledScreenAccessor) this).getX() + 8,
-				((HandledScreenAccessor) this).getY() + 6, 144, 12, label)
+				((HandledScreenAccessor) this).getY() + 6, 144, 12, Text.empty())
 		{
+			@Override
+			public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta)
+			{
+				// Show the "editor" text when focused
+				if (isFocused())
+				{
+					super.renderWidget(context, mouseX, mouseY, delta);
+				}
+				// Otherwise, show the regular text and emulate vanilla behavior
+				else
+				{
+					context.drawText(textRenderer, getMessage(), this.getX(), this.getY(), 0x404040, false);
+				}
+			}
+
 			@Override
 			public boolean isVisible()
 			{
-				return getSelectedTab().getType() == ItemGroup.Type.HOTBAR && inEditMode;
+				return tabIsHotbar(getSelectedTab());
+			}
+
+			@Override
+			public boolean isActive()
+			{
+				return tabIsHotbar(getSelectedTab()) && isFocused();
 			}
 
 			@Override
 			public void onRelease(double mouseX, double mouseY)
 			{
 				setFocused(true);
-				inEditMode = true;
 			}
 		};
-		renameHotbarField.setFocused(inEditMode);
-		renameHotbarField.setText(label.getString());
+
+		renameHotbarField.setFocused(false);
+		renameHotbarField.setText(renameHotbarField.getMessage().getString());
 		renameHotbarField.setDrawsBackground(false);
 		renameHotbarField.setMaxLength(65535);
-		renameHotbarField.active = getSelectedTab().getType() == ItemGroup.Type.HOTBAR;
+		renameHotbarField.setTooltip(Tooltip.of(mechanic.createText(Component.translatable("librarian.tooltip.click_to_rename"))));
+
+		// Update the label if we are set to use the HOTBAR ItemGroup type
+		// This primarily aims to emulate vanilla behavior and avoid lagspikes when opening the creative menu whilst
+		// 	the current page isn't loaded
+		if (tabIsHotbar(getSelectedTab()))
+		{
+			renameHotbarField.setMessage(mechanic.createText(Librarian.getInstance().getCurrentPage().getMetadata()
+					.map(HotbarPageMetadata::getName).orElse(Component.translatable("librarian.saved_hotbars.tab",
+					Component.text(Librarian.getInstance().getCurrentPageNumber().toString())))));
+		}
+
+		// Even though we override the isVisible and isActive methods, internally ClickableWidget still uses the
+		// 	variable themselves to determine other characteristics, so we still need to set them
+		renameHotbarField.active = tabIsHotbar(getSelectedTab());
+		renameHotbarField.visible = tabIsHotbar(getSelectedTab());
 
 		// Initialize buttons
 		nextButton = mechanic.createButton(x + 12, y,12, 12, Component.text("→"),
@@ -122,10 +149,10 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 				Component.text("Previous page"), () -> Librarian.getInstance().previousPage());
 
 		// Marks visibility and usability of the buttons
-		nextButton.visible = getSelectedTab().getType() == ItemGroup.Type.HOTBAR;
-		backupButton.visible = getSelectedTab().getType() == ItemGroup.Type.HOTBAR;
+		nextButton.visible = tabIsHotbar(getSelectedTab());
+		backupButton.visible = tabIsHotbar(getSelectedTab());
 		backupButton.active = Librarian.getInstance().getCurrentPage().exists();
-		previousButton.visible = getSelectedTab().getType() == ItemGroup.Type.HOTBAR;
+		previousButton.visible = tabIsHotbar(getSelectedTab());
 
 		// Adds the "rename hotbar" text field
 		addDrawableChild(renameHotbarField);
@@ -137,71 +164,86 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	}
 
 	@Inject(method = "removed", at = @At(value = "RETURN"))
-	public void hookRemoved(CallbackInfo ci)
+	public void unregisterOnRemoval(CallbackInfo ci)
 	{
+		// Unregisters us as an event listener when the menu is closed
 		Librarian.getInstance().getEventBus().unregister(this);
 	}
 
-	// Upon setting the current tab,
 	@Inject(method = "setSelectedTab", at = @At("HEAD"))
 	public void hookTabSelected(ItemGroup group, CallbackInfo ci)
 	{
+		boolean shouldShowElements = tabIsHotbar(group);
+
 		// Determine visibility and other stuff
 		if (renameHotbarField != null)
 		{
-			renameHotbarField.active = group.getType() == ItemGroup.Type.HOTBAR;
-			Librarian.getInstance().getCurrentPage().getMetadata().map(HotbarPageMetadata::getName).ifPresentOrElse(
-					name -> label = mechanic.createText(name),
-					() -> label = Text.translatable("librarian.saved_hotbars.tab",
-							Librarian.getInstance().getCurrentPageNumber()));
-			renameHotbarField.setText(label.getString());
+			if (shouldShowElements)
+			{
+				// Updates the "message" which we use to display the formatted text in non-edit mode
+				renameHotbarField.setMessage(mechanic.createText(Librarian.getInstance().getCurrentPage().getMetadata()
+						.map(HotbarPageMetadata::getName).orElse(Component.translatable("librarian.saved_hotbars.tab",
+								Component.text(Librarian.getInstance().getCurrentPageNumber().toString())))));
+			}
+
+			// Updates the text in the field to be the contents of the label so that it stays consistent in the
+			// 	edit vs. non-edit modes
+			renameHotbarField.setText(renameHotbarField.getMessage().getString());
 			renameHotbarField.setFocused(false);
-			inEditMode = false;
+
+			// See above for why we still set these
+			renameHotbarField.visible = shouldShowElements;
+			renameHotbarField.active = shouldShowElements;
+
+			// Resets the last successful change
 			lastSuccessfulChange = null;
 		}
-		if (nextButton != null) nextButton.visible = group.getType() == ItemGroup.Type.HOTBAR;
+
+		if (nextButton != null) nextButton.visible = shouldShowElements;
 		if (backupButton != null)
 		{
-			backupButton.visible = group.getType() == ItemGroup.Type.HOTBAR;
+			backupButton.visible = shouldShowElements;
 			backupButton.active = Librarian.getInstance().getCurrentPage().exists();
 		}
-		if (previousButton != null) previousButton.visible = group.getType() == ItemGroup.Type.HOTBAR;
+		if (previousButton != null) previousButton.visible = shouldShowElements;
 
 		// Avoid overlaps - https://github.com/FabricMC/fabric/pull/2742
 		((ScreenAccessor) this).getDrawables().stream().filter(entry ->
 				entry instanceof FabricCreativeGuiComponents.ItemGroupButtonWidget).forEach(button ->
-				((ButtonWidget) button).visible = group != Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
+				((ButtonWidget) button).visible = !shouldShowElements);
 	}
 
-	@ModifyArg(method = "drawForeground", at = @At(value = "INVOKE", target ="Lnet/minecraft/client/gui/DrawContext;drawText(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;IIIZ)I", ordinal = 0))
-	private Text getLabel(Text text)
+	@Inject(method = "drawForeground", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemGroup;shouldRenderName()Z", shift = At.Shift.AFTER), cancellable = true)
+	public void cancelForegroundTextRendering(DrawContext context, int mouseX, int mouseY, CallbackInfo ci)
 	{
-		return getSelectedTab().getType() == ItemGroup.Type.HOTBAR ? inEditMode ? Text.empty() : label : text;
+		if (tabIsHotbar(getSelectedTab()))
+		{
+			ci.cancel();
+		}
 	}
 
 	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-	public void injectKeyPressedHead(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir)
+	public void workaroundTypingInRenameField(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir)
 	{
-		if (getSelectedTab().getType() == ItemGroup.Type.HOTBAR)
+		if (tabIsHotbar(getSelectedTab()))
 		{
-			// Special key was pressed
-			if (renameHotbarField.keyPressed(keyCode, scanCode, modifiers))
-			{
-				//cir.setReturnValue(true);
-				Librarian.getLogger().info("Debug! Special key press detected - Keycode {}, Scancode {}, Modifiers {}", keyCode, scanCode, modifiers);
-			}
+			// Special keys
+			renameHotbarField.keyPressed(keyCode, scanCode, modifiers);
 
+			// Handle key presses if the field is focused
 			if (renameHotbarField.isFocused())
 			{
 				final IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
 
+				// Abort changes if the user presses ESC
 				if (keyCode == GLFW.GLFW_KEY_ESCAPE)
 				{
 					Librarian.getLogger().info("Debug! Code that would reset the custom name goes here!");
-					renameHotbarField.setText(lastSuccessfulChange != null ? lastSuccessfulChange : label.getString());
+					renameHotbarField.setText(lastSuccessfulChange != null ? lastSuccessfulChange :
+							renameHotbarField.getMessage().getString());
 					renameHotbarField.setFocused(false);
-					inEditMode = false;
 				}
+				// Apply the changes if the user presses ENTER
 				else if (keyCode == GLFW.GLFW_KEY_ENTER)
 				{
 					Librarian.getLogger().info("Debug! Code that would set the custom name goes here!");
@@ -215,9 +257,8 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 					renameHotbarField.setFocused(false);
 					renameHotbarField.setMessage(mechanic.createText(newName));
+
 					lastSuccessfulChange = renameHotbarField.getText();
-					inEditMode = false;
-					label = renameHotbarField.getMessage();
 
 					// Hacky fix, but oh well
 					backupButton.active = Librarian.getInstance().getCurrentPage().exists();
@@ -237,10 +278,10 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Inject(method = "keyPressed", at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/client/gui/screen/ingame/HandledScreen;keyPressed(III)Z",
 			shift = At.Shift.BEFORE), cancellable = true)
-	public void inject(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir)
+	public void handleNavigationKeys(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir)
 	{
 		// Librarian-specific keybinds
-		if (getSelectedTab().getType() == ItemGroup.Type.HOTBAR)
+		if (tabIsHotbar(getSelectedTab()))
 		{
 			// Fabric API keybinds
 			final FabricAPIAddon fabric = Librarian.getInstance().getAddon(FabricAPIAddon.class);
@@ -291,15 +332,6 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 						Librarian.getInstance().nextPage();
 						cir.setReturnValue(true);
 					}
-					// R
-					// Code is commented out as it registers a rogue "R" press when done this way and that looks stupid
-					/*else if (keyCode == GLFW.GLFW_KEY_R)
-					{
-						ignoreTypedCharacter = true;
-						renameHotbarField.setFocused(true);
-						inEditMode = true;
-						cir.setReturnValue(true);
-					}*/
 				}
 				// SHIFT
 				case GLFW.GLFW_MOD_SHIFT ->
@@ -340,7 +372,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Inject(method = "charTyped", at = @At("HEAD"), cancellable = true)
 	private void injectCharTyped(char chr, int modifiers, CallbackInfoReturnable<Boolean> cir)
 	{
-		if (getSelectedTab().getType() == ItemGroup.Type.HOTBAR)
+		if (tabIsHotbar(getSelectedTab()))
 		{
 			if (renameHotbarField.charTyped(chr, modifiers))
 			{
@@ -407,7 +439,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	public void onNavigation(NavigationEvent event)
 	{
 		// Refresh!
-		if (getSelectedTab().getType() == ItemGroup.Type.HOTBAR)
+		if (tabIsHotbar(getSelectedTab()))
 		{
 			setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
 		}
@@ -417,7 +449,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Unique
 	public void onReload(ReloadPageEvent event)
 	{
-		if (getSelectedTab().getType() == ItemGroup.Type.HOTBAR)
+		if (tabIsHotbar(getSelectedTab()))
 		{
 			setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
 		}
@@ -427,12 +459,18 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Unique
 	public void onCacheClear(CacheClearEvent event)
 	{
-		if (getSelectedTab().getType() == ItemGroup.Type.HOTBAR)
+		if (tabIsHotbar(getSelectedTab()))
 		{
 			setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
 		}
 	}
 
+	@Unique
+	private boolean tabIsHotbar(ItemGroup group)
+	{
+		return group.getType() == ItemGroup.Type.HOTBAR;
+	}
+	
 	@Accessor
 	public abstract ItemGroup getSelectedTab();
 }
