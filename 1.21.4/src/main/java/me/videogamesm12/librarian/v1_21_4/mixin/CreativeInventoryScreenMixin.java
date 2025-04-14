@@ -238,7 +238,6 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 				// Abort changes if the user presses ESC
 				if (keyCode == GLFW.GLFW_KEY_ESCAPE)
 				{
-					Librarian.getLogger().info("Debug! Code that would reset the custom name goes here!");
 					renameHotbarField.setText(lastSuccessfulChange != null ? lastSuccessfulChange :
 							renameHotbarField.getMessage().getString());
 					renameHotbarField.setFocused(false);
@@ -246,7 +245,6 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 				// Apply the changes if the user presses ENTER
 				else if (keyCode == GLFW.GLFW_KEY_ENTER)
 				{
-					Librarian.getLogger().info("Debug! Code that would set the custom name goes here!");
 					final Component newName = ComponentProcessor.findBestPick(renameHotbarField.getText())
 							.processComponent(renameHotbarField.getText());
 
@@ -270,8 +268,6 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			{
 				super.keyPressed(keyCode, scanCode, modifiers);
 			}
-
-			Librarian.getLogger().info("Debug! Key press detected - {}", keyCode);
 		}
 	}
 
