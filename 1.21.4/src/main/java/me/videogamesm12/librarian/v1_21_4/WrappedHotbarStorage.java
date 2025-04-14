@@ -42,5 +42,6 @@ public class WrappedHotbarStorage extends HotbarStorage implements IWrappedHotba
 	public void load()
 	{
 		((HotbarStorageInvoker) this).invokeLoad();
+		setLoaded(true);
 	}
 }

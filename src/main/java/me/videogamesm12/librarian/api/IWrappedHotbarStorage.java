@@ -3,11 +3,13 @@ package me.videogamesm12.librarian.api;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.event.BackupOutcomeEvent;
 import me.videogamesm12.librarian.util.FNF;
+import net.kyori.adventure.text.Component;
 
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
+import java.util.Optional;
 
 /**
  * <h1>IWrappedHotbarStorage</h1>
@@ -49,4 +51,29 @@ public interface IWrappedHotbarStorage
 	}
 
 	void load();
+
+	default boolean isLoaded()
+	{
+		return false;
+	}
+
+	default void setLoaded(boolean newValue)
+	{
+		// Don't do anything, this should be implemented when implementing in HotbarStorage as a mixin
+	}
+
+	default Optional<HotbarPageMetadata> getMetadata()
+	{
+		return Optional.empty();
+	}
+
+	default boolean metadataIsPresent()
+	{
+		return getMetadata().isPresent();
+	}
+
+	default void setMetadata(HotbarPageMetadata metadata)
+	{
+		// Do nothing
+	}
 }
