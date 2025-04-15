@@ -65,9 +65,6 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Unique
 	private ButtonWidget previousButton;
 
-	@Unique
-	private ButtonWidget surpriseButton;
-
 	protected CreativeInventoryScreenMixin(Text title)
 	{
 		super(title);
