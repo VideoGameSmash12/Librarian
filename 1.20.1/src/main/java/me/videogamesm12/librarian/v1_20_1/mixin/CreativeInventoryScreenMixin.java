@@ -201,7 +201,6 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			lastSuccessfulChange = null;
 		}
 
-		// Determine visibility and other stuff
 		if (nextButton != null) nextButton.visible = shouldShowElements;
 		if (backupButton != null)
 		{
@@ -213,7 +212,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		// Avoid overlaps - https://github.com/FabricMC/fabric/pull/2742
 		((ScreenAccessor) this).getDrawables().stream().filter(entry ->
 				entry instanceof FabricCreativeGuiComponents.ItemGroupButtonWidget).forEach(button ->
-				((ButtonWidget) button).visible = group != Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
+				((ButtonWidget) button).visible = !shouldShowElements);
 	}
 
 	@Inject(method = "drawForeground", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemGroup;shouldRenderName()Z", shift = At.Shift.AFTER), cancellable = true)

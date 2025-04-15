@@ -1,3 +1,7 @@
+ext {
+    post_seventeen = true
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:1.19.4"
     mappings "net.fabricmc:yarn:1.19.4+build.2:v2"
