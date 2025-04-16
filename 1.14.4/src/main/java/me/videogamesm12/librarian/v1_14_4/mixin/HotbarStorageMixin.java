@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 {
 	@Unique
-	private static final GsonComponentSerializer librarian$serializer = GsonComponentSerializer.gson();
+	private static final GsonComponentSerializer librarian$serializer = GsonComponentSerializer.colorDownsamplingGson();
 
 	@Unique
 	private HotbarPageMetadata metadata = null;

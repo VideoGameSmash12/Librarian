@@ -36,7 +36,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	@Shadow private boolean f_2733121;
 
 	@Unique
-	private static final GsonComponentSerializer librarian$serializer = GsonComponentSerializer.gson();
+	private static final GsonComponentSerializer librarian$serializer = GsonComponentSerializer.colorDownsamplingGson();
 
 	@Unique
 	private HotbarPageMetadata metadata = null;
