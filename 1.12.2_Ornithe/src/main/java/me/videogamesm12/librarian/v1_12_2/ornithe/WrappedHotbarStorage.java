@@ -40,5 +40,6 @@ public class WrappedHotbarStorage extends HotbarManager implements IWrappedHotba
 	public void load()
 	{
 		super.load();
+		setLoaded(true);
 	}
 }
