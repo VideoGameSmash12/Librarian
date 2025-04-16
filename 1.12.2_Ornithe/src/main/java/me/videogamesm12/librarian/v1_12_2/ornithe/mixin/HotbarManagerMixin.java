@@ -141,10 +141,10 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 			meta.putInt("version", HotbarPageMetadata.getCurrentVersion());
 
 			if (metadata.getName() != null)
-				meta.putString("name", Text.Serializer.toJson(metadata.getUserFriendlyName()));
+				meta.putString("name", librarian$serializer.serialize(metadata.getName()));
 
 			if (metadata.getDescription() != null)
-				meta.putString("description", Text.Serializer.toJson(metadata.getUserFriendlyDescription()));
+				meta.putString("description", librarian$serializer.serialize(metadata.getDescription()));
 
 			if (metadata.getAuthors() != null && !metadata.getAuthors().isEmpty())
 			{
