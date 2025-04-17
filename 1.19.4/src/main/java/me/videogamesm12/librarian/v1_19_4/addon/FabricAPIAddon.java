@@ -258,6 +258,7 @@ public class FabricAPIAddon implements IAddon
 														{
 															page.setMetadata(HotbarPageMetadata.builder().authors(new ArrayList<>(Collections.singletonList(value))).build());
 															((HotbarStorage) page).save();
+															context.getSource().sendFeedback(Librarian.getInstance().getMechanic().createText(Component.translatable("librarian.messages.metadata.authors_added", Component.text(value).color(NamedTextColor.WHITE)).color(NamedTextColor.GRAY)));
 														});
 														return 0;
 													})))
