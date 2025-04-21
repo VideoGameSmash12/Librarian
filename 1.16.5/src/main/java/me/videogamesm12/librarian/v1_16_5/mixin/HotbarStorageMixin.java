@@ -97,8 +97,6 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 				}
 				else
 				{
-					Librarian.getLogger().info("Debug! Loaded metadata - Version {}, Name {}, Description {}", version,
-							name, description);
 					metadata = HotbarPageMetadata.builder()
 							.version(version)
 							.name(name != null && !name.isEmpty() ? librarian$serializer.deserializeOrNull(name) : null)
