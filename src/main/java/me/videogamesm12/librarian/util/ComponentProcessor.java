@@ -32,80 +32,88 @@ public abstract class ComponentProcessor
 {
 	@Getter
 	private static final List<ComponentProcessor> formatters = new ArrayList<>();
-	private static final ComponentProcessor legacyAmpersand = new ComponentProcessor()
+	private static final ComponentProcessor legacyAmpersand;
+	private static final ComponentProcessor legacySection;
+	private static final ComponentProcessor miniMessage;
+	private static final ComponentProcessor plainText;
+
+	static
 	{
-		private final LegacyComponentSerializer ampersand = LegacyComponentSerializer.legacyAmpersand();
-		private final Pattern pattern = Pattern.compile("(?i)&([0-9A-FK-ORX]|#([A-F0-9]){2,6})");
-
-		@Override
-		public LegacyComponentSerializer getSerializer()
+		legacyAmpersand = new ComponentProcessor()
 		{
-			return ampersand;
-		}
+			private final LegacyComponentSerializer ampersand = LegacyComponentSerializer.legacyAmpersand();
+			private final Pattern pattern = Pattern.compile("(?i)&([0-9A-FK-ORX]|#([A-F0-9]){2,6})");
 
-		@Override
-		public boolean shouldProcessComponent(String input)
-		{
-			return pattern.matcher(input).find();
-		}
-	};
-	private static final ComponentProcessor legacySection = new ComponentProcessor()
-	{
-		private final LegacyComponentSerializer section = LegacyComponentSerializer.legacySection();
-		private final Pattern pattern = Pattern.compile("(?i)§[0-9A-FK-OR]");
+			@Override
+			public LegacyComponentSerializer getSerializer()
+			{
+				return ampersand;
+			}
 
-		@Override
-		public LegacyComponentSerializer getSerializer()
+			@Override
+			public boolean shouldProcessComponent(String input)
+			{
+				return pattern.matcher(input).find();
+			}
+		};
+		legacySection = new ComponentProcessor()
 		{
-			return section;
-		}
+			private final LegacyComponentSerializer section = LegacyComponentSerializer.legacySection();
+			private final Pattern pattern = Pattern.compile("(?i)§[0-9A-FK-OR]");
 
-		@Override
-		public boolean shouldProcessComponent(String input)
-		{
-			return pattern.matcher(input).find();
-		}
-	};
-	private static final ComponentProcessor miniMessage = new ComponentProcessor()
-	{
-		private final MiniMessage miniMessage = MiniMessage.miniMessage();
+			@Override
+			public LegacyComponentSerializer getSerializer()
+			{
+				return section;
+			}
 
-		@Override
-		public MiniMessage getSerializer()
+			@Override
+			public boolean shouldProcessComponent(String input)
+			{
+				return pattern.matcher(input).find();
+			}
+		};
+		miniMessage = new ComponentProcessor()
 		{
-			return miniMessage;
-		}
+			private final MiniMessage miniMessage = MiniMessage.miniMessage();
 
-		@Override
-		public boolean shouldProcessComponent(String input)
-		{
-			return !miniMessage.stripTags(input).equalsIgnoreCase(input);
-		}
-	};
-	private static final ComponentProcessor plainText = new ComponentProcessor()
-	{
-		@Override
-		public ComponentSerializer<Component, Component, String> getSerializer()
-		{
-			return null;
-		}
+			@Override
+			public MiniMessage getSerializer()
+			{
+				return miniMessage;
+			}
 
-		@Override
-		public boolean shouldProcessComponent(String input)
+			@Override
+			public boolean shouldProcessComponent(String input)
+			{
+				return !miniMessage.stripTags(input).equalsIgnoreCase(input);
+			}
+		};
+		plainText = new ComponentProcessor()
 		{
-			return true;
-		}
+			@Override
+			public ComponentSerializer<Component, Component, String> getSerializer()
+			{
+				return null;
+			}
 
-		@Override
-		public Component processComponent(String input)
-		{
-			return Component.text(input);
-		}
-	};
+			@Override
+			public boolean shouldProcessComponent(String input)
+			{
+				return true;
+			}
 
-	protected ComponentProcessor()
-	{
-		formatters.add(this);
+			@Override
+			public Component processComponent(String input)
+			{
+				return Component.text(input);
+			}
+		};
+
+		formatters.add(plainText);
+		formatters.add(miniMessage);
+		formatters.add(legacySection);
+		formatters.add(legacyAmpersand);
 	}
 
 	public abstract <T extends Component, A extends Component> ComponentSerializer<T, A, String> getSerializer();
@@ -120,6 +128,6 @@ public abstract class ComponentProcessor
 	public static ComponentProcessor findBestPick(String input)
 	{
 		return formatters.stream().filter(formatter -> formatter.shouldProcessComponent(input))
-				.min(Comparator.comparingInt(formatters::indexOf)).orElse(plainText);
+				.max(Comparator.comparingInt(formatters::indexOf)).orElse(plainText);
 	}
 }
