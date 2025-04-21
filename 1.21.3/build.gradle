@@ -1,3 +1,7 @@
+ext {
+    post_twenty_five = true
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:1.21.3"
     mappings "net.fabricmc:yarn:1.21.3+build.2:v2"

@@ -11,7 +11,7 @@ import java.math.BigInteger;
 
 public class Mechanic implements IMechanicFactory
 {
-	private static final GsonComponentSerializer GSON_COMPONENT_SERIALIZER = GsonComponentSerializer.gson();
+	private static final GsonComponentSerializer GSON_COMPONENT_SERIALIZER = GsonComponentSerializer.colorDownsamplingGson();
 
 	@Override
 	public WrappedHotbarStorage createHotbarStorage(@NonNull BigInteger integer)

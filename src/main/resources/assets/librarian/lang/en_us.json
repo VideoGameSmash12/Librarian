@@ -14,6 +14,23 @@
   "librarian.messages.load_failed.action_bar": "Failed to load hotbar page: %1$s",
   "librarian.messages.load_failed.toast.title": "Load failed",
   "librarian.messages.load_failed.toast.description": "Check logs for more info",
+  "librarian.messages.metadata.authors": "Current page author(s): %1$s",
+  "librarian.messages.metadata.authors_added": "%1$s has been added to the list of authors for this page.",
+  "librarian.messages.metadata.authors_already_added": "%1$s is already in the list of authors for this page.",
+  "librarian.messages.metadata.authors_cleared": "All authors have been removed from this page.",
+  "librarian.messages.metadata.authors_empty": "No authors are listed in the current page.",
+  "librarian.messages.metadata.authors_not_included": "%1$s isn't listed as an author for this page.",
+  "librarian.messages.metadata.authors_removed": "%1$s has been removed from the list of authors for this page.",
+  "librarian.messages.metadata.deleted": "The current page's metadata has been deleted.",
+  "librarian.messages.metadata.description": "The current page's description is currently set to %1$s.",
+  "librarian.messages.metadata.description_not_set": "The current page currently doesn't have a description.",
+  "librarian.messages.metadata.description_set": "The current page's description has been set to %1$s.",
+  "librarian.messages.metadata.description_reset": "The current page's description has been reset to defaults.",
+  "librarian.messages.metadata.name": "The current page's name is currently set to %1$s.",
+  "librarian.messages.metadata.name_not_set": "The current page currently doesn't have a name.",
+  "librarian.messages.metadata.name_set": "The current page has been renamed to %1$s.",
+  "librarian.messages.metadata.name_reset": "The current page's name has been reset to defaults.",
+  "librarian.messages.metadata.no_data_to_delete": "The current page's metadata has been purged.",
   "librarian.messages.navigation.action_bar": "Hotbar selected: %1$s",
   "librarian.messages.navigation.toast.title": "Hotbar selected",
   "librarian.messages.possible_overwrite_detected.title": "Possible accidental overwrite detected",
@@ -21,5 +38,8 @@
   "librarian.messages.reload.toast.title": "Hotbar reloaded",
   "librarian.messages.save_failed.action_bar": "Failed to save hotbar page: %1$s",
   "librarian.messages.save_failed.toast.title": "Save failed",
-  "librarian.messages.save_failed.toast.description": "Check logs for more info"
+  "librarian.messages.save_failed.toast.description": "Check logs for more info",
+
+  "librarian.tooltip.authors": "Authors:",
+  "librarian.tooltip.click_to_rename": "Click to Rename"
 }
