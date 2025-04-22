@@ -3,7 +3,7 @@
   "id": "librarian",
   "version": "${version}",
   "name": "Librarian",
-  "description": "General improvements to the Saved Hotbar system",
+  "description": "Improves the saved hotbar system by adding new features and increasing the overall capacity with a page system",
   "authors": [
     "videogamesm12"
   ],
@@ -26,5 +26,8 @@
     "librarian-listener": [
       "me.videogamesm12.librarian.listener.EventLogger"
     ]
+  },
+  "breaks": {
+    "hotbarsplus": "*"
   }
 }
