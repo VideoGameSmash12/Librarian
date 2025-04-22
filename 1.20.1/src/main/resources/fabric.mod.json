@@ -13,7 +13,11 @@
     "issues": "https://github.com/VideoGameSmash12/Librarian/issues"
   },
   "license": "GPL-3.0",
-  "icon": "assets/librarian/icon.png",
+  "icon": {
+    "64": "assets/librarian-resources/icon-64.png",
+    "128": "assets/librarian-resources/icon.png",
+    "256": "assets/librarian-resources/icon-256.png"
+  },
   "environment": "client",
   "entrypoints": {
     "librarian-mechanic": [
