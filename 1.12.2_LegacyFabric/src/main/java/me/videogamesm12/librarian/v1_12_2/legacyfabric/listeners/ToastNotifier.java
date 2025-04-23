@@ -144,7 +144,7 @@ public class ToastNotifier extends AbstractEventListener
 			LOAD_FAILURE(0xFF0000, true, 3, 0),
 			SAVE_FAILURE(0xFF0000, true, 3, 0),
 			RELOAD(0x00AAFF, true, 0, 1),
-			NAVIGATION(0x00FF00, false, 0, 0);
+			NAVIGATION(0x00FF00, true, 1, 1);
 
 			private final int textColor;
 			private final boolean hasIcon;

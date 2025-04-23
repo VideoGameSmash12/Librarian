@@ -143,7 +143,7 @@ public class ToastNotifier extends AbstractEventListener
 			LOAD_FAILURE(0xFF0000, Identifier.of("librarian", "toasts/failure")),
 			SAVE_FAILURE(0xFF0000, Identifier.of("librarian", "toasts/failure")),
 			RELOAD(0x00AAFF, Identifier.of("librarian", "toasts/reload")),
-			NAVIGATION(0x00FF00, null);
+			NAVIGATION(0x00FF00, Identifier.of("librarian", "toasts/page_selected"));
 
 			private final int textColor;
 			private final Identifier texture;

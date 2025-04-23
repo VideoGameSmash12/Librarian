@@ -142,7 +142,7 @@ public class ToastNotifier extends AbstractEventListener
 			LOAD_FAILURE(0xFF0000, new Identifier("librarian", "textures/gui/sprites/toasts/failure.png")),
 			SAVE_FAILURE(0xFF0000, new Identifier("librarian", "textures/gui/sprites/toasts/failure.png")),
 			RELOAD(0x00AAFF, new Identifier("librarian", "textures/gui/sprites/toasts/reload.png")),
-			NAVIGATION(0x00FF00, null);
+			NAVIGATION(0x00FF00, new Identifier("librarian", "textures/gui/sprites/toasts/page_selected.png"));
 
 			private final int textColor;
 			private final Identifier texture;
