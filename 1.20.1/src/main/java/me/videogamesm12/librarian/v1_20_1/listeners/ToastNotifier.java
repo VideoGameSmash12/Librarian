@@ -1,6 +1,8 @@
 package me.videogamesm12.librarian.v1_20_1.listeners;
 
 import com.google.common.eventbus.Subscribe;
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -151,7 +153,9 @@ public class ToastNotifier extends AbstractEventListener
 			{
 				if (texture != null)
 				{
-					context.drawTexture(texture,6 , 6, 0, 0, 20, 20);
+					RenderSystem.enableBlend();
+					context.drawTexture(texture, 6, 6, 0, 0, 20, 20, 20, 20);
+					RenderSystem.enableBlend();
 				}
 				else
 				{
