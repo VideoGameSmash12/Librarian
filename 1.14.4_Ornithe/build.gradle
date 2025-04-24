@@ -1,5 +1,5 @@
 plugins {
-    id 'ploceus' version '1.9-SNAPSHOT'
+    id 'ploceus' version '1.10-SNAPSHOT'
 }
 
 dependencies {
