@@ -38,24 +38,11 @@ allprojects {
     apply plugin: 'fabric-loom'
 
     ext {
-        post_seventeen = false
-        seventeen = false
-        post_twenty_five = false
+        java_version = 8
     }
 
     tasks.withType(JavaCompile).configureEach {
-        if (seventeen) {
-            it.options.release.set(16)
-        }
-        else if (post_seventeen) {
-            it.options.release.set(17)
-        }
-        else if (post_twenty_five) {
-            it.options.release.set(21)
-        }
-        else {
-            it.options.release.set(8)
-        }
+        it.options.release.set((Integer) java_version)
     }
 
     repositories {

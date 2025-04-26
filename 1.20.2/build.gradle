@@ -1,5 +1,5 @@
 ext {
-    post_seventeen = true
+    java_version = 17
 }
 
 dependencies {
