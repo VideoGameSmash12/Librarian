@@ -17,24 +17,29 @@
 
 package me.videogamesm12.librarian.util;
 
+import com.google.gson.JsonParseException;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.ComponentSerializer;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public abstract class ComponentProcessor
 {
 	@Getter
 	private static final List<ComponentProcessor> formatters = new ArrayList<>();
+	//
 	private static final ComponentProcessor legacyAmpersand;
 	private static final ComponentProcessor legacySection;
 	private static final ComponentProcessor miniMessage;
+	private static final ComponentProcessor json;
 	private static final ComponentProcessor plainText;
 
 	static
@@ -89,6 +94,36 @@ public abstract class ComponentProcessor
 				return !miniMessage.stripTags(input).equalsIgnoreCase(input);
 			}
 		};
+		json = new ComponentProcessor()
+		{
+			private final GsonComponentSerializer gson = VersionChecker.isNewerThanOrEqualTo("minecraft", "1.16.5") ?
+					GsonComponentSerializer.gson() : GsonComponentSerializer.colorDownsamplingGson();
+
+			@Override
+			public GsonComponentSerializer getSerializer()
+			{
+				return gson;
+			}
+
+			@Override
+			public boolean shouldProcessComponent(String input)
+			{
+				return isValidJson(input) && !input.startsWith("\"");
+			}
+
+			private boolean isValidJson(String input)
+			{
+				try
+				{
+					gson.deserialize(Objects.requireNonNull(input));
+					return true;
+				}
+				catch (JsonParseException parseException)
+				{
+					return false;
+				}
+			}
+		};
 		plainText = new ComponentProcessor()
 		{
 			@Override
@@ -111,6 +146,7 @@ public abstract class ComponentProcessor
 		};
 
 		formatters.add(plainText);
+		formatters.add(json);
 		formatters.add(miniMessage);
 		formatters.add(legacySection);
 		formatters.add(legacyAmpersand);
