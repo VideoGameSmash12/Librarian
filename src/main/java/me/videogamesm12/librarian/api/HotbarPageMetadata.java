@@ -20,47 +20,73 @@ package me.videogamesm12.librarian.api;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import me.videogamesm12.librarian.Librarian;
 import net.kyori.adventure.text.Component;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * <h1>HotbarPageMetadata</h1>
+ * <p>Metadata class for storing optional metadata that is loaded from and saved to pages. This is used to allow the
+ * 	user to customize their saved hotbar pages more thoroughly.</p>
+ */
 @Getter
 @Setter
 @Builder
 public class HotbarPageMetadata
 {
+	/**
+	 * The version of the metadata system that this mod uses for sanity checks.
+	 */
 	@Getter
 	private static final int currentVersion = 0;
 
+	/**
+	 * The version of the metadata system this hotbar page was saved for. By default, this is set to whatever the
+	 * 	current version is in the mod.
+	 */
 	@Builder.Default
 	private int version = getCurrentVersion();
 
+	/**
+	 * The custom name set for the saved hotbar page. This can be set with either in-game commands, by clicking the
+	 * 	Saved Hotbars text in the creative inventory menu, or programmatically by setting the value with the provided
+	 * 	setter method.
+	 */
 	@Builder.Default
+	@Nullable
 	private Component name = null;
 
+	/**
+	 * The description for the saved hotbar page. This can be set with either in-game commands or by setting the value
+	 * 	programmatically with the provided setter method.
+	 */
 	@Builder.Default
+	@Nullable
 	private Component description = null;
 
+	/**
+	 * A list of authors that the saved hotbar page is attributed to.
+	 */
 	@Builder.Default
+	@NotNull
 	private List<String> authors = new ArrayList<>();
 
-	public <A> A getUserFriendlyName()
-	{
-		return Librarian.getInstance().getMechanic().createText(name != null ? name : Component.empty());
-	}
-
-	public <A> A getUserFriendlyDescription()
-	{
-		return Librarian.getInstance().getMechanic().createText(description != null ? description : Component.empty());
-	}
-
+	/**
+	 * Adds a username to the list of authors for the saved hotbar page.
+	 * @param name	String
+	 */
 	public void addAuthor(String name)
 	{
 		authors.add(name);
 	}
 
+	/**
+	 * Removes a username from the list of authors for the saved hotbar page, if present.
+	 * @param name	String
+	 */
 	public void removeAuthor(String name)
 	{
 		authors.remove(name);

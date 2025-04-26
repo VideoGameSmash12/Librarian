@@ -31,6 +31,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+/**
+ * <h1>ComponentProcessor</h1>
+ * <p>Utility system for processing user-provided inputs and converting them to Adventure components.</p>
+ * <p>In the future, this may be fleshed out to also add support for taking Adventure components and converting them
+ * back to a String. For now though, it only supports going one-way.</p>
+ */
 public abstract class ComponentProcessor
 {
 	@Getter
@@ -152,15 +158,40 @@ public abstract class ComponentProcessor
 		formatters.add(legacyAmpersand);
 	}
 
+	/**
+	 * Get the {@link ComponentSerializer} used by this {@link ComponentProcessor} (if one is being used). This can be
+	 * 	null, but in such a case you must override {@code processComponent} to do your own handling.
+	 * @return		{@link ComponentSerializer}
+	 * @param <T>	{@link Component}
+	 * @param <A>	{@link Component}
+	 */
 	public abstract <T extends Component, A extends Component> ComponentSerializer<T, A, String> getSerializer();
 
+	/**
+	 * Checks the provided input to determine if this {@link ComponentProcessor} is the right tool for the job. This is
+	 * 	used internally by {@code ComponentSerializer.findBestPick} to find the best fitting processor for what the user
+	 * 	aims to do.
+	 * @param input	String
+	 * @return		boolean
+	 */
 	public abstract boolean shouldProcessComponent(String input);
 
+	/**
+	 * Takes the input and converts it into an Adventure {@link Component}.
+	 * @param input	String
+	 * @return		{@link Component}
+	 */
 	public Component processComponent(String input)
 	{
 		return getSerializer().deserialize(input);
 	}
 
+	/**
+	 * Reads the input and attempts to find the best {@link ComponentProcessor} based on how the input is formatted. If
+	 * 	nothing fits, it defaults to just plain text.
+	 * @param input	String
+	 * @return		{@link ComponentProcessor}
+	 */
 	public static ComponentProcessor findBestPick(String input)
 	{
 		return formatters.stream().filter(formatter -> formatter.shouldProcessComponent(input))
