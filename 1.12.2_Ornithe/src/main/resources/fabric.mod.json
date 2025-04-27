@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "librarian-resources-1_12_2-ornithe",
+  "id": "librarian-resources",
   "version": "${version}",
   "name": "Librarian Hooks (Ornithe 1.12.2)",
   "description": "Version-specific code for 1.12.2 under Ornithe.",

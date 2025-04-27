@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "librarian-resources-1_21_1",
+  "id": "librarian-resources",
   "version": "${version}",
   "name": "Librarian Hooks (1.21.1)",
   "description": "Version-specific code for 1.21.1.",
