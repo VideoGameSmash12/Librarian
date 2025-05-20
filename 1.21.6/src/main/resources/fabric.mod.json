@@ -36,8 +36,11 @@
   ],
   "accessWidener": "librarian.v1_21_6.accesswidener",
   "depends": {
-    "minecraft": "1.21.6-alpha.25.20.a",
+    "minecraft": ">=1.21.6-",
     "fabric": "*"
+  },
+  "breaks": {
+    "librarian-resources-bleeding": "*"
   },
   "custom": {
     "modmenu": {
