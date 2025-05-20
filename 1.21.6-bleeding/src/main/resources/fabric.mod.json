@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "librarian-resources-1_21_6",
+  "id": "librarian-resources-1_21_6_bleeding",
   "version": "${version}",
-  "name": "Librarian Hooks (1.21.6)",
-  "description": "Version-specific code for 1.21.6.",
+  "name": "Librarian Hooks (1.21.6, Bleeding)",
+  "description": "Version-specific code for 1.21.6. Bleeding.",
   "authors": [
     "videogamesm12"
   ],
@@ -36,8 +36,7 @@
   ],
   "accessWidener": "librarian.v1_21_6.accesswidener",
   "depends": {
-    "minecraft": "1.21.6-alpha.25.20.a",
-    "fabric": "*"
+    "minecraft": ">=1.21.6-alpha.25.21.a"
   },
   "custom": {
     "modmenu": {

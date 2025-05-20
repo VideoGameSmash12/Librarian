@@ -29,7 +29,8 @@ import me.videogamesm12.librarian.api.event.NavigationEvent;
 import me.videogamesm12.librarian.api.event.ReloadPageEvent;
 import me.videogamesm12.librarian.util.ComponentProcessor;
 import me.videogamesm12.librarian.v1_21_6.addon.FabricAPIAddon;
-import net.fabricmc.fabric.impl.client.itemgroup.FabricCreativeGuiComponents;
+//import net.fabricmc.fabric.impl.client.itemgroup.FabricCreativeGuiComponents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.minecraft.client.MinecraftClient;
@@ -47,6 +48,7 @@ import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -225,9 +227,12 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		if (previousButton != null) previousButton.visible = shouldShowElements;
 
 		// Avoid overlaps - https://github.com/FabricMC/fabric/pull/2742
-		((ScreenAccessor) this).getDrawables().stream().filter(entry ->
-				entry instanceof FabricCreativeGuiComponents.ItemGroupButtonWidget).forEach(button ->
-				((ButtonWidget) button).visible = !shouldShowElements);
+		/*if (FabricLoader.getInstance().isModLoaded("fabric"))
+		{
+			((ScreenAccessor) this).getDrawables().stream().filter(entry ->
+					entry instanceof FabricCreativeGuiComponents.ItemGroupButtonWidget).forEach(button ->
+					((ButtonWidget) button).visible = !shouldShowElements);
+		}*/
 	}
 
 	@Inject(method = "drawForeground", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemGroup;shouldRenderName()Z", shift = At.Shift.AFTER), cancellable = true)
@@ -298,23 +303,26 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		{
 			// Fabric API keybinds
 			final FabricAPIAddon fabric = Librarian.getInstance().getAddon(FabricAPIAddon.class);
-			if (fabric.getNextKey().matchesKey(keyCode, scanCode))
+			if (fabric != null)
 			{
-				Librarian.getInstance().nextPage();
-				cir.setReturnValue(true);
-				return;
-			}
-			else if (fabric.getPreviousKey().matchesKey(keyCode, scanCode))
-			{
-				Librarian.getInstance().previousPage();
-				cir.setReturnValue(true);
-				return;
-			}
-			else if (fabric.getBackupKey().matchesKey(keyCode, scanCode))
-			{
-				Librarian.getInstance().getCurrentPage().backup();
-				cir.setReturnValue(true);
-				return;
+				if (fabric.getNextKey().matchesKey(keyCode, scanCode))
+				{
+					Librarian.getInstance().nextPage();
+					cir.setReturnValue(true);
+					return;
+				}
+				else if (fabric.getPreviousKey().matchesKey(keyCode, scanCode))
+				{
+					Librarian.getInstance().previousPage();
+					cir.setReturnValue(true);
+					return;
+				}
+				else if (fabric.getBackupKey().matchesKey(keyCode, scanCode))
+				{
+					Librarian.getInstance().getCurrentPage().backup();
+					cir.setReturnValue(true);
+					return;
+				}
 			}
 
 			// Built-in key binds
@@ -454,7 +462,8 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		// Refresh!
 		if (tabIsHotbar(getSelectedTab()))
 		{
-			setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
+			setSelectedTab(Registries.ITEM_GROUP.get(Identifier.ofVanilla("hotbar")));
+			//setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
 		}
 	}
 
@@ -464,7 +473,8 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	{
 		if (tabIsHotbar(getSelectedTab()))
 		{
-			setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
+			setSelectedTab(Registries.ITEM_GROUP.get(Identifier.ofVanilla("hotbar")));
+			//setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
 		}
 	}
 
@@ -474,7 +484,8 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	{
 		if (tabIsHotbar(getSelectedTab()))
 		{
-			setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
+			setSelectedTab(Registries.ITEM_GROUP.get(Identifier.ofVanilla("hotbar")));
+			//setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
 		}
 	}
 
