@@ -25,6 +25,7 @@ import io.github.cottonmc.clientcommands.ClientCommandPlugin;
 import io.github.cottonmc.clientcommands.CottonClientCommandSource;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
+import me.videogamesm12.librarian.api.IMechanicFactory;
 import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
 import me.videogamesm12.librarian.util.ComponentProcessor;
 import net.kyori.adventure.text.Component;
@@ -32,12 +33,17 @@ import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minecraft.client.options.HotbarStorage;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CottonClientCommandsAddon implements ClientCommandPlugin
 {
+	private final IMechanicFactory mechanic = Librarian.getInstance().getMechanic();
+	
 	@Override
 	public void registerCommands(CommandDispatcher<CottonClientCommandSource> commandDispatcher)
 	{
@@ -72,6 +78,17 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 								.then(ArgumentBuilders.literal("list")
 										.executes(context ->
 										{
+											Set<BigInteger> pages = Librarian.getInstance().getMap().keySet();
+
+											if (pages.isEmpty())
+											{
+												feedback(context.getSource(), Component.translatable("librarian.messages.cache_list.empty"));
+											}
+											else
+											{
+												feedback(context.getSource(), Component.translatable("librarian.messages.cache_list", Component.join(JoinConfiguration.commas(true), pages.stream().map(big -> Component.text(big.toString())).collect(Collectors.toList()))));
+											}
+
 											return 1;
 										}))
 								.then(ArgumentBuilders.literal("clear")
@@ -87,11 +104,11 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 									if (page.getMetadata().isPresent())
 									{
 										page.setMetadata(null);
-										context.getSource().sendFeedback(Librarian.getInstance().getMechanic().createText(Component.translatable("librarian.messages.metadata.deleted").color(NamedTextColor.GRAY)));
+										feedback(context.getSource(), Component.translatable("librarian.messages.metadata.deleted").color(NamedTextColor.GRAY));
 									}
 									else
 									{
-										context.getSource().sendError(Librarian.getInstance().getMechanic().createText(Component.translatable("librarian.messages.metadata.no_data_to_delete")));
+										error(context.getSource(), Component.translatable("librarian.messages.metadata.no_data_to_delete"));
 									}
 
 									return 1;
@@ -103,13 +120,11 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 
 											if (page.getMetadata().isPresent() && page.getMetadata().get().getName() != null)
 											{
-												context.getSource().sendFeedback(Librarian.getInstance().getMechanic()
-														.createText(Component.translatable("librarian.messages.metadata.name", page.getMetadata().get().getName()).color(NamedTextColor.GRAY)));
+												feedback(context.getSource(), Component.translatable("librarian.messages.metadata.name", Objects.requireNonNull(page.getMetadata().get().getName())).color(NamedTextColor.GRAY));
 											}
 											else
 											{
-												context.getSource().sendFeedback(Librarian.getInstance().getMechanic()
-														.createText(Component.translatable("librarian.messages.metadata.name_not_set").color(NamedTextColor.GRAY)));
+												feedback(context.getSource(), Component.translatable("librarian.messages.metadata.name_not_set").color(NamedTextColor.GRAY));
 											}
 
 											return 1;
@@ -119,7 +134,7 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 												{
 													IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
 													page.getMetadata().ifPresent(meta -> meta.setName(null));
-													context.getSource().sendFeedback(Librarian.getInstance().getMechanic().createText(Component.translatable("librarian.messages.metadata.name_reset").color(NamedTextColor.GRAY)));
+													feedback(context.getSource(), Component.translatable("librarian.messages.metadata.name_reset").color(NamedTextColor.GRAY));
 													return 1;
 												})
 												.then(ArgumentBuilders.argument("value", StringArgumentType.greedyString())
@@ -141,7 +156,7 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 															}
 
 															((HotbarStorage) page).save();
-															context.getSource().sendFeedback(Librarian.getInstance().getMechanic().createText(Component.translatable("librarian.messages.metadata.name_set", processed).color(NamedTextColor.GRAY)));
+															feedback(context.getSource(), Component.translatable("librarian.messages.metadata.name_set", processed).color(NamedTextColor.GRAY));
 															return 1;
 														})))))
 								.then(ArgumentBuilders.literal("description")
@@ -150,13 +165,11 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 											IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
 											if (page.getMetadata().isPresent() && page.getMetadata().get().getDescription() != null)
 											{
-												context.getSource().sendFeedback(Librarian.getInstance().getMechanic()
-														.createText(Component.translatable("librarian.messages.metadata.description", page.getMetadata().get().getDescription()).color(NamedTextColor.GRAY)));
+												feedback(context.getSource(), Component.translatable("librarian.messages.metadata.description", Objects.requireNonNull(page.getMetadata().get().getDescription())).color(NamedTextColor.GRAY));
 											}
 											else
 											{
-												context.getSource().sendFeedback(Librarian.getInstance().getMechanic()
-														.createText(Component.translatable("librarian.messages.metadata.description_not_set")));
+												feedback(context.getSource(), Component.translatable("librarian.messages.metadata.description_not_set"));
 											}
 
 											return 1;
@@ -170,7 +183,7 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 														meta.setDescription(null);
 														((HotbarStorage) page).save();
 													});
-													context.getSource().sendFeedback(Librarian.getInstance().getMechanic().createText(Component.translatable("librarian.messages.metadata.description_reset").color(NamedTextColor.GRAY)));
+													feedback(context.getSource(), Component.translatable("librarian.messages.metadata.description_reset").color(NamedTextColor.GRAY));
 													return 1;
 												})
 												.then(ArgumentBuilders.argument("value", StringArgumentType.greedyString())
@@ -191,7 +204,7 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 															}
 
 															((HotbarStorage) page).save();
-															context.getSource().sendFeedback(Librarian.getInstance().getMechanic().createText(Component.translatable("librarian.messages.metadata.description_set", processed).color(NamedTextColor.GRAY)));
+															feedback(context.getSource(), Component.translatable("librarian.messages.metadata.description_set", processed).color(NamedTextColor.GRAY));
 															return 1;
 														})))))
 								.then(ArgumentBuilders.literal("authors")
@@ -201,15 +214,12 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 													IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
 													if (page.getMetadata().isPresent() && !page.getMetadata().get().getAuthors().isEmpty())
 													{
-														context.getSource().sendFeedback(Librarian.getInstance().getMechanic()
-																.createText(Component.translatable("librarian.messages.metadata.authors",
-																		Component.join(JoinConfiguration.commas(true),
-																				page.getMetadata().get().getAuthors().stream().map(name -> Component.text(name).color(NamedTextColor.WHITE)).collect(Collectors.toList()))).color(NamedTextColor.GRAY)));
+														feedback(context.getSource(), Component.translatable("librarian.messages.metadata.authors", Component.join(JoinConfiguration.commas(true),
+																page.getMetadata().get().getAuthors().stream().map(name -> Component.text(name).color(NamedTextColor.WHITE)).collect(Collectors.toList()))).color(NamedTextColor.GRAY));
 													}
 													else
 													{
-														context.getSource().sendFeedback(Librarian.getInstance().getMechanic()
-																.createText(Component.translatable("librarian.messages.metadata.authors_empty").color(NamedTextColor.GRAY)));
+														feedback(context.getSource(), Component.translatable("librarian.messages.metadata.authors_empty").color(NamedTextColor.GRAY));
 													}
 
 													return 1;
@@ -223,7 +233,7 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 														meta.getAuthors().clear();
 														((HotbarStorage) page).save();
 													});
-													context.getSource().sendFeedback(Librarian.getInstance().getMechanic().createText(Component.translatable("librarian.messages.metadata.authors_cleared").color(NamedTextColor.GRAY)));
+													feedback(context.getSource(), Component.translatable("librarian.messages.metadata.authors_cleared").color(NamedTextColor.GRAY));
 
 													return 1;
 												}))
@@ -244,7 +254,7 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 																}
 																else
 																{
-																	context.getSource().sendError(Librarian.getInstance().getMechanic().createText(Component.translatable("librarian.messages.metadata.authors_already_added", Component.text(value).color(NamedTextColor.WHITE)).color(NamedTextColor.GRAY)));
+																	error(context.getSource(), Component.translatable("librarian.messages.metadata.authors_already_added", Component.text(value).color(NamedTextColor.WHITE)).color(NamedTextColor.GRAY));
 																	return 1;
 																}
 															}
@@ -254,7 +264,7 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 																((HotbarStorage) page).save();
 															}
 
-															context.getSource().sendFeedback(Librarian.getInstance().getMechanic().createText(Component.translatable("librarian.messages.metadata.authors_added", Component.text(value).color(NamedTextColor.WHITE)).color(NamedTextColor.GRAY)));
+															feedback(context.getSource(), Component.translatable("librarian.messages.metadata.authors_added", Component.text(value).color(NamedTextColor.WHITE)).color(NamedTextColor.GRAY));
 															return 1;
 														})))
 										.then(ArgumentBuilders.literal("remove")
@@ -267,14 +277,24 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 															{
 																page.getMetadata().get().removeAuthor(value);
 																((HotbarStorage) page).save();
-																context.getSource().sendFeedback(Librarian.getInstance().getMechanic().createText(Component.translatable("librarian.messages.metadata.authors_removed", Component.text(value)).color(NamedTextColor.GRAY)));
+																feedback(context.getSource(), Component.translatable("librarian.messages.metadata.authors_removed", Component.text(value)).color(NamedTextColor.GRAY));
 															}
 															else
 															{
-																context.getSource().sendError(Librarian.getInstance().getMechanic().createText(Component.translatable("librarian.messages.metadata.authors_not_included", Component.text(value))));
+																error(context.getSource(), Component.translatable("librarian.messages.metadata.authors_not_included", Component.text(value)));
 															}
 
 															return 1;
 														}))))));
+	}
+
+	private void feedback(CottonClientCommandSource source, Component message)
+	{
+		source.sendFeedback(mechanic.createText(message));
+	}
+
+	private void error(CottonClientCommandSource source, Component message)
+	{
+		source.sendError(mechanic.createText(message));
 	}
 }

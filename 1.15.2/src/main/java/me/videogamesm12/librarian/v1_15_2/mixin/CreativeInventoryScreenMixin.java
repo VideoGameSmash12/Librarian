@@ -36,11 +36,8 @@ import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.options.HotbarStorage;
 import net.minecraft.client.options.HotbarStorageEntry;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
@@ -53,7 +50,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -64,8 +60,9 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 {
 	@Shadow protected abstract void setSelectedTab(ItemGroup group);
 
-	@Shadow public abstract int getSelectedTab();
+	@Shadow private static int selectedTab;
 
+	@Unique
 	private IMechanicFactory mechanic;
 
 	@Unique
@@ -104,13 +101,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			@Override
 			public boolean isVisible()
 			{
-				return tabIsHotbar(getSelectedTab());
+				return tabIsHotbar(selectedTab);
 			}
 
 			@Override
 			public boolean isActive()
 			{
-				return tabIsHotbar(getSelectedTab()) && isFocused();
+				return tabIsHotbar(selectedTab) && isFocused();
 			}
 
 			@Override
@@ -127,7 +124,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		// Update the label if we are set to use the HOTBAR ItemGroup type
 		// This primarily aims to emulate vanilla behavior and avoid lagspikes when opening the creative menu whilst
 		// 	the current page isn't loaded
-		if (tabIsHotbar(getSelectedTab()))
+		if (tabIsHotbar(selectedTab))
 		{
 			renameHotbarField.setActualMessage(mechanic.createText(Librarian.getInstance().getCurrentPage().getMetadata()
 					.map(HotbarPageMetadata::getName).orElse(Component.translatable("librarian.saved_toolbars.tab",
@@ -137,8 +134,8 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 		// Even though we override the isVisible and isActive methods, internally ClickableWidget still uses the
 		// 	variable themselves to determine other characteristics, so we still need to set them
-		renameHotbarField.active = tabIsHotbar(getSelectedTab());
-		renameHotbarField.visible = tabIsHotbar(getSelectedTab());
+		renameHotbarField.active = tabIsHotbar(selectedTab);
+		renameHotbarField.visible = tabIsHotbar(selectedTab);
 
 		// Initialize buttons
 		nextButton = mechanic.createButton(x + 12, y,12, 12, Component.text("→"), null,
@@ -149,10 +146,10 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 				() -> Librarian.getInstance().previousPage());
 
 		// Marks visibility and usability of the buttons
-		nextButton.visible = tabIsHotbar(getSelectedTab());
-		backupButton.visible = tabIsHotbar(getSelectedTab());
+		nextButton.visible = tabIsHotbar(selectedTab);
+		backupButton.visible = tabIsHotbar(selectedTab);
 		backupButton.active = Librarian.getInstance().getCurrentPage().exists();
-		previousButton.visible = tabIsHotbar(getSelectedTab());
+		previousButton.visible = tabIsHotbar(selectedTab);
 
 		// Adds the "rename hotbar" text field
 		addButton(renameHotbarField);
@@ -211,7 +208,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Inject(method = "drawForeground", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemGroup;hasTooltip()Z", shift = At.Shift.AFTER), cancellable = true)
 	public void cancelForegroundTextRendering(int mouseX, int mouseY, CallbackInfo ci)
 	{
-		if (tabIsHotbar(getSelectedTab()))
+		if (tabIsHotbar(selectedTab))
 		{
 			ci.cancel();
 		}
@@ -220,7 +217,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
 	public void workaroundTypingInRenameField(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir)
 	{
-		if (tabIsHotbar(getSelectedTab()))
+		if (tabIsHotbar(selectedTab))
 		{
 			// Special keys
 			renameHotbarField.keyPressed(keyCode, scanCode, modifiers);
@@ -277,7 +274,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	public void handleNavigationKeys(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir)
 	{
 		// Librarian-specific keybinds
-		if (getSelectedTab() == ItemGroup.HOTBAR.getIndex())
+		if (selectedTab == ItemGroup.HOTBAR.getIndex())
 		{
 			// Fabric API keybinds
 			final FabricAPIAddon fabric = Librarian.getInstance().getAddon(FabricAPIAddon.class);
@@ -372,7 +369,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Inject(method = "charTyped", at = @At("HEAD"), cancellable = true)
 	private void injectCharTyped(char chr, int modifiers, CallbackInfoReturnable<Boolean> cir)
 	{
-		if (tabIsHotbar(getSelectedTab()))
+		if (tabIsHotbar(selectedTab))
 		{
 			if (renameHotbarField.charTyped(chr, modifiers))
 			{
@@ -437,7 +434,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	public void onNavigation(NavigationEvent event)
 	{
 		// Refresh!
-		if (getSelectedTab() == ItemGroup.HOTBAR.getIndex())
+		if (selectedTab == ItemGroup.HOTBAR.getIndex())
 		{
 			setSelectedTab(ItemGroup.HOTBAR);
 		}
@@ -447,7 +444,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Unique
 	public void onReload(ReloadPageEvent event)
 	{
-		if (getSelectedTab() == ItemGroup.HOTBAR.getIndex())
+		if (selectedTab == ItemGroup.HOTBAR.getIndex())
 		{
 			setSelectedTab(ItemGroup.HOTBAR);
 		}
@@ -457,7 +454,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Unique
 	public void onCacheClear(CacheClearEvent event)
 	{
-		if (getSelectedTab() == ItemGroup.HOTBAR.getIndex())
+		if (selectedTab == ItemGroup.HOTBAR.getIndex())
 		{
 			setSelectedTab(ItemGroup.HOTBAR);
 		}
