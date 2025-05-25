@@ -36,6 +36,9 @@ public class FNF
 	 * Date format for use in backups.
 	 */
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd 'at' HH.mm.ss z");
+	/**
+	 * Regex pattern for file names for use in figuring out a hotbar page number from a file.
+	 */
 	private static final Pattern fileNameRegex = Pattern.compile("^hotbar\\.([-0-9]+)\\.?nbt$");
 	/**
 	 * The folder where additional saved hotbar files are stored.
@@ -104,12 +107,22 @@ public class FNF
 		return String.format("%s [%s].nbt", getPageFileName(page), dateFormat.format(new Date()));
 	}
 
+	/**
+	 * Get a File for hotbar NBT files depending on the page number provided
+	 * @param page	BigInteger
+	 * @return		String
+	 */
 	public static File getFileForPage(BigInteger page)
 	{
 		return new File(page.equals(BigInteger.ZERO) ? FabricLoader.getInstance().getGameDir().toFile() :
 				getHotbarFolder(), getPageFileName(page));
 	}
 
+	/**
+	 * Get the page number for a hotbar NBT file from its file name.
+	 * @param name	String
+	 * @return		BigInteger
+	 */
 	public static BigInteger getNumberFromFileName(String name)
 	{
 		final Matcher matcher = fileNameRegex.matcher(name);
