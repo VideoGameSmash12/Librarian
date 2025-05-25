@@ -95,7 +95,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 		renameHotbarField = new FormattedTextFieldWidget(MinecraftClient.getInstance().textRenderer,
 				((ContainerScreenAccessor) this).getX() + 8,
-				((ContainerScreenAccessor) this).getY() + 6, 144, 12, null, new LiteralText(""))
+				((ContainerScreenAccessor) this).getY() + 6, 144, 12, "", new LiteralText(""))
 		{
 			@Override
 			public boolean isVisible()
