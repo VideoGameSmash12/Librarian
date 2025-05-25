@@ -24,14 +24,16 @@ import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
 import me.videogamesm12.librarian.api.event.LoadFailureEvent;
 import me.videogamesm12.librarian.api.event.SaveFailureEvent;
-import me.videogamesm12.librarian.v1_15_2.WrappedHotbarStorage;
+import me.videogamesm12.librarian.util.FNF;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.client.options.HotbarStorage;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
@@ -39,6 +41,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.File;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -47,8 +50,19 @@ import java.util.stream.Collectors;
 @Mixin(HotbarStorage.class)
 public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 {
+	@Shadow
+	private boolean loaded;
+
+	@Shadow protected abstract void load();
+
+	@Shadow @Final
+	private File file;
+
 	@Unique
 	private static final GsonComponentSerializer librarian$serializer = GsonComponentSerializer.colorDownsamplingGson();
+
+	@Unique
+	private BigInteger pageNumber;
 
 	@Unique
 	private HotbarPageMetadata metadata = null;
@@ -62,66 +76,61 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Inject(method = "<init>", at = @At(value = "TAIL"))
 	private void hijackInitializer(File file, DataFixer dataFixer, CallbackInfo ci)
 	{
-		if (WrappedHotbarStorage.class.isAssignableFrom(getClass()))
-		{
-			this.setFile(file);
-		}
+		this.pageNumber = FNF.getNumberFromFileName(file.getName());
+		this.setFile(file);
 	}
 
 	@Inject(method = "load", at = @At(value = "INVOKE",
 			target = "Lorg/apache/logging/log4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V", shift = At.Shift.AFTER, remap = false))
 	private void hookLoadFailure(CallbackInfo ci, @Local Exception ex)
 	{
-		if (WrappedHotbarStorage.class.isAssignableFrom(getClass()))
-		{
-			Librarian.getInstance().getEventBus().post(new LoadFailureEvent((IWrappedHotbarStorage) this, ex));
-		}
+		Librarian.getInstance().getEventBus().post(new LoadFailureEvent(this, ex));
 	}
 
 	@Inject(method = "save", at = @At(value = "INVOKE",
 			target = "Lorg/apache/logging/log4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V", shift = At.Shift.AFTER, remap = false))
 	private void hookSaveFailure(CallbackInfo ci, @Local Exception ex)
 	{
-		if (WrappedHotbarStorage.class.isAssignableFrom(getClass()))
-		{
-			Librarian.getInstance().getEventBus().post(new SaveFailureEvent((IWrappedHotbarStorage) this, ex));
-		}
+		Librarian.getInstance().getEventBus().post(new SaveFailureEvent(this, ex));
+	}
+
+	@Inject(method = "load", at = @At("RETURN"))
+	private void markLoaded(CallbackInfo ci)
+	{
+		setLoaded(true);
 	}
 
 	@Inject(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/NbtHelper;update(Lcom/mojang/datafixers/DataFixer;Lnet/minecraft/datafixer/DataFixTypes;Lnet/minecraft/nbt/CompoundTag;I)Lnet/minecraft/nbt/CompoundTag;",
 			shift = At.Shift.AFTER))
 	private void fetchMetadata(CallbackInfo ci, @Local CompoundTag compound)
 	{
-		if (WrappedHotbarStorage.class.isAssignableFrom(getClass()))
+		CompoundTag meta = compound.getCompound("librarian");
+
+		if (meta != null)
 		{
-			CompoundTag meta = compound.getCompound("librarian");
+			int version = meta.getInt("version");
+			String name = meta.getString("name");
+			String description = meta.getString("description");
+			List<String> authors = new ArrayList<>(meta.getList("authors", 8).stream()
+					.map(Tag::asString).collect(Collectors.toList()));
 
-			if (meta != null)
+			if (version > HotbarPageMetadata.getCurrentVersion())
 			{
-				int version = meta.getInt("version");
-				String name = meta.getString("name");
-				String description = meta.getString("description");
-				List<String> authors = new ArrayList<>(meta.getList("authors", 8).stream()
-						.map(Tag::asString).collect(Collectors.toList()));
+				Librarian.getLogger().error("Hotbar metadata rejected - data is intended for a newer version of " +
+								"Librarian than what we are currently running (current version {}, file version {})",
+						HotbarPageMetadata.getCurrentVersion(), version);
 
-				if (version > HotbarPageMetadata.getCurrentVersion())
-				{
-					Librarian.getLogger().error("Hotbar metadata rejected - data is intended for a newer version of " +
-									"Librarian than what we are currently running (current version {}, file version {})",
-							HotbarPageMetadata.getCurrentVersion(), version);
-
-					metadata = HotbarPageMetadata.builder().build();
-				}
-				else
-				{
-					metadata = HotbarPageMetadata.builder()
-							.version(version)
-							.name(name != null && !name.isEmpty() ? librarian$serializer.deserializeOrNull(name) : null)
-							.description(description != null && !description.isEmpty() ?
-									librarian$serializer.deserializeOrNull(description) : null)
-							.authors(authors)
-							.build();
-				}
+				metadata = HotbarPageMetadata.builder().build();
+			}
+			else
+			{
+				metadata = HotbarPageMetadata.builder()
+						.version(version)
+						.name(name != null && !name.isEmpty() ? librarian$serializer.deserializeOrNull(name) : null)
+						.description(description != null && !description.isEmpty() ?
+								librarian$serializer.deserializeOrNull(description) : null)
+						.authors(authors)
+						.build();
 			}
 		}
 	}
@@ -131,7 +140,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 			shift = At.Shift.BEFORE))
 	private void addMetadata(CallbackInfo ci, @Local CompoundTag compound)
 	{
-		if (WrappedHotbarStorage.class.isAssignableFrom(getClass()) && metadata != null)
+		if (metadata != null)
 		{
 			CompoundTag meta = new CompoundTag();
 
@@ -143,7 +152,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 			if (metadata.getDescription() != null)
 				meta.putString("description", librarian$serializer.serialize(metadata.getDescription()));
 
-			if (metadata.getAuthors() != null && !metadata.getAuthors().isEmpty())
+			if (!metadata.getAuthors().isEmpty())
 			{
 				final ListTag list = new ListTag();
 				metadata.getAuthors().forEach(author -> list.add(StringTag.of(author)));
@@ -157,10 +166,9 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Override
 	public Optional<HotbarPageMetadata> librarian$getMetadata()
 	{
-		if (!this.isLoaded())
+		if (!loaded)
 		{
-			((HotbarStorageAccessor) this).invokeLoad();
-			this.setLoaded(true);
+			load();
 		}
 
 		return Optional.ofNullable(metadata);
@@ -170,6 +178,24 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	public void librarian$setMetadata(HotbarPageMetadata newMeta)
 	{
 		metadata = newMeta;
+	}
+
+	@Override
+	public BigInteger librarian$getPageNumber()
+	{
+		return pageNumber;
+	}
+
+	@Override
+	public File librarian$getLocation()
+	{
+		return file;
+	}
+
+	@Override
+	public void librarian$load()
+	{
+		load();
 	}
 
 	@Accessor

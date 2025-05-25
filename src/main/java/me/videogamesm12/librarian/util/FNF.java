@@ -122,10 +122,8 @@ public class FNF
 			{
 				return new BigInteger(page);
 			}
-
-			return BigInteger.ZERO;
 		}
 
-		return null;
+		return BigInteger.ZERO;
 	}
 }
