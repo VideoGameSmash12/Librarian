@@ -34,6 +34,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.HotbarStorage;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
@@ -44,7 +45,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @AddonMeta(requiredMods = "fabric")
 @Getter
@@ -74,17 +74,21 @@ public class FabricAPIAddon implements IAddon
 
 		ClientTickEvents.END_CLIENT_TICK.register(client ->
 		{
-			if (nextKey.wasPressed())
+			if (MinecraftClient.getInstance().interactionManager != null &&
+					MinecraftClient.getInstance().interactionManager.hasCreativeInventory())
 			{
-				Librarian.getInstance().nextPage();
-			}
-			else if (previousKey.wasPressed())
-			{
-				Librarian.getInstance().previousPage();
-			}
-			else if (backupKey.wasPressed())
-			{
-				Librarian.getInstance().getCurrentPage().backup();
+				if (nextKey.wasPressed())
+				{
+					Librarian.getInstance().nextPage();
+				}
+				else if (previousKey.wasPressed())
+				{
+					Librarian.getInstance().previousPage();
+				}
+				else if (backupKey.wasPressed())
+				{
+					Librarian.getInstance().getCurrentPage().backup();
+				}
 			}
 		});
 

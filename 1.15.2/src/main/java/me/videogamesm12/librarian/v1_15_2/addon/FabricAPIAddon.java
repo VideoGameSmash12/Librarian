@@ -23,9 +23,12 @@ import me.videogamesm12.librarian.api.addon.AddonMeta;
 import me.videogamesm12.librarian.api.addon.IAddon;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.Optional;
 
 @AddonMeta(requiredMods = "fabric")
 @Getter
@@ -53,17 +56,21 @@ public class FabricAPIAddon implements IAddon
 
 		ClientTickEvents.END_CLIENT_TICK.register(client ->
 		{
-			if (nextKey.wasPressed())
+			if (MinecraftClient.getInstance().interactionManager != null &&
+					MinecraftClient.getInstance().interactionManager.hasCreativeInventory())
 			{
-				Librarian.getInstance().nextPage();
-			}
-			else if (previousKey.wasPressed())
-			{
-				Librarian.getInstance().previousPage();
-			}
-			else if (backupKey.wasPressed())
-			{
-				Librarian.getInstance().getCurrentPage().backup();
+				if (nextKey.wasPressed())
+				{
+					Librarian.getInstance().nextPage();
+				}
+				else if (previousKey.wasPressed())
+				{
+					Librarian.getInstance().previousPage();
+				}
+				else if (backupKey.wasPressed())
+				{
+					Librarian.getInstance().getCurrentPage().backup();
+				}
 			}
 		});
 	}

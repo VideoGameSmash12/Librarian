@@ -23,6 +23,7 @@ import me.videogamesm12.librarian.api.addon.AddonMeta;
 import me.videogamesm12.librarian.api.addon.IAddon;
 import net.legacyfabric.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.legacyfabric.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import org.lwjgl.input.Keyboard;
 
@@ -39,24 +40,28 @@ public class LegacyFabricAPIAddon implements IAddon
 	{
 		nextKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("librarian.key.next_page", Keyboard.KEY_RBRACKET,
 				"category.librarian.navigation"));
-		backupKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("librarian.key.backup", Keyboard.KEY_B,
+		backupKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("librarian.key.backup_current_page", Keyboard.KEY_B,
 				"category.librarian.actions"));
 		previousKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("librarian.key.previous_page", Keyboard.KEY_LBRACKET,
 				"category.librarian.navigation"));
 
 		ClientTickEvents.END_CLIENT_TICK.register((client) ->
 		{
-			if (nextKey.wasPressed())
+			if (MinecraftClient.getInstance().interactionManager != null &&
+					MinecraftClient.getInstance().interactionManager.hasCreativeInventory())
 			{
-				Librarian.getInstance().nextPage();
-			}
-			else if (backupKey.wasPressed())
-			{
-				Librarian.getInstance().getCurrentPage().backup();
-			}
-			else if (previousKey.wasPressed())
-			{
-				Librarian.getInstance().previousPage();
+				if (nextKey.wasPressed())
+				{
+					Librarian.getInstance().nextPage();
+				}
+				else if (backupKey.wasPressed())
+				{
+					Librarian.getInstance().getCurrentPage().backup();
+				}
+				else if (previousKey.wasPressed())
+				{
+					Librarian.getInstance().previousPage();
+				}
 			}
 		});
 	}
