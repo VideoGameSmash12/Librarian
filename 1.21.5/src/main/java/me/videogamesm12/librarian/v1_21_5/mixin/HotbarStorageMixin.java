@@ -55,6 +55,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Shadow protected abstract void load();
 
 	@Shadow private boolean loaded;
+
 	@Unique
 	private static final GsonComponentSerializer librarian$serializer = GsonComponentSerializer.gson();
 
