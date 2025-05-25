@@ -52,7 +52,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 {
 	@Shadow private boolean f_2733121;
 
-	@Shadow public abstract void load();
+	@Shadow protected abstract void load();
 
 	@Shadow @Final private File file;
 
