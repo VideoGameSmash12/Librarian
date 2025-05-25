@@ -18,7 +18,6 @@
 package me.videogamesm12.librarian.v1_17_1.listeners;
 
 import com.google.common.eventbus.Subscribe;
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,6 @@ import me.videogamesm12.librarian.util.FNF;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawableHelper;
-import net.minecraft.client.render.DiffuseLighting;
 import net.minecraft.client.toast.Toast;
 import net.minecraft.client.toast.ToastManager;
 import net.minecraft.client.util.math.MatrixStack;
@@ -39,7 +37,6 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
-import org.lwjgl.opengl.GL11;
 
 public class ToastNotifier extends AbstractEventListener
 {
@@ -52,7 +49,7 @@ public class ToastNotifier extends AbstractEventListener
 		if (event.getPath() != null)
 		{
 			addOrUpdateNotification(new TranslatableText("librarian.messages.backup_success.toast.title"),
-					new LiteralText(event.getStorage().getLocation().getName()), LibrarianToast.Type.BACKUP);
+					new LiteralText(event.getStorage().librarian$getLocation().getName()), LibrarianToast.Type.BACKUP);
 		}
 		else
 		{

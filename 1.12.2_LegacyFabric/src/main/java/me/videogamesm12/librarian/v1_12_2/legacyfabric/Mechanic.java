@@ -19,9 +19,13 @@ package me.videogamesm12.librarian.v1_12_2.legacyfabric;
 
 import lombok.NonNull;
 import me.videogamesm12.librarian.api.IMechanicFactory;
+import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
+import me.videogamesm12.librarian.util.FNF;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import net.minecraft.class_3251;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 
@@ -35,9 +39,22 @@ public class Mechanic implements IMechanicFactory
 	private int startingId = -1337;
 
 	@Override
-	public WrappedHotbarStorage createHotbarStorage(@NonNull BigInteger integer)
+	public IWrappedHotbarStorage createHotbarStorage(@NonNull BigInteger integer)
 	{
-		return new WrappedHotbarStorage(integer);
+		// Use the one that the game already loaded on startup if the page is 0. This isn't as big of an issue on newer
+		//	versions of the game because they load everything *as they need it* in those versions, but 1.12.2 is a
+		//	special snowflake who likes to load everything during the initialization process, and since I can't tell it
+		//	not to without using some additional hacky fixes, we might as well just bite the bullet and deal with it.
+		//
+		// This sucks.
+		if (integer.equals(BigInteger.ZERO))
+		{
+			return (IWrappedHotbarStorage) MinecraftClient.getInstance().field_15872;
+		}
+		else
+		{
+			return (IWrappedHotbarStorage) new class_3251(MinecraftClient.getInstance(), FNF.getFileForPage(integer));
+		}
 	}
 
 	@Override

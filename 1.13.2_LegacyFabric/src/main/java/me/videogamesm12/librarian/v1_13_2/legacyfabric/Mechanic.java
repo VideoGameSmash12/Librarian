@@ -19,9 +19,13 @@ package me.videogamesm12.librarian.v1_13_2.legacyfabric;
 
 import lombok.NonNull;
 import me.videogamesm12.librarian.api.IMechanicFactory;
+import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
+import me.videogamesm12.librarian.util.FNF;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import net.minecraft.class_3251;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 
@@ -35,9 +39,9 @@ public class Mechanic implements IMechanicFactory
 	private int startingId = -1337;
 
 	@Override
-	public WrappedHotbarStorage createHotbarStorage(@NonNull BigInteger integer)
+	public IWrappedHotbarStorage createHotbarStorage(@NonNull BigInteger integer)
 	{
-		return new WrappedHotbarStorage(integer);
+		return (IWrappedHotbarStorage) new class_3251(FNF.getFileForPage(integer), MinecraftClient.getInstance().method_12142());
 	}
 
 	@Override

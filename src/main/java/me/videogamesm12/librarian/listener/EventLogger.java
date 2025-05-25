@@ -35,12 +35,12 @@ public class EventLogger extends AbstractEventListener
 		if (event.getPath() != null)
 		{
 			Librarian.getLogger().info("Successfully backed up {} to file {}",
-					event.getStorage().getLocation().getName(), event.getPath().getName());
+					event.getStorage().librarian$getLocation().getName(), event.getPath().getName());
 		}
 		// The backup failed
 		else
 		{
-			Librarian.getLogger().error("Failed to back up hotbar file {}", event.getStorage().getLocation().getName(),
+			Librarian.getLogger().error("Failed to back up hotbar file {}", event.getStorage().librarian$getLocation().getName(),
 					event.getException());
 		}
 	}
@@ -49,14 +49,14 @@ public class EventLogger extends AbstractEventListener
 	public void onLoadFailure(LoadFailureEvent event)
 	{
 		// The exception was already covered earlier
-		Librarian.getLogger().error("Failed to load hotbar file {}", event.getStorage().getLocation().getName());
+		Librarian.getLogger().error("Failed to load hotbar file {}", event.getStorage().librarian$getLocation().getName());
 	}
 
 	@Subscribe
 	public void onSaveFailure(SaveFailureEvent event)
 	{
 		// Exception already covered
-		Librarian.getLogger().error("Hotbar file {} could not be saved", event.getStorage().getLocation().getName());
+		Librarian.getLogger().error("Hotbar file {} could not be saved", event.getStorage().librarian$getLocation().getName());
 	}
 
 	@Subscribe

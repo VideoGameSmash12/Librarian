@@ -19,10 +19,14 @@ package me.videogamesm12.librarian.v1_19_4;
 
 import lombok.NonNull;
 import me.videogamesm12.librarian.api.IMechanicFactory;
+import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
+import me.videogamesm12.librarian.util.FNF;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.option.HotbarStorage;
 import net.minecraft.text.Text;
 
 import java.math.BigInteger;
@@ -32,9 +36,9 @@ public class Mechanic implements IMechanicFactory
 	private static final GsonComponentSerializer GSON_COMPONENT_SERIALIZER = GsonComponentSerializer.gson();
 
 	@Override
-	public WrappedHotbarStorage createHotbarStorage(@NonNull BigInteger integer)
+	public IWrappedHotbarStorage createHotbarStorage(@NonNull BigInteger integer)
 	{
-		return new WrappedHotbarStorage(integer);
+		return (IWrappedHotbarStorage) new HotbarStorage(FNF.getFileForPage(integer), MinecraftClient.getInstance().getDataFixer());
 	}
 
 	@Override

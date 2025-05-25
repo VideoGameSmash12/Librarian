@@ -23,7 +23,6 @@ import me.videogamesm12.librarian.api.addon.AddonMeta;
 import me.videogamesm12.librarian.api.addon.IAddon;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.options.KeyBinding;
-import net.minecraft.world.GameMode;
 import net.ornithemc.osl.keybinds.api.KeyBindingEvents;
 import net.ornithemc.osl.lifecycle.api.client.MinecraftClientEvents;
 import org.lwjgl.glfw.GLFW;
@@ -63,7 +62,7 @@ public class OSLAddon implements IAddon
 				}
 				else if (backupKey.consumeClick())
 				{
-					Librarian.getInstance().getCurrentPage().backup();
+					Librarian.getInstance().getCurrentPage().librarian$backup();
 				}
 			}
 		});

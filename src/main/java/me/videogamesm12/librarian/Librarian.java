@@ -144,7 +144,7 @@ public class Librarian implements ClientModInitializer
 
 	public void reloadCurrentPage()
 	{
-		getCurrentPage().load();
+		getCurrentPage().librarian$load();
 		eventBus.post(new ReloadPageEvent(currentPageNumber));
 	}
 

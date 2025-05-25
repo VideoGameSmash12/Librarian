@@ -50,7 +50,7 @@ public class ToastNotifier extends AbstractEventListener
 		if (event.getPath() != null)
 		{
 			addOrUpdateNotification(new TranslatableText("librarian.messages.backup_success.toast.title"),
-					new LiteralText(event.getStorage().getLocation().getName()), LibrarianToast.Type.BACKUP);
+					new LiteralText(event.getStorage().librarian$getLocation().getName()), LibrarianToast.Type.BACKUP);
 		}
 		else
 		{
