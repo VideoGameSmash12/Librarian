@@ -43,19 +43,19 @@ public class WrappedHotbarStorage extends HotbarManager implements IWrappedHotba
 	}
 
 	@Override
-	public File getLocation()
+	public File librarian$getLocation()
 	{
 		return location;
 	}
 
 	@Override
-	public BigInteger getPageNumber()
+	public BigInteger librarian$getPageNumber()
 	{
 		return page;
 	}
 
 	@Override
-	public void load()
+	public void librarian$load()
 	{
 		((HotbarManagerAccessor) this).invokeLoad();
 		setLoaded(true);

@@ -154,7 +154,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	}
 
 	@Override
-	public Optional<HotbarPageMetadata> getMetadata()
+	public Optional<HotbarPageMetadata> librarian$getMetadata()
 	{
 		if (!this.isLoaded())
 		{
@@ -166,7 +166,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	}
 
 	@Override
-	public void setMetadata(HotbarPageMetadata newMeta)
+	public void librarian$setMetadata(HotbarPageMetadata newMeta)
 	{
 		metadata = newMeta;
 	}

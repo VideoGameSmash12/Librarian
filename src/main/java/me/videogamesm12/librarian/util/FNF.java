@@ -23,6 +23,8 @@ import java.io.File;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * <h1>FNF</h1>
@@ -34,6 +36,7 @@ public class FNF
 	 * Date format for use in backups.
 	 */
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd 'at' HH.mm.ss z");
+	private static final Pattern fileNameRegex = Pattern.compile("^hotbar\\.([-0-9]+)\\.?nbt$");
 	/**
 	 * The folder where additional saved hotbar files are stored.
 	 */
@@ -99,5 +102,30 @@ public class FNF
 	public static String getBackupFileName(BigInteger page)
 	{
 		return String.format("%s [%s].nbt", getPageFileName(page), dateFormat.format(new Date()));
+	}
+
+	public static File getFileForPage(BigInteger page)
+	{
+		return new File(page.equals(BigInteger.ZERO) ? FabricLoader.getInstance().getGameDir().toFile() :
+				getHotbarFolder(), getPageFileName(page));
+	}
+
+	public static BigInteger getNumberFromFileName(String name)
+	{
+		final Matcher matcher = fileNameRegex.matcher(name);
+
+		if (matcher.find())
+		{
+			String page = matcher.group(1);
+
+			if (page != null)
+			{
+				return new BigInteger(page);
+			}
+
+			return BigInteger.ZERO;
+		}
+
+		return null;
 	}
 }

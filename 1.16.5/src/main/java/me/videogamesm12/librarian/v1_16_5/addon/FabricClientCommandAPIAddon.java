@@ -72,7 +72,7 @@ public class FabricClientCommandAPIAddon implements IAddon
 						.then(ClientCommandManager.literal("backup")
 								.executes(context ->
 								{
-									Librarian.getInstance().getCurrentPage().backup();
+									Librarian.getInstance().getCurrentPage().librarian$backup();
 									return 0;
 								}))
 						.then(ClientCommandManager.literal("cache")
@@ -102,9 +102,9 @@ public class FabricClientCommandAPIAddon implements IAddon
 								.then(ClientCommandManager.literal("delete").executes(context ->
 								{
 									IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
-									if (page.getMetadata().isPresent())
+									if (page.librarian$getMetadata().isPresent())
 									{
-										page.setMetadata(null);
+										page.librarian$setMetadata(null);
 										feedback(context.getSource(), Component.translatable("librarian.messages.metadata.deleted").color(NamedTextColor.GRAY));
 									}
 									else
@@ -119,9 +119,9 @@ public class FabricClientCommandAPIAddon implements IAddon
 										{
 											IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
 
-											if (page.getMetadata().isPresent() && page.getMetadata().get().getName() != null)
+											if (page.librarian$getMetadata().isPresent() && page.librarian$getMetadata().get().getName() != null)
 											{
-												feedback(context.getSource(), Component.translatable("librarian.messages.metadata.name", Objects.requireNonNull(page.getMetadata().get().getName())).color(NamedTextColor.GRAY));
+												feedback(context.getSource(), Component.translatable("librarian.messages.metadata.name", Objects.requireNonNull(page.librarian$getMetadata().get().getName())).color(NamedTextColor.GRAY));
 											}
 											else
 											{
@@ -134,7 +134,7 @@ public class FabricClientCommandAPIAddon implements IAddon
 												.executes(context ->
 												{
 													IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
-													page.getMetadata().ifPresent(meta -> meta.setName(null));
+													page.librarian$getMetadata().ifPresent(meta -> meta.setName(null));
 													feedback(context.getSource(), Component.translatable("librarian.messages.metadata.name_reset").color(NamedTextColor.GRAY));
 													return 0;
 												})
@@ -147,13 +147,13 @@ public class FabricClientCommandAPIAddon implements IAddon
 
 															IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
 
-															if (page.getMetadata().isPresent())
+															if (page.librarian$getMetadata().isPresent())
 															{
-																page.getMetadata().get().setName(processed);
+																page.librarian$getMetadata().get().setName(processed);
 															}
 															else
 															{
-																page.setMetadata(HotbarPageMetadata.builder().name(processed).build());
+																page.librarian$setMetadata(HotbarPageMetadata.builder().name(processed).build());
 															}
 
 															((HotbarStorage) page).save();
@@ -164,9 +164,9 @@ public class FabricClientCommandAPIAddon implements IAddon
 										.executes(context ->
 										{
 											IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
-											if (page.getMetadata().isPresent() && page.getMetadata().get().getDescription() != null)
+											if (page.librarian$getMetadata().isPresent() && page.librarian$getMetadata().get().getDescription() != null)
 											{
-												feedback(context.getSource(), Component.translatable("librarian.messages.metadata.description", Objects.requireNonNull(page.getMetadata().get().getDescription())).color(NamedTextColor.GRAY));
+												feedback(context.getSource(), Component.translatable("librarian.messages.metadata.description", Objects.requireNonNull(page.librarian$getMetadata().get().getDescription())).color(NamedTextColor.GRAY));
 											}
 											else
 											{
@@ -179,7 +179,7 @@ public class FabricClientCommandAPIAddon implements IAddon
 												.executes(context ->
 												{
 													IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
-													page.getMetadata().ifPresent(meta ->
+													page.librarian$getMetadata().ifPresent(meta ->
 													{
 														meta.setDescription(null);
 														((HotbarStorage) page).save();
@@ -196,13 +196,13 @@ public class FabricClientCommandAPIAddon implements IAddon
 																	.processComponent(value);
 
 															IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
-															if (page.getMetadata().isPresent())
+															if (page.librarian$getMetadata().isPresent())
 															{
-																page.getMetadata().get().setDescription(processed);
+																page.librarian$getMetadata().get().setDescription(processed);
 															}
 															else
 															{
-																page.setMetadata(HotbarPageMetadata.builder().description(processed).build());
+																page.librarian$setMetadata(HotbarPageMetadata.builder().description(processed).build());
 															}
 
 															((HotbarStorage) page).save();
@@ -214,11 +214,11 @@ public class FabricClientCommandAPIAddon implements IAddon
 												.executes(context ->
 												{
 													IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
-													if (page.getMetadata().isPresent() && !page.getMetadata().get().getAuthors().isEmpty())
+													if (page.librarian$getMetadata().isPresent() && !page.librarian$getMetadata().get().getAuthors().isEmpty())
 													{
 														feedback(context.getSource(), Component.translatable("librarian.messages.metadata.authors",
 																Component.join(JoinConfiguration.commas(true),
-																		page.getMetadata().get().getAuthors().stream().map(name -> Component.text(name).color(NamedTextColor.WHITE)).collect(Collectors.toList()))).color(NamedTextColor.GRAY));
+																		page.librarian$getMetadata().get().getAuthors().stream().map(name -> Component.text(name).color(NamedTextColor.WHITE)).collect(Collectors.toList()))).color(NamedTextColor.GRAY));
 													}
 													else
 													{
@@ -231,7 +231,7 @@ public class FabricClientCommandAPIAddon implements IAddon
 												.executes(context ->
 												{
 													IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
-													page.getMetadata().ifPresent(meta ->
+													page.librarian$getMetadata().ifPresent(meta ->
 													{
 														meta.getAuthors().clear();
 														((HotbarStorage) page).save();
@@ -247,9 +247,9 @@ public class FabricClientCommandAPIAddon implements IAddon
 															final String value = StringArgumentType.getString(context, "name");
 															IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
 
-															if (page.getMetadata().isPresent())
+															if (page.librarian$getMetadata().isPresent())
 															{
-																HotbarPageMetadata meta = page.getMetadata().get();
+																HotbarPageMetadata meta = page.librarian$getMetadata().get();
 																if (!meta.getAuthors().contains(value))
 																{
 																	meta.addAuthor(value);
@@ -263,7 +263,7 @@ public class FabricClientCommandAPIAddon implements IAddon
 															}
 															else
 															{
-																page.setMetadata(HotbarPageMetadata.builder().authors(new ArrayList<>(Collections.singletonList(value))).build());
+																page.librarian$setMetadata(HotbarPageMetadata.builder().authors(new ArrayList<>(Collections.singletonList(value))).build());
 																((HotbarStorage) page).save();
 															}
 
@@ -276,9 +276,9 @@ public class FabricClientCommandAPIAddon implements IAddon
 														{
 															final String value = StringArgumentType.getString(context, "name");
 															IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
-															if (page.getMetadata().isPresent() && page.getMetadata().get().getAuthors().contains(value))
+															if (page.librarian$getMetadata().isPresent() && page.librarian$getMetadata().get().getAuthors().contains(value))
 															{
-																page.getMetadata().get().removeAuthor(value);
+																page.librarian$getMetadata().get().removeAuthor(value);
 																((HotbarStorage) page).save();
 																feedback(context.getSource(), Component.translatable("librarian.messages.metadata.authors_removed", Component.text(value)).color(NamedTextColor.GRAY));
 															}

@@ -56,7 +56,7 @@ public class LegacyFabricAPIAddon implements IAddon
 				}
 				else if (backupKey.wasPressed())
 				{
-					Librarian.getInstance().getCurrentPage().backup();
+					Librarian.getInstance().getCurrentPage().librarian$backup();
 				}
 				else if (previousKey.wasPressed())
 				{

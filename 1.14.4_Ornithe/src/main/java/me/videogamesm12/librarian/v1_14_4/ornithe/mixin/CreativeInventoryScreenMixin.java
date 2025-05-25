@@ -119,7 +119,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		// 	the current page isn't loaded
 		if (tabIsHotbar(selectedTab))
 		{
-			renameHotbarField.setActualMessage(mechanic.createText(Librarian.getInstance().getCurrentPage().getMetadata()
+			renameHotbarField.setActualMessage(mechanic.createText(Librarian.getInstance().getCurrentPage().librarian$getMetadata()
 					.map(HotbarPageMetadata::getName).orElse(Component.translatable("librarian.saved_toolbars.tab",
 							Component.text(Librarian.getInstance().getCurrentPageNumber().toString())))));
 		}
@@ -134,7 +134,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		nextButton = mechanic.createButton(x + 12, y, 12, 12, Component.text("→"),
 				Component.text("Next page"), () -> Librarian.getInstance().nextPage());
 		backupButton = mechanic.createButton(x, y, 12, 12, Component.text("✍"),
-				Component.text("Make a backup of this page"), () -> Librarian.getInstance().getCurrentPage().backup());
+				Component.text("Make a backup of this page"), () -> Librarian.getInstance().getCurrentPage().librarian$backup());
 		previousButton = mechanic.createButton(x - 12, y, 12, 12, Component.text("←"),
 				Component.text("Previous page"), () -> Librarian.getInstance().previousPage());
 
@@ -171,7 +171,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			if (shouldShowElements)
 			{
 				// Updates the "message" which we use to display the formatted text in non-edit mode
-				renameHotbarField.setActualMessage(mechanic.createText(Librarian.getInstance().getCurrentPage().getMetadata()
+				renameHotbarField.setActualMessage(mechanic.createText(Librarian.getInstance().getCurrentPage().librarian$getMetadata()
 						.map(HotbarPageMetadata::getName).orElse(Component.translatable("librarian.saved_toolbars.tab",
 								Component.text(Librarian.getInstance().getCurrentPageNumber().toString())))));
 			}
@@ -233,13 +233,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					final Component newName = ComponentProcessor.findBestPick(renameHotbarField.getText())
 							.processComponent(renameHotbarField.getText());
 
-					if (page.getMetadata().isPresent())
+					if (page.librarian$getMetadata().isPresent())
 					{
-						page.getMetadata().get().setName(newName);
+						page.librarian$getMetadata().get().setName(newName);
 					}
 					else
 					{
-						page.setMetadata(HotbarPageMetadata.builder().name(newName).build());
+						page.librarian$setMetadata(HotbarPageMetadata.builder().name(newName).build());
 					}
 					((HotbarManager) page).save();
 
@@ -276,7 +276,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		}
 		else if (osl.getBackupKey().matches(keyCode, scanCode))
 		{
-			Librarian.getInstance().getCurrentPage().backup();
+			Librarian.getInstance().getCurrentPage().librarian$backup();
 			cir.setReturnValue(true);
 			return;
 		}

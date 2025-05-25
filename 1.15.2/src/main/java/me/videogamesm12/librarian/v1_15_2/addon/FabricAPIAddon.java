@@ -28,8 +28,6 @@ import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.Optional;
-
 @AddonMeta(requiredMods = "fabric")
 @Getter
 public class FabricAPIAddon implements IAddon
@@ -69,7 +67,7 @@ public class FabricAPIAddon implements IAddon
 				}
 				else if (backupKey.wasPressed())
 				{
-					Librarian.getInstance().getCurrentPage().backup();
+					Librarian.getInstance().getCurrentPage().librarian$backup();
 				}
 			}
 		});
