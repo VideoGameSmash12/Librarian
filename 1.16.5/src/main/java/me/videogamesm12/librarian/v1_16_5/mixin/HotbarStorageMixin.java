@@ -152,7 +152,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 			if (metadata.getDescription() != null)
 				meta.putString("description", librarian$serializer.serialize(metadata.getDescription()));
 
-			if (metadata.getAuthors() != null && !metadata.getAuthors().isEmpty())
+			if (!metadata.getAuthors().isEmpty())
 			{
 				final NbtList list = new NbtList();
 				metadata.getAuthors().forEach(author -> list.add(NbtString.of(author)));
