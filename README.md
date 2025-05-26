@@ -7,7 +7,7 @@ capacity with a page system. It is the successor to Hotbars+, a mod by the same 
 ### Accidental overwrite protection
 A common problem people experience with the saved hotbar system is the potential to unintentionally overwrite existing
 hotbars by pressing the wrong key, losing many items by complete accident in the process. Librarian tries to help 
-prevent this from happening by comparing the date of the items being saved to that of the items already saved. If it
+prevent this from happening by comparing the data of the items being saved to that of the items already saved. If it
 doesn't exactly match, a prompt will come up asking for confirmation before continuing, potentially saving you and your
 items.
 
