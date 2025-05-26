@@ -11,15 +11,25 @@ prevent this from happening by comparing the date of the items being saved to th
 doesn't exactly match, a prompt will come up asking for confirmation before continuing, potentially saving you and your
 items.
 
+![b0120207262c68c7d534e96f0cdfa54a51d7940b](https://github.com/user-attachments/assets/88248d39-27a7-47c1-bae5-e29e09e50dcc)
+
+
 ### Infinite saved hotbar capacity
 Never run out of space in your hotbars again. Librarian introduces a page system which allows you to store as many items
 as you could possibly ever want or need.
+
+![57a1e26527b2703c20e226b965c51b86b5c6a42c](https://github.com/user-attachments/assets/f237cdfd-8c6c-4df1-83da-cf3121227b11)
+
+Since this system is vanilla-compatible, you won't need to worry about having to convert or do any transfers should you
+decide to not use the mod anymore.
 
 ### Renamable saved hotbars
 To help facilitate distribution and organization, Librarian introduces a new vanilla-compatible hotbar metadata system
 which allows you to rename your saved hotbars to literally anything you want along with other bits of metadata like a
 description and even a list of authors. Names and descriptions support both chat color codes and also
 [MiniMessage](https://docs.advntr.dev/minimessage/format.html).
+
+![e89aae8e1f50f79b56eddc00208bbd5706ba6077](https://github.com/user-attachments/assets/c83ddae8-26ad-4f1f-919d-6e426cbd641e)
 
 All metadata can be customized in-game with the client-side command `/librarian meta`*, but users can also rename their
 hotbar page by simply clicking the text in the creative inventory menu.
