@@ -56,7 +56,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Shadow protected abstract void load();
 
 	@Shadow @Final
-	private File file;
+	private Path file;
 
 	@Unique
 	private static final GsonComponentSerializer librarian$serializer = GsonComponentSerializer.gson();
@@ -189,7 +189,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Override
 	public File librarian$getLocation()
 	{
-		return file;
+		return file.toFile();
 	}
 
 	@Override
