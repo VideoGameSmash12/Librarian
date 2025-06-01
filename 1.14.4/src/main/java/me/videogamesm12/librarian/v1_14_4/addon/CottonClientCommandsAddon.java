@@ -20,6 +20,7 @@ package me.videogamesm12.librarian.v1_14_4.addon;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.github.cottonmc.clientcommands.ArgumentBuilders;
 import io.github.cottonmc.clientcommands.ClientCommandPlugin;
 import io.github.cottonmc.clientcommands.CottonClientCommandSource;
@@ -47,7 +48,7 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 	@Override
 	public void registerCommands(CommandDispatcher<CottonClientCommandSource> commandDispatcher)
 	{
-		commandDispatcher.register(
+		final LiteralCommandNode<CottonClientCommandSource> mainCommand = commandDispatcher.register(
 				ArgumentBuilders.literal("librarian")
 						.then(ArgumentBuilders.literal("goto")
 								.then(ArgumentBuilders.argument("page", LongArgumentType.longArg())
@@ -286,6 +287,8 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 
 															return 1;
 														}))))));
+
+		commandDispatcher.register(ArgumentBuilders.literal("lb").redirect(mainCommand));
 	}
 
 	private void feedback(CottonClientCommandSource source, Component message)
