@@ -12,6 +12,7 @@
     "HandledScreenAccessor",
     "HotbarStorageMixin",
     "MinecraftClientMixin",
-    "ScreenAccessor"
+    "ScreenAccessor",
+    "fabric.ItemGroupButtonWidgetMixin"
   ]
 }

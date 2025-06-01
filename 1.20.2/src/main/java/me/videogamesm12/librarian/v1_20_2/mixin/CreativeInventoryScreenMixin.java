@@ -29,7 +29,6 @@ import me.videogamesm12.librarian.api.event.NavigationEvent;
 import me.videogamesm12.librarian.api.event.ReloadPageEvent;
 import me.videogamesm12.librarian.util.ComponentProcessor;
 import me.videogamesm12.librarian.v1_20_2.addon.FabricAPIAddon;
-import net.fabricmc.fabric.impl.client.itemgroup.FabricCreativeGuiComponents;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.minecraft.client.MinecraftClient;
@@ -223,11 +222,6 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			backupButton.active = Librarian.getInstance().getCurrentPage().exists();
 		}
 		if (previousButton != null) previousButton.visible = shouldShowElements;
-		
-		// Avoid overlaps - https://github.com/FabricMC/fabric/pull/2742
-		((ScreenAccessor) this).getDrawables().stream().filter(entry ->
-				entry instanceof FabricCreativeGuiComponents.ItemGroupButtonWidget).forEach(button ->
-				((ButtonWidget) button).visible = group != Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
 	}
 
 	@Inject(method = "drawForeground", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemGroup;shouldRenderName()Z", shift = At.Shift.AFTER), cancellable = true)
