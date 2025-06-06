@@ -8,10 +8,12 @@
     "defaultRequire": 1
   },
   "client": [
+    "CreativeInventoryScreenAccessor",
     "CreativeInventoryScreenMixin",
     "HandledScreenAccessor",
     "HotbarStorageMixin",
     "MinecraftClientMixin",
-    "ScreenAccessor"
+    "ScreenAccessor",
+    "fabric.ItemGroupButtonWidgetMixin"
   ]
 }
