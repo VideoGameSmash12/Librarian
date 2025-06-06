@@ -19,6 +19,7 @@ package me.videogamesm12.librarian.v1_19_4.addon;
 
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import lombok.Getter;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
@@ -95,7 +96,7 @@ public class FabricAPIAddon implements IAddon
 
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, access) ->
 		{
-			dispatcher.register(ClientCommandManager.literal("librarian")
+			final LiteralCommandNode<FabricClientCommandSource> mainCommand = dispatcher.register(ClientCommandManager.literal("librarian")
 					.then(ClientCommandManager.literal("goto")
 							.then(ClientCommandManager.argument("page", LongArgumentType.longArg())
 									.executes(context ->
@@ -317,6 +318,8 @@ public class FabricAPIAddon implements IAddon
 
 														return 0;
 													}))))));
+
+			dispatcher.register(ClientCommandManager.literal("lb").redirect(mainCommand));
 		});
 	}
 
