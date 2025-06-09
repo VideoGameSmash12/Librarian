@@ -20,9 +20,11 @@ package me.videogamesm12.librarian.v1_15_2.addon;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.github.cottonmc.clientcommands.ArgumentBuilders;
 import io.github.cottonmc.clientcommands.ClientCommandPlugin;
 import io.github.cottonmc.clientcommands.CottonClientCommandSource;
+import me.videogamesm12.librarian.Config;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IMechanicFactory;
@@ -46,7 +48,14 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 	@Override
 	public void registerCommands(CommandDispatcher<CottonClientCommandSource> commandDispatcher)
 	{
-		commandDispatcher.register(
+		final Config.CommandSystemSettings settings = Librarian.getInstance().getConfig().commandSystem();
+
+		if (!settings.isEnabled())
+		{
+			return;
+		}
+
+		final LiteralCommandNode<CottonClientCommandSource> mainCommand = commandDispatcher.register(
 				ArgumentBuilders.literal("librarian")
 						.then(ArgumentBuilders.literal("goto")
 								.then(ArgumentBuilders.argument("page", LongArgumentType.longArg())
@@ -286,6 +295,9 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 
 															return 1;
 														}))))));
+
+		settings.getAliases().stream().map(alias -> ArgumentBuilders.literal(alias)
+				.redirect(mainCommand)).forEach(commandDispatcher::register);
 	}
 
 	private void feedback(CottonClientCommandSource source, Component message)

@@ -19,6 +19,8 @@ package me.videogamesm12.librarian.v1_16_5.addon;
 
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.tree.LiteralCommandNode;
+import me.videogamesm12.librarian.Config;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IMechanicFactory;
@@ -48,7 +50,14 @@ public class FabricClientCommandAPIAddon implements IAddon
 	@Override
 	public void init()
 	{
-		ClientCommandManager.DISPATCHER.register(
+		final Config.CommandSystemSettings settings = Librarian.getInstance().getConfig().commandSystem();
+
+		if (!settings.isEnabled())
+		{
+			return;
+		}
+
+		final LiteralCommandNode<FabricClientCommandSource> mainCommand = ClientCommandManager.DISPATCHER.register(
 				ClientCommandManager.literal("librarian")
 						.then(ClientCommandManager.literal("goto")
 								.then(ClientCommandManager.argument("page", LongArgumentType.longArg())
@@ -289,6 +298,9 @@ public class FabricClientCommandAPIAddon implements IAddon
 
 															return 0;
 														}))))));
+
+		settings.getAliases().stream().map(alias -> ClientCommandManager.literal(alias)
+				.redirect(mainCommand)).forEach(ClientCommandManager.DISPATCHER::register);
 	}
 
 	private void feedback(FabricClientCommandSource source, Component message)
