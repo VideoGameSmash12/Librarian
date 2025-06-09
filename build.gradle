@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = "3.0-rc3"
+version = "3.0-rc4"
 group = "me.videogamesm12"
 
 base {
