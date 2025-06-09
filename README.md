@@ -65,6 +65,34 @@ Currently supported versions:
 * 1.21.4
 * 1.21.5
 
+## Installing
+Download the mod JAR and copy it to your 'mods' folder. Depending on the version of Minecraft you are running, you may
+need to install some extra mods as well. Here is a table explaining exactly that for each case:
+
+| Version | Loader        | Required Mod(s)            | Optional Mod(s)                                   |
+|---------|---------------|----------------------------|---------------------------------------------------|
+| 1.12.2  | Legacy Fabric | Legacy Fabric API          |
+| 1.12.2  | Ornithe       | Ornithe Standard Libraries |
+| 1.13.2  | Legacy Fabric | None                       |
+| 1.13.2  | Ornithe       | Ornithe Standard Libraries |
+| 1.14.4  | Fabric        | Fabric API                 | Cotton Client Commands (for client-side commands) |
+| 1.14.4  | Ornithe       | Ornithe Standard Libraries |
+| 1.15.2  | Fabric        | Fabric API                 | Cotton Client Commands (for client-side commands) |
+| 1.16.5  | Fabric        | Fabric API                 |
+| 1.17.1  | Fabric        | Fabric API                 |
+| 1.18.2  | Fabric        | Fabric API                 |
+| 1.19    | Fabric        | Fabric API                 |
+| 1.19.2  | Fabric        | Fabric API                 |
+| 1.19.4  | Fabric        | Fabric API                 |
+| 1.20.1  | Fabric        | Fabric API                 |
+| 1.20.2  | Fabric        | Fabric API                 |
+| 1.20.4  | Fabric        | Fabric API                 |
+| 1.20.6  | Fabric        | Fabric API                 |
+| 1.21.1  | Fabric        | Fabric API                 |
+| 1.21.3  | Fabric        | Fabric API                 |
+| 1.21.4  | Fabric        | Fabric API                 |
+| 1.21.5  | Fabric        | Fabric API                 |
+
 ## Building
 Librarian requires at least JDK 21 to be compiled. You can compile it by running `gradlew build` (or, if you are running
 Windows, `./gradlew.bat build`). The resulting JAR will be located in `/build/libs`.
