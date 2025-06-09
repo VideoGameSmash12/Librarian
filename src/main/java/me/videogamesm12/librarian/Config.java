@@ -22,6 +22,7 @@ import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import me.videogamesm12.librarian.api.event.NavigationEvent;
 import net.fabricmc.loader.api.FabricLoader;
@@ -29,6 +30,9 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * <h1>Config</h1>
@@ -39,13 +43,18 @@ public class Config
 {
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 	private static final File configFile = new File(FabricLoader.getInstance().getConfigDir().toFile(), "librarian.json");
-	private static final int currentVersion = 0;
+	private static final int currentVersion = 1;
 
 	@Builder.Default
 	private int version = currentVersion;
 
 	@Builder.Default
+	@NonNull
 	private MemorizerSettings memorizer = MemorizerSettings.builder().build();
+
+	@Builder.Default
+	@NonNull
+	private CommandSystemSettings commandSystem = CommandSystemSettings.builder().build();
 
 	/**
 	 * Gets this configuration's version.
@@ -66,6 +75,15 @@ public class Config
 	}
 
 	/**
+	 * Gets the configuration for the command system.
+	 * @return	{@link CommandSystemSettings}
+	 */
+	public CommandSystemSettings commandSystem()
+	{
+		return commandSystem;
+	}
+
+	/**
 	 * Memorizes the last page the user was at upon navigating to another page.
 	 * @param event	{@link NavigationEvent}
 	 */
@@ -80,7 +98,7 @@ public class Config
 	}
 
 	/**
-	 * <h2>Memorizer</h2>
+	 * <h2>MemorizerSettings</h2>
 	 * <p>All configuration options for the Memorizer feature, which keeps track of the last page the user was on in a
 	 * 	session so that the next time the client starts up, they will start at that page.</p>
 	 */
@@ -96,13 +114,37 @@ public class Config
 		private boolean enabled = true;
 
 		/**
-		 * This controls the page the user starts at on start-up if the feature is enabled. It gets automatically
-		 * 	updated every time a page navigation occurs.
+		 * Determines the page the user starts at on start-up if the feature is enabled. It gets automatically updated
+		 * 	every time a page navigation occurs.
 		 */
 		@Getter
 		@Setter
 		@Builder.Default
+		@NonNull
 		private BigInteger page = BigInteger.ZERO;
+	}
+
+	/**
+	 * <h2>CommandSystemSettings</h2>
+	 * <p>All configuration options for the mod's client commands.</p>
+	 */
+	@Builder
+	public static class CommandSystemSettings
+	{
+		/**
+		 * Controls whether to register our commands on startup.
+		 */
+		@Getter
+		@Builder.Default
+		private boolean enabled = true;
+
+		/**
+		 * A list of aliases that get registered as aliases of the /librarian command.
+		 */
+		@Getter
+		@Builder.Default
+		@NonNull
+		private List<String> aliases = Collections.singletonList("lb");
 	}
 
 	/**

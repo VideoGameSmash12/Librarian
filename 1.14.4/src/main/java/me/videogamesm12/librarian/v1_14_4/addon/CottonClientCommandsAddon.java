@@ -24,6 +24,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.github.cottonmc.clientcommands.ArgumentBuilders;
 import io.github.cottonmc.clientcommands.ClientCommandPlugin;
 import io.github.cottonmc.clientcommands.CottonClientCommandSource;
+import me.videogamesm12.librarian.Config;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IMechanicFactory;
@@ -48,6 +49,13 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 	@Override
 	public void registerCommands(CommandDispatcher<CottonClientCommandSource> commandDispatcher)
 	{
+		final Config.CommandSystemSettings settings = Librarian.getInstance().getConfig().commandSystem();
+
+		if (!settings.isEnabled())
+		{
+			return;
+		}
+
 		final LiteralCommandNode<CottonClientCommandSource> mainCommand = commandDispatcher.register(
 				ArgumentBuilders.literal("librarian")
 						.then(ArgumentBuilders.literal("goto")
@@ -288,7 +296,8 @@ public class CottonClientCommandsAddon implements ClientCommandPlugin
 															return 1;
 														}))))));
 
-		commandDispatcher.register(ArgumentBuilders.literal("lb").redirect(mainCommand));
+		settings.getAliases().stream().map(alias -> ArgumentBuilders.literal(alias)
+				.redirect(mainCommand)).forEach(commandDispatcher::register);
 	}
 
 	private void feedback(CottonClientCommandSource source, Component message)
