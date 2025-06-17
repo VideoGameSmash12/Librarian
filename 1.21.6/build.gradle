@@ -3,7 +3,7 @@ ext {
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:25w20a"
-    mappings "net.fabricmc:yarn:25w20a+build.1:v2"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:0.124.2+1.21.6"
+    minecraft "com.mojang:minecraft:1.21.6-rc1"
+    mappings "net.fabricmc:yarn:1.21.6-rc1+build.1:v2"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:0.127.0+1.21.6"
 }

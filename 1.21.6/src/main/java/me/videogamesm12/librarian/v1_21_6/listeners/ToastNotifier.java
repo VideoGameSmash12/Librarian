@@ -46,7 +46,7 @@ public class ToastNotifier extends AbstractEventListener
 		if (event.getPath() != null)
 		{
 			addOrUpdateNotification(Text.translatable("librarian.messages.backup_success.toast.title"),
-					Text.literal(event.getStorage().getLocation().getName()), LibrarianToast.Type.BACKUP);
+					Text.literal(event.getStorage().librarian$getLocation().getName()), LibrarianToast.Type.BACKUP);
 		}
 		else
 		{
@@ -115,7 +115,7 @@ public class ToastNotifier extends AbstractEventListener
 		@Setter
 		private Text description;
 		@Getter
-		private Type type;
+		private final Type type;
 		//-
 		private long startTime;
 		@Setter
