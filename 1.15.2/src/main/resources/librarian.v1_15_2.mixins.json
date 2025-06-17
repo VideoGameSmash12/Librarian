@@ -10,7 +10,6 @@
   "client": [
     "ContainerScreenAccessor",
     "CreativeInventoryScreenMixin",
-    "HotbarStorageAccessor",
     "HotbarStorageMixin",
     "MinecraftClientMixin"
   ]

@@ -46,13 +46,14 @@ public class Librarian implements ClientModInitializer
 	private static Librarian instance;
 
 	private IMechanicFactory mechanic;
+	private Config config;
 	private final List<AbstractEventListener> listeners = new ArrayList<>();
 	private final Map<Class<? extends IAddon>, IAddon> addons = new HashMap<>();
 
 	private BigInteger currentPageNumber = BigInteger.ZERO;
 	private final Map<BigInteger, IWrappedHotbarStorage> map = new HashMap<>();
 
-	private EventBus eventBus = new EventBus();
+	private final EventBus eventBus = new EventBus();
 
 	@Override
 	public void onInitializeClient()
@@ -67,6 +68,10 @@ public class Librarian implements ClientModInitializer
 					else
 						return new IllegalStateException("This version of Minecraft is not supported");
 				});
+
+		// Read the configuration
+		config = Config.load();
+		currentPageNumber = config.memorizer().isEnabled() ? config.memorizer().getPage() : BigInteger.ZERO;
 
 		// Event listeners can be specified for various different events
 		listeners.addAll(FabricLoader.getInstance().getEntrypoints("librarian-listener", AbstractEventListener.class));
@@ -144,7 +149,7 @@ public class Librarian implements ClientModInitializer
 
 	public void reloadCurrentPage()
 	{
-		getCurrentPage().load();
+		getCurrentPage().librarian$load();
 		eventBus.post(new ReloadPageEvent(currentPageNumber));
 	}
 

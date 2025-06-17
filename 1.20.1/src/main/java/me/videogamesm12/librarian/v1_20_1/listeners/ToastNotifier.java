@@ -18,7 +18,6 @@
 package me.videogamesm12.librarian.v1_20_1.listeners;
 
 import com.google.common.eventbus.Subscribe;
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +46,7 @@ public class ToastNotifier extends AbstractEventListener
 		if (event.getPath() != null)
 		{
 			addOrUpdateNotification(Text.translatable("librarian.messages.backup_success.toast.title"),
-					Text.literal(event.getStorage().getLocation().getName()), LibrarianToast.Type.BACKUP);
+					Text.literal(event.getStorage().librarian$getLocation().getName()), LibrarianToast.Type.BACKUP);
 		}
 		else
 		{

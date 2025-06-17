@@ -50,7 +50,7 @@ public class ActionBarNotifier extends AbstractEventListener
 	{
 		if (event.getPath() != null)
 		{
-			sendActionBar(event.getStorage().getLocation().getName() + " backed up to " + event.getPath().getName());
+			sendActionBar(event.getStorage().librarian$getLocation().getName() + " backed up to " + event.getPath().getName());
 		}
 		else
 		{

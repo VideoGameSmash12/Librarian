@@ -60,7 +60,7 @@ public class ActionBarNotifier extends AbstractEventListener
 		if (event.getPath() != null)
 		{
 			sendActionBar(new TranslatableText("librarian.messages.backup_success.action_bar",
-					event.getStorage().getLocation().getName(), event.getPath().getName()));
+					event.getStorage().librarian$getLocation().getName(), event.getPath().getName()));
 		}
 		else
 		{

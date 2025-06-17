@@ -36,27 +36,27 @@ import java.util.Optional;
  */
 public interface IWrappedHotbarStorage
 {
-	File getLocation();
+	File librarian$getLocation();
 
-	BigInteger getPageNumber();
+	BigInteger librarian$getPageNumber();
 
 	default boolean exists()
 	{
-		return getLocation().exists();
+		return librarian$getLocation().exists();
 	}
 
-	default void backup()
+	default void librarian$backup()
 	{
 		try
 		{
 			// If it doesn't exist, don't even try to back it up
-			if (!getLocation().exists())
+			if (!librarian$getLocation().exists())
 			{
 				return;
 			}
 
-			final File backupFile = Files.copy(getLocation().toPath(), new File(FNF.getBackupFolder(),
-					FNF.getBackupFileName(getPageNumber())).toPath()).toFile();
+			final File backupFile = Files.copy(librarian$getLocation().toPath(), new File(FNF.getBackupFolder(),
+					FNF.getBackupFileName(librarian$getPageNumber())).toPath()).toFile();
 
 			Librarian.getInstance().getEventBus().post(new BackupOutcomeEvent(this, backupFile));
 		}
@@ -66,7 +66,7 @@ public interface IWrappedHotbarStorage
 		}
 	}
 
-	void load();
+	void librarian$load();
 
 	default boolean isLoaded()
 	{
@@ -78,17 +78,12 @@ public interface IWrappedHotbarStorage
 		// Don't do anything, this should be implemented when implementing in HotbarStorage as a mixin
 	}
 
-	default Optional<HotbarPageMetadata> getMetadata()
+	default Optional<HotbarPageMetadata> librarian$getMetadata()
 	{
 		return Optional.empty();
 	}
 
-	default boolean metadataIsPresent()
-	{
-		return getMetadata().isPresent();
-	}
-
-	default void setMetadata(HotbarPageMetadata metadata)
+	default void librarian$setMetadata(HotbarPageMetadata metadata)
 	{
 		// Do nothing
 	}

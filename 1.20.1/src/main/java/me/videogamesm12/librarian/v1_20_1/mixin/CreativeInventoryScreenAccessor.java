@@ -15,15 +15,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.videogamesm12.librarian.v1_20_2.mixin;
+package me.videogamesm12.librarian.v1_20_1.mixin;
 
-import net.minecraft.client.option.HotbarStorage;
+import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
+import net.minecraft.item.ItemGroup;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Invoker;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(HotbarStorage.class)
-public interface HotbarStorageAccessor
+@Mixin(CreativeInventoryScreen.class)
+public interface CreativeInventoryScreenAccessor
 {
-	@Invoker
-	void invokeLoad();
+	@Accessor("selectedTab")
+	static ItemGroup getSelectedTab()
+	{
+		throw new AssertionError();
+	}
 }

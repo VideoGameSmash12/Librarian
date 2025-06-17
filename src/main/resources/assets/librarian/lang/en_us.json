@@ -18,6 +18,8 @@
   "librarian.messages.cache_cleared.action_bar": "The hotbar cache has been cleared",
   "librarian.messages.cache_cleared.toast.title": "Hotbar cache cleared",
   "librarian.messages.cache_cleared.toast.description": "Unused, please check back later",
+  "librarian.messages.cache_list": "Currently loaded page(s): %s",
+  "librarian.messages.cache_list.empty": "No pages are currently loaded.",
   "librarian.messages.load_failed.action_bar": "Failed to load hotbar page: %1$s",
   "librarian.messages.load_failed.toast.title": "Load failed",
   "librarian.messages.load_failed.toast.description": "Check logs for more info",
