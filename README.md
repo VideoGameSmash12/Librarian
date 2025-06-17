@@ -64,6 +64,7 @@ Currently supported versions:
 * 1.21.3
 * 1.21.4
 * 1.21.5
+* 1.21.6
 
 ## Installing
 Download the mod JAR and copy it to your 'mods' folder. Depending on the version of Minecraft you are running, you may
@@ -92,6 +93,7 @@ need to install some extra mods as well. Here is a table explaining exactly that
 | 1.21.3  | Fabric        | Fabric API                 |
 | 1.21.4  | Fabric        | Fabric API                 |
 | 1.21.5  | Fabric        | Fabric API                 |
+| 1.21.6  | Fabric        | Fabric API                 |
 
 ## Building
 Librarian requires at least JDK 21 to be compiled. You can compile it by running `gradlew build` (or, if you are running
