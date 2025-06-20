@@ -40,7 +40,7 @@ this purpose.
 
 ### Multi-version support
 To account for those holding out on specifics game versions, Librarian supports a wide range of Minecraft versions as
-recent as 1.21.5 and as old as 1.12.2 (with the help of [Legacy Fabric](https://legacyfabric.net/) and
+recent as 1.21.6 and as old as 1.12.2 (with the help of [Legacy Fabric](https://legacyfabric.net/) and
 [Ornithe](https://ornithemc.net/)). I am committed to supporting as many versions as reasonably possible. The foundation
 of Librarian, while similar to its predecessor, is written with the goal of not relying on any particular
 version-specific code. This helps make it more future-proof in the long run.
