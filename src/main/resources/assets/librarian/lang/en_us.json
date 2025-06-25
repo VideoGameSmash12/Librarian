@@ -50,5 +50,8 @@
   "librarian.messages.save_failed.toast.description": "Check logs for more info",
 
   "librarian.tooltip.authors": "Authors:",
-  "librarian.tooltip.click_to_rename": "Click to Rename"
+  "librarian.tooltip.click_to_rename": "Click to Rename",
+  "librarian.tooltip.button.backup": "Make a backup of this page",
+  "librarian.tooltip.button.next_page": "Next page",
+  "librarian.tooltip.button.previous_page": "Previous page"
 }

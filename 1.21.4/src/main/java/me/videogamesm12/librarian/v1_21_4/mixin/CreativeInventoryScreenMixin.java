@@ -30,7 +30,6 @@ import me.videogamesm12.librarian.api.event.ReloadPageEvent;
 import me.videogamesm12.librarian.util.ComponentProcessor;
 import me.videogamesm12.librarian.v1_21_4.addon.FabricAPIAddon;
 import net.fabricmc.fabric.impl.client.itemgroup.FabricCreativeGuiComponents;
-import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -47,6 +46,7 @@ import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -157,13 +157,17 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		renameHotbarField.visible = tabIsHotbar(selectedTab);
 
 		// Initialize buttons
-		nextButton = mechanic.createButton(x + 12, y,12, 12, Component.text("→"),
-				Component.text("Next page"), () -> Librarian.getInstance().nextPage());
-		backupButton = mechanic.createButton(x, y,12, 12, Component.text("\uD83D\uDCBE")
-				.font(Key.key("librarian", "default")), Component.text("Make a backup of this page"),
-				() -> Librarian.getInstance().getCurrentPage().librarian$backup());
-		previousButton = mechanic.createButton(x - 12, y,12, 12, Component.text("←"),
-				Component.text("Previous page"), () -> Librarian.getInstance().previousPage());
+		nextButton = ButtonWidget.builder(Text.literal("→"), (widget) -> Librarian.getInstance().nextPage())
+				.dimensions(x + 12, y, 12, 12)
+				.tooltip(Tooltip.of(Text.translatable("librarian.tooltip.button.next_page"))).build();
+		backupButton = ButtonWidget.builder(Text.literal("\uD83D\uDCBE").styled(style ->
+				style.withFont(Identifier.of("librarian", "default"))),
+				widget -> Librarian.getInstance().getCurrentPage().librarian$backup())
+				.dimensions(x, y, 12, 12)
+				.tooltip(Tooltip.of(Text.translatable("librarian.tooltip.button.backup"))).build();
+		previousButton = ButtonWidget.builder(Text.literal("←"), (widget) -> Librarian.getInstance().previousPage())
+				.dimensions(x - 12, y, 12, 12)
+				.tooltip(Tooltip.of(Text.translatable("librarian.tooltip.button.previous_page"))).build();
 
 		// Marks visibility and usability of the buttons
 		nextButton.visible = tabIsHotbar(selectedTab);
