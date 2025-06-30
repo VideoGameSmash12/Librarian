@@ -15,18 +15,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.videogamesm12.librarian.v1_21_6.mixin;
+package me.videogamesm12.librarian.v1_21_7.mixin;
 
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.Drawable;
+import net.minecraft.client.gui.screen.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(HandledScreen.class)
-public interface HandledScreenAccessor
+import java.util.List;
+
+@Mixin(Screen.class)
+public interface ScreenAccessor
 {
 	@Accessor
-	int getX();
-
-	@Accessor
-	int getY();
+	List<Drawable> getDrawables();
 }

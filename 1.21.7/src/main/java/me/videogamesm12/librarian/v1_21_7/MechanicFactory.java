@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.videogamesm12.librarian.v1_21_6;
+package me.videogamesm12.librarian.v1_21_7;
 
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.JsonOps;
@@ -31,7 +31,6 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.option.HotbarStorage;
 import net.minecraft.registry.BuiltinRegistries;
 import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.storage.NbtReadView;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextCodecs;
 
