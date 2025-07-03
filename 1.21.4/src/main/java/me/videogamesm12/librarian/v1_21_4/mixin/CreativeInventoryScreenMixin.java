@@ -30,6 +30,7 @@ import me.videogamesm12.librarian.api.event.ReloadPageEvent;
 import me.videogamesm12.librarian.util.ComponentProcessor;
 import me.videogamesm12.librarian.v1_21_4.addon.FabricAPIAddon;
 import net.fabricmc.fabric.impl.client.itemgroup.FabricCreativeGuiComponents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.minecraft.client.MinecraftClient;
@@ -41,13 +42,20 @@ import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.option.HotbarStorage;
+import net.minecraft.client.option.HotbarStorageEntry;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.slot.Slot;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -56,6 +64,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -64,7 +73,12 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 {
 	@Shadow protected abstract void setSelectedTab(ItemGroup group);
 
+	@Shadow protected abstract boolean isCreativeInventorySlot(@Nullable Slot slot);
+
 	@Shadow private static ItemGroup selectedTab;
+	@Shadow private float scrollPosition;
+	@Shadow @Final private boolean operatorTabEnabled;
+
 	@Unique
 	private IMechanicFactory mechanic;
 
@@ -378,6 +392,25 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 						cir.setReturnValue(true);
 					}
 				}
+				// NONE
+				case 0 ->
+				{
+					// DELETE
+					if (keyCode == GLFW.GLFW_KEY_DELETE)
+					{
+						final Slot slot = ((HandledScreenAccessor) this).getFocusedSlot();
+						if (FabricLoader.getInstance().isModLoaded("bettersavedhotbars")
+								|| slot == null
+								|| !isCreativeInventorySlot(slot)
+								|| slot.getStack().isEmpty())
+						{
+							return;
+						}
+
+						setItem(((HandledScreenAccessor) this).getFocusedSlot(), new ItemStack(Items.AIR, 0), null);
+						cir.setReturnValue(true);
+					}
+				}
 			}
 		}
 	}
@@ -447,6 +480,51 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		}
 	}
 
+	/* -- Borrowed some code from Better Saved Hotbars for reference -- */
+	@Inject(method = "onMouseClick", at = @At("HEAD"), cancellable = true)
+	private void onClick(Slot slot, int slotId, int button, SlotActionType actionType, CallbackInfo ci)
+	{
+		// If the current selected tab isn't the saved hotbar tab, the slot clicked is null, the slotId is greater than
+		// 	45, or Better Saved Hotbars is installed
+		if (!tabIsHotbar(selectedTab)
+				|| slot == null
+				|| !isCreativeInventorySlot(slot)
+				|| FabricLoader.getInstance().isModLoaded("bettersavedhotbars"))
+		{
+			return;
+		}
+
+		final ScreenHandler handler = Objects.requireNonNull(Objects.requireNonNull(client).player).currentScreenHandler;
+
+		// Figure out the item in the player's hand
+		final ItemStack cursor = handler.getCursorStack().copy();
+
+		if (cursor.getItem() != Items.AIR && (actionType == SlotActionType.PICKUP || actionType == SlotActionType.SWAP))
+		{
+			// Overwrite prevention
+			if (slot.getStack().getItem() != Items.AIR && !ItemStack.areItemsAndComponentsEqual(slot.getStack(), cursor))
+			{
+				MinecraftClient.getInstance().setScreen(new ConfirmScreen((value) ->
+				{
+					if (value)
+					{
+						setItem(slot, cursor, slot.getStack());
+					}
+
+					MinecraftClient.getInstance().setScreen(new CreativeInventoryScreen(client.player, Objects.requireNonNull(client.getNetworkHandler()).getEnabledFeatures(), operatorTabEnabled));
+
+					// Set the cursor back0
+					if (!value) client.player.currentScreenHandler.setCursorStack(cursor);
+				}, Text.translatable("librarian.messages.possible_overwrite_detected.title"), Text.translatable("librarian.messages.possible_overwrite_detected.description")));
+				ci.cancel();
+				return;
+			}
+
+			setItem(slot, cursor, slot.getStack());
+			ci.cancel();
+		}
+	}
+
 	@Subscribe
 	@Unique
 	public void onNavigation(NavigationEvent event)
@@ -482,5 +560,50 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	private boolean tabIsHotbar(ItemGroup group)
 	{
 		return group.getType() == ItemGroup.Type.HOTBAR;
+	}
+
+	@Unique
+	private PlayerInventory fakeRow(List<ItemStack> items, int slot, ItemStack item)
+	{
+		// Make modifiable
+		items = new ArrayList<>(items);
+		items.set(slot, item);
+
+		// Create inventory
+		final PlayerInventory inventory = new PlayerInventory(Objects.requireNonNull(client).player);
+		for (int i = 0; i < 9; i++)
+		{
+			inventory.setStack(i, items.get(i));
+		}
+
+		return inventory;
+	}
+
+	@Unique
+	private void setItem(final Slot slot, final ItemStack input, final ItemStack output)
+	{
+		final ScreenHandler handler = Objects.requireNonNull(Objects.requireNonNull(client).player).currentScreenHandler;
+
+		// Figure out the exact place it needs to go
+		int rowNum = slot.getIndex() / 9 + (Math.round(4 * scrollPosition));
+		int columnNum = slot.getIndex() % 9;
+
+		// Get the hotbar page and row
+		final HotbarStorage page = (HotbarStorage) Librarian.getInstance().getCurrentPage();
+		final HotbarStorageEntry row = page.getSavedHotbar(rowNum);
+		List<ItemStack> items = row.deserialize(Objects.requireNonNull(MinecraftClient.getInstance().world).getRegistryManager());
+
+		slot.setStack(input);
+		row.serialize(fakeRow(items, columnNum, input), MinecraftClient.getInstance().world.getRegistryManager());
+		page.save();
+
+		// Set the output item stack if not null
+		if (output != null)
+		{
+			handler.setCursorStack(output);
+		}
+
+		// Stupid hack
+		backupButton.active = ((IWrappedHotbarStorage) page).exists();
 	}
 }
