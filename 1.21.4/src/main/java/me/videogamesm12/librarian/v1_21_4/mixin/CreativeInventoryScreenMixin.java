@@ -79,7 +79,6 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Shadow private float scrollPosition;
 	@Shadow @Final private boolean operatorTabEnabled;
 
-	@Shadow @Nullable private List<Slot> slots;
 	@Unique
 	private IMechanicFactory mechanic;
 
