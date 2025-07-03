@@ -12,8 +12,5 @@
     "HotbarStorageMixin",
     "MinecraftClientMixin",
     "ScreenAccessor"
-  ],
-  "mixins": [
-    "PlayerInventoryAccessor"
   ]
 }

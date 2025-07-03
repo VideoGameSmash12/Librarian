@@ -79,6 +79,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Shadow private float scrollPosition;
 	@Shadow @Final private boolean operatorTabEnabled;
 
+	@Shadow @Nullable private List<Slot> slots;
 	@Unique
 	private IMechanicFactory mechanic;
 
@@ -305,7 +306,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Inject(method = "keyPressed", at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/client/gui/screen/ingame/HandledScreen;keyPressed(III)Z",
 			shift = At.Shift.BEFORE), cancellable = true)
-	public void handleNavigationKeys(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir)
+	public void handleActionKeys(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir)
 	{
 		// Librarian-specific keybinds
 		if (tabIsHotbar(selectedTab))
@@ -484,22 +485,24 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Inject(method = "onMouseClick", at = @At("HEAD"), cancellable = true)
 	private void onClick(Slot slot, int slotId, int button, SlotActionType actionType, CallbackInfo ci)
 	{
-		// If the current selected tab isn't the saved hotbar tab, the slot clicked is null, the slotId is greater than
-		// 	45, or Better Saved Hotbars is installed
+		// If the current selected tab isn't the saved hotbar tab, the slot clicked is null, or Better Saved Hotbars is
+		// 	installed
 		if (!tabIsHotbar(selectedTab)
 				|| slot == null
-				|| !isCreativeInventorySlot(slot)
 				|| FabricLoader.getInstance().isModLoaded("bettersavedhotbars"))
 		{
 			return;
 		}
 
 		final ScreenHandler handler = Objects.requireNonNull(Objects.requireNonNull(client).player).currentScreenHandler;
+		float scroll = scrollPosition;
 
 		// Figure out the item in the player's hand
 		final ItemStack cursor = handler.getCursorStack().copy();
 
-		if (cursor.getItem() != Items.AIR && (actionType == SlotActionType.PICKUP || actionType == SlotActionType.SWAP))
+		// Clicking a slot in the saved hotbars page that isn't the player's inventory
+		if (cursor.getItem() != Items.AIR && isCreativeInventorySlot(slot) &&
+				(actionType == SlotActionType.PICKUP || actionType == SlotActionType.SWAP))
 		{
 			// Overwrite prevention
 			if (slot.getStack().getItem() != Items.AIR && !ItemStack.areItemsAndComponentsEqual(slot.getStack(), cursor))
@@ -511,17 +514,35 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 						setItem(slot, cursor, slot.getStack());
 					}
 
-					MinecraftClient.getInstance().setScreen(new CreativeInventoryScreen(client.player, Objects.requireNonNull(client.getNetworkHandler()).getEnabledFeatures(), operatorTabEnabled));
+					// Re-open the screen and set the scroll to what was before
+					MinecraftClient.getInstance().setScreen(new CreativeInventoryScreen(client.player,
+							Objects.requireNonNull(client.getNetworkHandler()).getEnabledFeatures(),
+							operatorTabEnabled));
+					((CreativeInventoryScreen.CreativeScreenHandler) handler).scrollItems(scroll);
 
-					// Set the cursor back0
+					// Set the cursor back
 					if (!value) client.player.currentScreenHandler.setCursorStack(cursor);
-				}, Text.translatable("librarian.messages.possible_overwrite_detected.title"), Text.translatable("librarian.messages.possible_overwrite_detected.description")));
+				}, Text.translatable("librarian.messages.possible_overwrite_detected.title"), Text.translatable("librarian.messages.possible_overwrite_detected.individual.description")));
 				ci.cancel();
 				return;
 			}
 
 			setItem(slot, cursor, slot.getStack());
 			ci.cancel();
+		}
+		// Shift clicking the item from the player's inventory hotbar
+		else if (!isCreativeInventorySlot(slot) && slot.getStack().getItem() != Items.AIR && actionType == SlotActionType.QUICK_MOVE)
+		{
+			// Cancel it. Prevents users from losing their items accidentally
+			ci.cancel();
+
+			final IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
+
+			if (page.librarian$hasEmptySlots())
+			{
+				int[] rowCol = page.librarian$getFirstEmptySlot();
+				setItem(rowCol[0], rowCol[1], slot.getStack().copy(), null);
+			}
 		}
 	}
 
@@ -582,18 +603,24 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Unique
 	private void setItem(final Slot slot, final ItemStack input, final ItemStack output)
 	{
-		final ScreenHandler handler = Objects.requireNonNull(Objects.requireNonNull(client).player).currentScreenHandler;
-
-		// Figure out the exact place it needs to go
+		// Figure out the exact place it needs to go based on the scroll position
 		int rowNum = slot.getIndex() / 9 + (Math.round(4 * scrollPosition));
 		int columnNum = slot.getIndex() % 9;
+
+		setItem(rowNum, columnNum, input, output);
+	}
+
+	@Unique
+	private void setItem(final int rowNum, final int columnNum, final ItemStack input, final ItemStack output)
+	{
+		final ScreenHandler handler = Objects.requireNonNull(Objects.requireNonNull(client).player).currentScreenHandler;
+		final float scroll = scrollPosition;
 
 		// Get the hotbar page and row
 		final HotbarStorage page = (HotbarStorage) Librarian.getInstance().getCurrentPage();
 		final HotbarStorageEntry row = page.getSavedHotbar(rowNum);
 		List<ItemStack> items = row.deserialize(Objects.requireNonNull(MinecraftClient.getInstance().world).getRegistryManager());
 
-		slot.setStack(input);
 		row.serialize(fakeRow(items, columnNum, input), MinecraftClient.getInstance().world.getRegistryManager());
 		page.save();
 
@@ -603,7 +630,11 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			handler.setCursorStack(output);
 		}
 
-		// Stupid hack
-		backupButton.active = ((IWrappedHotbarStorage) page).exists();
+		// Refresh the current page, easier than having to mess with slots
+		setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
+
+		// Scroll back to where we were
+		((CreativeInventoryScreen.CreativeScreenHandler) handler).scrollItems(scroll);
+		scrollPosition = scroll;
 	}
 }
