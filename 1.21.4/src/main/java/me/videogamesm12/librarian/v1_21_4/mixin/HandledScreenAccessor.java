@@ -18,6 +18,7 @@
 package me.videogamesm12.librarian.v1_21_4.mixin;
 
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.screen.slot.Slot;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
@@ -29,4 +30,7 @@ public interface HandledScreenAccessor
 
 	@Accessor
 	int getY();
+
+	@Accessor
+	Slot getFocusedSlot();
 }
