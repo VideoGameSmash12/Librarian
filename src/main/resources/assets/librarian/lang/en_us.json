@@ -5,6 +5,7 @@
   "librarian.key.next_page": "Next Page",
   "librarian.key.previous_page": "Previous Page",
   "librarian.key.backup_current_page": "Backup Current Page",
+  "librarian.key.delete_item": "Delete Hovered Item",
 
   "librarian.saved_hotbars.tab": "Saved Hotbars (Page %1$s)",
   "librarian.saved_toolbars.tab": "Saved Toolbars (Page %1$s)",

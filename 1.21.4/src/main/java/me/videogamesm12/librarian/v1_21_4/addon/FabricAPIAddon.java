@@ -34,6 +34,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.loader.api.FabricLoader;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -58,6 +59,7 @@ public class FabricAPIAddon implements IAddon
 	private KeyBinding nextKey = null;
 	private KeyBinding previousKey = null;
 	private KeyBinding backupKey = null;
+	private KeyBinding deleteKey = null;
 
 	@Override
 	public void init()
@@ -74,6 +76,14 @@ public class FabricAPIAddon implements IAddon
 				InputUtil.Type.KEYSYM,
 				GLFW.GLFW_KEY_B,
 				"category.librarian.actions"));
+
+		if (!FabricLoader.getInstance().isModLoaded("bettersavedhotbars"))
+		{
+			deleteKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("librarian.key.delete_item",
+					InputUtil.Type.KEYSYM,
+					GLFW.GLFW_KEY_DELETE,
+					"category.librarian.actions"));
+		}
 
 		ClientTickEvents.END_CLIENT_TICK.register(client ->
 		{

@@ -330,6 +330,19 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 				cir.setReturnValue(true);
 				return;
 			}
+			// Fabric API keybinds that don't get registered if a conflicting mod is installed
+			else if (fabric.getDeleteKey() != null && fabric.getDeleteKey().matchesKey(keyCode, scanCode))
+			{
+				final Slot slot = ((HandledScreenAccessor) this).getFocusedSlot();
+				if (slot == null || !isCreativeInventorySlot(slot) || slot.getStack().isEmpty())
+				{
+					return;
+				}
+
+				setItem(((HandledScreenAccessor) this).getFocusedSlot(), new ItemStack(Items.AIR, 0), null);
+				cir.setReturnValue(true);
+				return;
+			}
 
 			// Built-in key binds
 			switch (modifiers)
@@ -389,25 +402,6 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					else if (keyCode == GLFW.GLFW_KEY_RIGHT)
 					{
 						Librarian.getInstance().advanceBy(10);
-						cir.setReturnValue(true);
-					}
-				}
-				// NONE
-				case 0 ->
-				{
-					// DELETE
-					if (keyCode == GLFW.GLFW_KEY_DELETE)
-					{
-						final Slot slot = ((HandledScreenAccessor) this).getFocusedSlot();
-						if (FabricLoader.getInstance().isModLoaded("bettersavedhotbars")
-								|| slot == null
-								|| !isCreativeInventorySlot(slot)
-								|| slot.getStack().isEmpty())
-						{
-							return;
-						}
-
-						setItem(((HandledScreenAccessor) this).getFocusedSlot(), new ItemStack(Items.AIR, 0), null);
 						cir.setReturnValue(true);
 					}
 				}
@@ -499,6 +493,9 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		// Figure out the item in the player's hand
 		final ItemStack cursor = handler.getCursorStack().copy();
 
+		// We need this to support cases where users want to delete stuff with middle click as well
+		final FabricAPIAddon fabric = Librarian.getInstance().getAddon(FabricAPIAddon.class);
+
 		// Clicking a slot in the saved hotbars page that isn't the player's inventory
 		if (cursor.getItem() != Items.AIR && isCreativeInventorySlot(slot) &&
 				(actionType == SlotActionType.PICKUP || actionType == SlotActionType.SWAP))
@@ -529,18 +526,27 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			setItem(slot, cursor, slot.getStack());
 			ci.cancel();
 		}
+		// Deleting the hovered over item by clicking it
+		else if (fabric.getDeleteKey() != null && fabric.getDeleteKey().matchesMouse(button)
+				&& isCreativeInventorySlot(slot) && !slot.getStack().isEmpty())
+		{
+			setItem(((HandledScreenAccessor) this).getFocusedSlot(), new ItemStack(Items.AIR, 0), null);
+			ci.cancel();
+		}
 		// Shift clicking the item from the player's inventory hotbar
 		else if (!isCreativeInventorySlot(slot) && slot.getStack().getItem() != Items.AIR && actionType == SlotActionType.QUICK_MOVE)
 		{
-			// Cancel it. Prevents users from losing their items accidentally
-			ci.cancel();
-
 			final IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
 
 			if (page.librarian$hasEmptySlots())
 			{
 				int[] rowCol = page.librarian$getFirstEmptySlot();
 				setItem(rowCol[0], rowCol[1], slot.getStack().copy(), null);
+			}
+			else
+			{
+				// Cancel it. Prevents users from losing their items accidentally
+				ci.cancel();
 			}
 		}
 	}
