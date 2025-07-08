@@ -26,7 +26,10 @@ import me.videogamesm12.librarian.api.event.LoadFailureEvent;
 import me.videogamesm12.librarian.api.event.SaveFailureEvent;
 import me.videogamesm12.librarian.util.FNF;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.HotbarStorage;
+import net.minecraft.client.option.HotbarStorageEntry;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -45,6 +48,7 @@ import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Mixin(HotbarStorage.class)
@@ -53,6 +57,8 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Shadow @Final private Path file;
 
 	@Shadow protected abstract void load();
+
+	@Shadow public abstract HotbarStorageEntry getSavedHotbar(int i);
 
 	@Shadow private boolean loaded;
 
@@ -194,6 +200,26 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	public void librarian$load()
 	{
 		load();
+	}
+
+	@Override
+	public int[] librarian$getFirstEmptySlot()
+	{
+		for (int row = 0; row < 9; row++)
+		{
+			HotbarStorageEntry entry = getSavedHotbar(row);
+			List<ItemStack> items = entry.deserialize(Objects.requireNonNull(MinecraftClient.getInstance().world).getRegistryManager());
+
+			for (int column = 0; column < 9; column++)
+			{
+				if (items.get(column).isEmpty())
+				{
+					return new int[] {row, column};
+				}
+			}
+		}
+
+		return new int[] {-1, -1};
 	}
 
 	@Accessor

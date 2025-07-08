@@ -87,4 +87,14 @@ public interface IWrappedHotbarStorage
 	{
 		// Do nothing
 	}
+
+	default int[] librarian$getFirstEmptySlot()
+	{
+		return new int[] {-1, -1};
+	}
+
+	default boolean librarian$hasEmptySlots()
+	{
+		return librarian$getFirstEmptySlot()[0] != -1;
+	}
 }
