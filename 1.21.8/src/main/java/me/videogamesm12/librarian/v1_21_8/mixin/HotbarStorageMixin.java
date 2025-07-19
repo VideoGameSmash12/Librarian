@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.videogamesm12.librarian.v1_21_7.mixin;
+package me.videogamesm12.librarian.v1_21_8.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.datafixers.DataFixer;

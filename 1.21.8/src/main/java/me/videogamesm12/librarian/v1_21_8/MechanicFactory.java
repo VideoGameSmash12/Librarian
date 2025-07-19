@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.videogamesm12.librarian.v1_21_7;
+package me.videogamesm12.librarian.v1_21_8;
 
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.JsonOps;
