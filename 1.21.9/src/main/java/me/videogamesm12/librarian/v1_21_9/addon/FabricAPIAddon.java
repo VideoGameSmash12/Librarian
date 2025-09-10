@@ -40,6 +40,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.minecraft.client.option.HotbarStorage;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.math.BigInteger;
@@ -54,6 +55,9 @@ public class FabricAPIAddon implements IAddon
 {
 	private final IMechanicFactory mechanic = Librarian.getInstance().getMechanic();
 
+	private KeyBinding.Category navigationCategory;
+	private KeyBinding.Category actionsCategory;
+
 	private KeyBinding nextKey = null;
 	private KeyBinding previousKey = null;
 	private KeyBinding backupKey = null;
@@ -61,22 +65,21 @@ public class FabricAPIAddon implements IAddon
 	@Override
 	public void init()
 	{
-		// With 1.21.9, Mojang changed how key binding registration works for categories to use an enum instead of a
-		// 	string. Fabric's developers have yet to figure out a solution to replicate the behavior of <=1.21.8 with
-		// 	custom categories, so the workaround until then is to use the built-in CREATIVE keybinding category.
+		navigationCategory = KeyBinding.Category.method_74698(Identifier.of("librarian", "navigation"));
+		actionsCategory = KeyBinding.Category.method_74698(Identifier.of("librarian", "actions"));
 
 		nextKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("librarian.key.next_page",
 				InputUtil.Type.KEYSYM,
 				GLFW.GLFW_KEY_RIGHT_BRACKET,
-				KeyBinding.Category.CREATIVE));
+				navigationCategory));
 		previousKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("librarian.key.previous_page",
 				InputUtil.Type.KEYSYM,
 				GLFW.GLFW_KEY_LEFT_BRACKET,
-				KeyBinding.Category.CREATIVE));
+				navigationCategory));
 		backupKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("librarian.key.backup_current_page",
 				InputUtil.Type.KEYSYM,
 				GLFW.GLFW_KEY_B,
-				KeyBinding.Category.CREATIVE));
+				actionsCategory));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client ->
 		{

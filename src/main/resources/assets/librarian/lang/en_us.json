@@ -1,6 +1,8 @@
 {
   "category.librarian.navigation": "Librarian - Navigation",
   "category.librarian.actions": "Librarian - Actions",
+  "key.category.librarian.navigation": "Librarian - Navigation",
+  "key.category.librarian.actions": "Librarian - Actions",
 
   "librarian.key.next_page": "Next Page",
   "librarian.key.previous_page": "Previous Page",
