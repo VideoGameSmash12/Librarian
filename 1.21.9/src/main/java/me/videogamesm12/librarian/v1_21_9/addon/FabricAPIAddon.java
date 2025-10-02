@@ -65,8 +65,8 @@ public class FabricAPIAddon implements IAddon
 	@Override
 	public void init()
 	{
-		navigationCategory = KeyBinding.Category.method_74698(Identifier.of("librarian", "navigation"));
-		actionsCategory = KeyBinding.Category.method_74698(Identifier.of("librarian", "actions"));
+		navigationCategory = KeyBinding.Category.create(Identifier.of("librarian", "navigation"));
+		actionsCategory = KeyBinding.Category.create(Identifier.of("librarian", "actions"));
 
 		nextKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("librarian.key.next_page",
 				InputUtil.Type.KEYSYM,
