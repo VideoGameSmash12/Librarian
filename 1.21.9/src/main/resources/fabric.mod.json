@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "id": "librarian-resources-1_21_9",
+  "version": "${version}",
+  "name": "Librarian Hooks (1.21.9)",
+  "description": "Version-specific code for 1.21.9.",
+  "authors": [
+    "videogamesm12"
+  ],
+  "contact": {
+    "homepage": "https://github.com/VideoGameSmash12/Librarian",
+    "sources": "https://github.com/VideoGameSmash12/Librarian/tree/master/1.21.9",
+    "issues": "https://github.com/VideoGameSmash12/Librarian/issues"
+  },
+  "license": "GPL-3.0",
+  "icon": {
+    "64": "assets/librarian-resources/icon-64.png",
+    "128": "assets/librarian-resources/icon.png",
+    "256": "assets/librarian-resources/icon-256.png"
+  },
+  "environment": "client",
+  "entrypoints": {
+    "librarian-mechanic": [
+      "me.videogamesm12.librarian.v1_21_9.MechanicFactory"
+    ],
+    "librarian-addon": [
+      "me.videogamesm12.librarian.v1_21_9.addon.FabricAPIAddon"
+    ],
+    "librarian-listener": [
+      "me.videogamesm12.librarian.v1_21_9.listeners.ActionBarNotifier",
+      "me.videogamesm12.librarian.v1_21_9.listeners.ToastNotifier"
+    ]
+  },
+  "mixins": [
+    "librarian.v1_21_9.mixins.json"
+  ],
+  "accessWidener": "librarian.v1_21_9.accesswidener",
+  "depends": {
+    "minecraft": "1.21.9",
+    "fabric": "*"
+  },
+  "breaks": {
+    "librarian-resources-bleeding": "*"
+  },
+  "custom": {
+    "modmenu": {
+      "badges": ["library"],
+      "parent": "librarian"
+    }
+  }
+}
