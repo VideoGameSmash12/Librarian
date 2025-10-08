@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
-  "id": "librarian-resources-1_21_9",
+  "id": "librarian-resources-1_21_10",
   "version": "${version}",
-  "name": "Librarian Hooks (1.21.9)",
-  "description": "Version-specific code for 1.21.9.",
+  "name": "Librarian Hooks (1.21.10)",
+  "description": "Version-specific code for 1.21.10.",
   "authors": [
     "videogamesm12"
   ],
   "contact": {
     "homepage": "https://github.com/VideoGameSmash12/Librarian",
-    "sources": "https://github.com/VideoGameSmash12/Librarian/tree/master/1.21.9",
+    "sources": "https://github.com/VideoGameSmash12/Librarian/tree/master/1.21.10",
     "issues": "https://github.com/VideoGameSmash12/Librarian/issues"
   },
   "license": "GPL-3.0",
@@ -21,22 +21,22 @@
   "environment": "client",
   "entrypoints": {
     "librarian-mechanic": [
-      "me.videogamesm12.librarian.v1_21_9.MechanicFactory"
+      "me.videogamesm12.librarian.v1_21_10.MechanicFactory"
     ],
     "librarian-addon": [
-      "me.videogamesm12.librarian.v1_21_9.addon.FabricAPIAddon"
+      "me.videogamesm12.librarian.v1_21_10.addon.FabricAPIAddon"
     ],
     "librarian-listener": [
-      "me.videogamesm12.librarian.v1_21_9.listeners.ActionBarNotifier",
-      "me.videogamesm12.librarian.v1_21_9.listeners.ToastNotifier"
+      "me.videogamesm12.librarian.v1_21_10.listeners.ActionBarNotifier",
+      "me.videogamesm12.librarian.v1_21_10.listeners.ToastNotifier"
     ]
   },
   "mixins": [
-    "librarian.v1_21_9.mixins.json"
+    "librarian.v1_21_10.mixins.json"
   ],
-  "accessWidener": "librarian.v1_21_9.accesswidener",
+  "accessWidener": "librarian.v1_21_10.accesswidener",
   "depends": {
-    "minecraft": "1.21.9",
+    "minecraft": "1.21.10",
     "fabric": "*"
   },
   "breaks": {
