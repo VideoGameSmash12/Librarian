@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.videogamesm12.librarian.v1_21_9.listeners;
+package me.videogamesm12.librarian.v1_21_10.listeners;
 
 import com.google.common.eventbus.Subscribe;
 import me.videogamesm12.librarian.api.AbstractEventListener;

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.videogamesm12.librarian.v1_21_9.mixin;
+package me.videogamesm12.librarian.v1_21_10.mixin;
 
 import me.videogamesm12.librarian.Librarian;
 import net.minecraft.client.MinecraftClient;
