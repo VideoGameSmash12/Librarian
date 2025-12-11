@@ -24,9 +24,9 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(InventoryMenuScreen.class)
 public interface InventoryMenuScreenAccessor
 {
-	@Accessor
+	@Accessor(value = "x")
 	int getX();
 
-	@Accessor
+	@Accessor(value = "y")
 	int getY();
 }
