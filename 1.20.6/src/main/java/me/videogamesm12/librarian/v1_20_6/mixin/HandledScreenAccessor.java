@@ -24,9 +24,9 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(HandledScreen.class)
 public interface HandledScreenAccessor
 {
-	@Accessor
+	@Accessor(value = "x")
 	int getX();
 
-	@Accessor
+	@Accessor(value = "y")
 	int getY();
 }
