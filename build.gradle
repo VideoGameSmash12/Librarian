@@ -34,10 +34,18 @@ dependencies {
 
 
 allprojects {
-    apply plugin: 'fabric-loom'
+    // If the module is for 1.21.11 and earlier or is the main project, use Loom with remapping support
+    if (name.startsWith("1.") || it == rootProject) {
+        apply plugin: 'net.fabricmc.fabric-loom-remap'
+    }
+    // otherwise, use Loom without remapping support
+    else {
+        apply plugin: 'net.fabricmc.fabric-loom'
+    }
 
     ext {
         java_version = 8
+        remap = name.startsWith("1.") || it == rootProject
     }
 
     tasks.withType(JavaCompile).configureEach {
@@ -60,7 +68,13 @@ allprojects {
 
     // Including this because without it I can't actually use mixins for some reason???
     dependencies {
-        modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+        if (remap) {
+            modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+        }
+        else {
+            implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+        }
+
         implementation "net.kyori:adventure-api:4.22.0"
         implementation "net.kyori:adventure-key:4.22.0"
         implementation "net.kyori:adventure-text-serializer-gson:4.22.0"
@@ -92,5 +106,7 @@ subprojects {
 }
 
 subprojects.each {
-    remapJar.dependsOn("${it.path}:remapJar")
+    if (remap) {
+        remapJar.dependsOn("${it.path}:remapJar")
+    }
 }
