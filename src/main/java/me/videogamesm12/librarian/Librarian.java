@@ -38,7 +38,7 @@ import java.util.*;
 @Getter
 public class Librarian implements ClientModInitializer
 {
-	private static final List<String> requiredApis = Arrays.asList("fabric", "legacy-fabric-api", "osl");
+	private static final List<String> requiredApis = Arrays.asList("fabric", "fabric-api", "legacy-fabric-api", "osl");
 	@Getter
 	private static final Logger logger = LogManager.getLogger("Librarian");
 

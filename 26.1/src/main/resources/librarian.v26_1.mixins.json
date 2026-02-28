@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "me.videogamesm12.librarian.v26_1.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "client": [
+    "CreativeModeInventoryScreenMixin",
+    "AbstractContainerScreenAccessor",
+    "HotbarManagerMixin",
+    "MinecraftClientMixin",
+    "ScreenAccessor"
+  ]
+}
