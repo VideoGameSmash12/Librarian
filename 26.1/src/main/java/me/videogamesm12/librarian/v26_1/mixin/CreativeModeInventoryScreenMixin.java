@@ -129,23 +129,22 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 			@Override
 			public boolean isActive()
 			{
-				return tabIsHotbar(selectedTab) && isFocused();
+				return tabIsHotbar(selectedTab);
 			}
 
 			@Override
-			public boolean mouseClicked(MouseButtonEvent event, boolean bl)
+			public boolean mouseReleased(MouseButtonEvent event)
 			{
-				Librarian.getLogger().fatal("Debug - mouse clicked event");
+				// I don't know why, but onClick or mouseClicked don't fire anymore after you switch tabs or rename the
+				// 	hotbar page. Why? Who knows! It wasn't like that in <=1.21.11 though!
 
 				if (!isFocused())
 				{
-					Librarian.getLogger().fatal("Not focused");
 					setFocused(true);
 					return true;
 				}
 
-				Librarian.getLogger().fatal("Focused");
-				return super.mouseClicked(event, bl);
+				return super.mouseReleased(event);
 			}
 		};
 
