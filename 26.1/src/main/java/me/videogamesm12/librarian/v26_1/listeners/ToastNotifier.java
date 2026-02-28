@@ -21,6 +21,7 @@ import com.google.common.eventbus.Subscribe;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.AbstractEventListener;
 import me.videogamesm12.librarian.api.event.*;
 import me.videogamesm12.librarian.util.FNF;
@@ -90,14 +91,18 @@ public class ToastNotifier extends AbstractEventListener
 
 	private void addOrUpdateNotification(Component title, Component description, LibrarianToast.Type type)
 	{
+		Librarian.getLogger().info("Debug - updating or adding toast");
+		Librarian.getLogger().info("Debug - Toast type {}", type);
 		final LibrarianToast toast = Minecraft.getInstance().getToastManager().getToast(LibrarianToast.class, type);
 
 		if (toast == null)
 		{
+			Librarian.getLogger().info("Toast is null");
 			Minecraft.getInstance().getToastManager().addToast(new LibrarianToast(title, description, type));
 		}
 		else
 		{
+			Librarian.getLogger().info("Toast is not null");
 			toast.setTitle(title);
 			toast.setDescription(description);
 			toast.setJustUpdated(true);
@@ -113,7 +118,7 @@ public class ToastNotifier extends AbstractEventListener
 		@Setter
 		private Component description;
 		@Getter
-		private final Type type;
+		private final Type token;
 		//-
 		private long startTime;
 		@Setter
@@ -121,11 +126,11 @@ public class ToastNotifier extends AbstractEventListener
 		@Getter
 		private Visibility wantedVisibility = Visibility.HIDE;
 
-		public LibrarianToast(Component title, Component description, Type type)
+		public LibrarianToast(Component title, Component description, Type token)
 		{
 			this.title = title;
 			this.description = description;
-			this.type = type;
+			this.token = token;
 		}
 
 		@Override
@@ -145,13 +150,13 @@ public class ToastNotifier extends AbstractEventListener
 		{
 			// Draw images
 			graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BACKGROUND, 0, 0, width(), height());
-			if (type.getIcon() != null)
+			if (token.getIcon() != null)
 			{
-				graphics.blitSprite(RenderPipelines.GUI_TEXTURED, type.getIcon(), 6, 6, 20, 20);
+				graphics.blitSprite(RenderPipelines.GUI_TEXTURED, token.getIcon(), 6, 6, 20, 20);
 			}
 
 			// Draw text
-			graphics.drawString(font, title, 30, description != null ? 7 : 12, type.getTextColor(), false);
+			graphics.drawString(font, title, 30, description != null ? 7 : 12, token.getTextColor(), false);
 			if (description != null)
 				graphics.drawString(font, description, 30, 18, 0xFFFFFFFF, false);
 		}
