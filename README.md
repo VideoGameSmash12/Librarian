@@ -40,7 +40,7 @@ this purpose.
 
 ### Multi-version support
 To account for those holding out on specifics game versions, Librarian supports a wide range of Minecraft versions as
-recent as 1.21.10 and as old as 1.12.2 (with the help of [Legacy Fabric](https://legacyfabric.net/) and
+recent as 1.21.11 and as old as 1.12.2 (with the help of [Legacy Fabric](https://legacyfabric.net/) and
 [Ornithe](https://ornithemc.net/)). I am committed to supporting as many versions as reasonably possible. The foundation
 of Librarian, while similar to its predecessor, is written with the goal of not relying on any particular
 version-specific code. This helps make it more future-proof in the long run.
@@ -66,6 +66,7 @@ Currently supported versions:
 * 1.21.5
 * 1.21.8
 * 1.21.10
+* 1.21.11
 
 ## Installing
 Download the mod JAR and copy it to your 'mods' folder. Depending on the version of Minecraft you are running, you may
@@ -96,6 +97,7 @@ need to install some extra mods as well. Here is a table explaining exactly that
 | 1.21.5  | Fabric        | Fabric API                 |
 | 1.21.8  | Fabric        | Fabric API                 |
 | 1.21.10 | Fabric        | Fabric API                 |
+| 1.21.11 | Fabric        | Fabric API                 |
 
 ## Building
 Librarian requires at least JDK 21 to be compiled. You can compile it by running `gradlew build` (or, if you are running
