@@ -50,7 +50,7 @@ import java.util.Optional;
 @Mixin(HotbarManager.class)
 public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 {
-	@Shadow @Final private Path optionsFile;
+	@Shadow private Path optionsFile;
 
 	@Shadow protected abstract void load();
 
@@ -79,14 +79,14 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	}
 
 	@Inject(method = "load", at = @At(value = "INVOKE",
-			target = "Lorg/slf4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V", shift = At.Shift.AFTER, remap = false))
+			target = "Lorg/slf4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V", shift = At.Shift.AFTER))
 	private void hookLoadFailure(CallbackInfo ci, @Local Exception ex)
 	{
 		Librarian.getInstance().getEventBus().post(new LoadFailureEvent(this, ex));
 	}
 
 	@Inject(method = "save", at = @At(value = "INVOKE",
-			target = "Lorg/slf4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V", shift = At.Shift.AFTER, remap = false))
+			target = "Lorg/slf4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V", shift = At.Shift.AFTER))
 	private void hookSaveFailure(CallbackInfo ci, @Local Exception ex)
 	{
 		Librarian.getInstance().getEventBus().post(new SaveFailureEvent(this, ex));

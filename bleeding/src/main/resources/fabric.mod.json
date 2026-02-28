@@ -34,13 +34,10 @@
   "mixins": [
     "librarian.v1_21_11.mixins.json"
   ],
-  "accessWidener": "librarian.v1_21_11.accesswidener",
+  "accessWidener": "librarian.v1_21_11.classtweaker",
   "depends": {
-    "minecraft": "1.21.11_unobfuscated",
+    "minecraft": "1.21.11+unobfuscated",
     "fabric": "*"
-  },
-  "breaks": {
-    "librarian-resources-bleeding": "*"
   },
   "custom": {
     "modmenu": {

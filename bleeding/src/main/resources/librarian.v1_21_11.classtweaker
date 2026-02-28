@@ -1,2 +1,2 @@
-accessWidener	v1	named
+classTweaker	v1	official
 mutable   field   net/minecraft/client/HotbarManager   optionsFile   Ljava/nio/file/Path;
