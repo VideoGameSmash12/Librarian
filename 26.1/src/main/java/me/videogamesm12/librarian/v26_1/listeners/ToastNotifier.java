@@ -91,18 +91,14 @@ public class ToastNotifier extends AbstractEventListener
 
 	private void addOrUpdateNotification(Component title, Component description, LibrarianToast.Type type)
 	{
-		Librarian.getLogger().info("Debug - updating or adding toast");
-		Librarian.getLogger().info("Debug - Toast type {}", type);
 		final LibrarianToast toast = Minecraft.getInstance().getToastManager().getToast(LibrarianToast.class, type);
 
 		if (toast == null)
 		{
-			Librarian.getLogger().info("Toast is null");
 			Minecraft.getInstance().getToastManager().addToast(new LibrarianToast(title, description, type));
 		}
 		else
 		{
-			Librarian.getLogger().info("Toast is not null");
 			toast.setTitle(title);
 			toast.setDescription(description);
 			toast.setJustUpdated(true);
