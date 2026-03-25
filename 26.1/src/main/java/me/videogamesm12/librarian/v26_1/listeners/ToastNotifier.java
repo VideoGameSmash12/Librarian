@@ -21,19 +21,17 @@ import com.google.common.eventbus.Subscribe;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.AbstractEventListener;
 import me.videogamesm12.librarian.api.event.*;
 import me.videogamesm12.librarian.util.FNF;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.client.gui.components.toasts.ToastManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import org.jetbrains.annotations.NotNull;
 
 public class ToastNotifier extends AbstractEventListener
 {
@@ -142,7 +140,7 @@ public class ToastNotifier extends AbstractEventListener
 		}
 
 		@Override
-		public void render(@NotNull GuiGraphics graphics, @NotNull Font font, long fullyVisibleForMs)
+		public void extractRenderState(GuiGraphicsExtractor graphics, Font font, long fullyVisibleForMs)
 		{
 			// Draw images
 			graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BACKGROUND, 0, 0, width(), height());
@@ -152,9 +150,9 @@ public class ToastNotifier extends AbstractEventListener
 			}
 
 			// Draw text
-			graphics.drawString(font, title, 30, description != null ? 7 : 12, token.getTextColor(), false);
+			graphics.text(font, title, 30, description != null ? 7 : 12, token.getTextColor(), false);
 			if (description != null)
-				graphics.drawString(font, description, 30, 18, 0xFFFFFFFF, false);
+				graphics.text(font, description, 30, 18, 0xFFFFFFFF, false);
 		}
 
 		@Getter

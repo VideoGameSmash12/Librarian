@@ -25,8 +25,8 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface AbstractContainerScreenAccessor
 {
 	@Accessor(value = "leftPos")
-	int getX();
+	int getLeftPos();
 
 	@Accessor(value = "topPos")
-	int getY();
+	int getTopPos();
 }
