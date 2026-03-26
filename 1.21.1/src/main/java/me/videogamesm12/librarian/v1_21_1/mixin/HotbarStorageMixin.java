@@ -26,6 +26,7 @@ import me.videogamesm12.librarian.api.event.LoadFailureEvent;
 import me.videogamesm12.librarian.api.event.SaveFailureEvent;
 import me.videogamesm12.librarian.util.FNF;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.option.HotbarStorage;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
@@ -65,6 +66,9 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Unique
 	private HotbarPageMetadata metadata = null;
 
+	@Unique
+	private int dataVersion = 0;
+
 	/**
 	 * <p>Hijacks what is used as the location by HotbarStorage on initialization.</p>
 	 * @param ci        CallbackInfo
@@ -100,8 +104,12 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 
 	@Inject(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/datafixer/DataFixTypes;update(Lcom/mojang/datafixers/DataFixer;Lnet/minecraft/nbt/NbtCompound;I)Lnet/minecraft/nbt/NbtCompound;",
 			shift = At.Shift.AFTER))
-	private void fetchMetadata(CallbackInfo ci, @Local NbtCompound compound)
+	private void fetchData(CallbackInfo ci, @Local int dataVersion, @Local NbtCompound compound)
 	{
+		// Store the dataVersion of the hotbar from disk
+		this.dataVersion = dataVersion;
+
+		// If present, fetch our own metadata as well
 		NbtCompound meta = compound.getCompound("librarian");
 
 		if (meta != null)
@@ -136,8 +144,12 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Inject(method = "save", at = @At(value = "INVOKE", target =
 			"Lnet/minecraft/nbt/NbtIo;write(Lnet/minecraft/nbt/NbtCompound;Ljava/nio/file/Path;)V",
 			shift = At.Shift.BEFORE))
-	private void addMetadata(CallbackInfo ci, @Local NbtCompound compound)
+	private void addData(CallbackInfo ci, @Local NbtCompound compound)
 	{
+		// Update the data version
+		dataVersion = SharedConstants.getGameVersion().getSaveVersion().getId();
+
+		// Write our metadata
 		if (metadata != null)
 		{
 			NbtCompound meta = new NbtCompound();
@@ -159,6 +171,12 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 
 			compound.put("librarian", meta);
 		}
+	}
+
+	@Override
+	public int librarian$dataVersion()
+	{
+		return dataVersion;
 	}
 
 	@Override

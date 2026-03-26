@@ -62,8 +62,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -520,27 +518,6 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	private boolean tabIsHotbar(ItemGroup group)
 	{
 		return group.getType() == ItemGroup.Type.HOTBAR;
-	}
-
-	@Unique
-	private static boolean interrupt(boolean check, Text title, Text description, Operation<Void> runIfTrue, int index, boolean restore, boolean save)
-	{
-		if (check)
-		{
-			final MinecraftClient client = MinecraftClient.getInstance();
-
-			client.setScreen(new ConfirmScreen((val) ->
-			{
-				if (val) runIfTrue.call(client, index, restore, save);
-				client.setScreen(null);
-			}, title, description));
-
-			return false;
-		}
-		else
-		{
-			return true;
-		}
 	}
 	
 	@Accessor
