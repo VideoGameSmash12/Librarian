@@ -28,21 +28,22 @@ import me.videogamesm12.librarian.api.event.CacheClearEvent;
 import me.videogamesm12.librarian.api.event.NavigationEvent;
 import me.videogamesm12.librarian.api.event.ReloadPageEvent;
 import me.videogamesm12.librarian.util.ComponentProcessor;
+import me.videogamesm12.librarian.v1_13_2.ornithe.FixedConfirmScreen;
 import me.videogamesm12.librarian.v1_13_2.ornithe.addon.OSLAddon;
 import me.videogamesm12.librarian.v1_13_2.ornithe.widget.FormattedTextFieldWidget;
 import net.kyori.adventure.text.Component;
 import net.minecraft.client.Hotbar;
 import net.minecraft.client.HotbarManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.menu.CreativeInventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.resource.language.I18n;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.CreativeModeTab;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -52,6 +53,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Mixin(CreativeInventoryScreen.class)
@@ -367,39 +370,71 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	}
 
 	@WrapMethod(method = "saveOrLoadToolbar")
-	private static void checkForAccidentalOverwrites(Minecraft client, int index, boolean restore, boolean save, Operation<Void> original)
+	private static void checkForAccidentalItemLoss(Minecraft client, int index, boolean restore, boolean save,
+												   Operation<Void> original)
 	{
 		if (save)
 		{
 			final HotbarManager storage = client.m_7202825();
-			final Hotbar storageEntry = storage.get(index);
+			final IWrappedHotbarStorage wrappedStorage = (IWrappedHotbarStorage) storage;
+			final List<String> issues = new ArrayList<>();
 
-			if (storageEntry.isEmpty())
+			downgradeCheck:
 			{
-				original.call(client, index, restore, save);
-				return;
-			}
-
-			boolean confirm = false;
-
-			for (int i = 0; i < PlayerInventory.getHotbarSize(); i++)
-			{
-				ItemStack inventoryStack = Objects.requireNonNull(client.player).inventory.getStack(i);
-				ItemStack hotbarEntry = storageEntry.get(i);
-
-				if (!hotbarEntry.isEmpty() && !inventoryStack.matchesItem(hotbarEntry))
+				if (wrappedStorage.librarian$dataVersion() > 1631)
 				{
-					confirm = true;
-					break;
+					issues.add("downgrade");
+					break downgradeCheck;
 				}
 			}
 
-			if (confirm)
+			overwriteCheck:
 			{
-				Minecraft.getInstance().openScreen(new ConfirmScreen((bl, i) ->
+				final Hotbar storageEntry = storage.get(index);
+
+				if (storageEntry.isEmpty())
+				{
+					break overwriteCheck;
+				}
+
+				for (int i = 0; i < PlayerInventory.getHotbarSize(); i++)
+				{
+					ItemStack inventoryStack = Objects.requireNonNull(client.player).inventory.getStack(i);
+					ItemStack hotbarEntry = storageEntry.get(i);
+
+					if (!hotbarEntry.isEmpty() && !inventoryStack.matchesItem(hotbarEntry))
+					{
+						issues.add("nonmatching");
+						break overwriteCheck;
+					}
+				}
+			}
+
+			if (!issues.isEmpty())
+			{
+				final Text title;
+				final Text description;
+
+				// Only one issue found, use more specific message for that
+				if (issues.size() == 1)
+				{
+					title = new TranslatableText("librarian.messages.issues." + issues.get(0) + ".title");
+					description = new TranslatableText("librarian.messages.issues." + issues.get(0) + ".description");
+				}
+				// Otherwise, use more brief versions instead
+				else
+				{
+					title = new TranslatableText("librarian.messages.possible_loss_scenario_detected.title");
+					description = new TranslatableText("librarian.messages.possible_loss_scenario_detected.description");
+					issues.forEach(issue -> description.append(new TranslatableText("librarian.messages.issues." + issue + ".summary")).append("\n\n"));
+					description.append(new TranslatableText("librarian.messages.possible_loss_scenario_detected.footer"));
+				}
+
+				Minecraft.getInstance().openScreen(new FixedConfirmScreen(title.getFormattedString(), description.getFormattedString(), 1337, (bl, i) ->
 				{
 					if (bl) original.call(client, index, restore, save);
-				}, I18n.translate("librarian.messages.possible_overwrite_detected.title"), I18n.translate("librarian.messages.possible_overwrite_detected.description"), 1337));
+					Minecraft.getInstance().openScreen(null);
+				}));
 			}
 			else
 			{

@@ -32,6 +32,7 @@ import me.videogamesm12.librarian.v1_21_1.addon.FabricAPIAddon;
 import net.fabricmc.fabric.impl.client.itemgroup.FabricCreativeGuiComponents;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ConfirmScreen;
@@ -46,6 +47,7 @@ import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
@@ -56,6 +58,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -399,42 +402,72 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	}
 
 	@WrapMethod(method = "onHotbarKeyPress")
-	private static void checkForAccidentalOverwrites(MinecraftClient client, int index, boolean restore, boolean save,
-													 Operation<Void> original)
+	private static void checkForAccidentalItemLoss(MinecraftClient client, int index, boolean restore, boolean save,
+												   Operation<Void> original)
 	{
 		if (save)
 		{
 			final HotbarStorage storage = client.getCreativeHotbarStorage();
-			final List<ItemStack> storageEntry = storage.getSavedHotbar(index).deserialize(Objects.requireNonNull(client.player)
-					.getWorld().getRegistryManager());
+			final IWrappedHotbarStorage wrappedStorage = (IWrappedHotbarStorage) storage;
+			final List<String> issues = new ArrayList<>();
 
-			if (storageEntry.isEmpty())
+			downgradeCheck:
 			{
-				original.call(client, index, restore, save);
-				return;
-			}
-
-			boolean confirm = false;
-
-			for (int i = 0; i < PlayerInventory.getHotbarSize(); i++)
-			{
-				ItemStack inventoryStack = Objects.requireNonNull(client.player).getInventory().getStack(i);
-				ItemStack hotbarEntry = storageEntry.get(i);
-
-				if (!hotbarEntry.isEmpty() && !ItemStack.areItemsAndComponentsEqual(inventoryStack, hotbarEntry))
+				if (wrappedStorage.librarian$dataVersion() > SharedConstants.getGameVersion().getSaveVersion().getId())
 				{
-					confirm = true;
-					break;
+					issues.add("downgrade");
+					break downgradeCheck;
 				}
 			}
 
-			if (confirm)
+			overwriteCheck:
 			{
+				final List<ItemStack> storageEntry = storage.getSavedHotbar(index).deserialize(Objects.requireNonNull(client.world)
+						.getRegistryManager());
+
+				if (storageEntry.isEmpty())
+				{
+					break overwriteCheck;
+				}
+
+				for (int i = 0; i < PlayerInventory.getHotbarSize(); i++)
+				{
+					ItemStack inventoryStack = Objects.requireNonNull(client.player).getInventory().getStack(i);
+					ItemStack hotbarEntry = storageEntry.get(i);
+
+					if (!hotbarEntry.isEmpty() && !ItemStack.areItemsAndComponentsEqual(inventoryStack, hotbarEntry))
+					{
+						issues.add("nonmatching");
+						break overwriteCheck;
+					}
+				}
+			}
+
+			if (!issues.isEmpty())
+			{
+				final MutableText title;
+				final MutableText description;
+
+				// Only one issue found, use more specific message for that
+				if (issues.size() == 1)
+				{
+					title = Text.translatable("librarian.messages.issues." + issues.getFirst() + ".title");
+					description = Text.translatable("librarian.messages.issues." + issues.getFirst() + ".description");
+				}
+				// Otherwise, use more brief versions instead
+				else
+				{
+					title = Text.translatable("librarian.messages.possible_loss_scenario_detected.title");
+					description = Text.translatable("librarian.messages.possible_loss_scenario_detected.description");
+					issues.forEach(issue -> description.append(Text.translatable("librarian.messages.issues." + issue + ".summary")).append("\n\n"));
+					description.append(Text.translatable("librarian.messages.possible_loss_scenario_detected.footer"));
+				}
+
 				MinecraftClient.getInstance().setScreen(new ConfirmScreen((value) ->
 				{
 					if (value) original.call(client, index, restore, save);
 					MinecraftClient.getInstance().setScreen(null);
-				}, Text.translatable("librarian.messages.possible_overwrite_detected.title"), Text.translatable("librarian.messages.possible_overwrite_detected.description")));
+				}, title, description));
 			}
 			else
 			{

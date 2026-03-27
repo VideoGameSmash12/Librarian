@@ -26,6 +26,7 @@ import me.videogamesm12.librarian.api.event.LoadFailureEvent;
 import me.videogamesm12.librarian.api.event.SaveFailureEvent;
 import me.videogamesm12.librarian.util.FNF;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.HotbarManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -64,6 +65,9 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	@Unique
 	private HotbarPageMetadata metadata = null;
 
+	@Unique
+	private int dataVersion = 0;
+
 	/**
 	 * <p>Hijacks what is used as the location by HotbarStorage on initialization.</p>
 	 * @param ci        CallbackInfo
@@ -100,28 +104,32 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	@Inject(method = "load", at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/util/datafix/DataFixTypes;updateToCurrentVersion(Lcom/mojang/datafixers/DataFixer;Lnet/minecraft/nbt/CompoundTag;I)Lnet/minecraft/nbt/CompoundTag;",
 			shift = At.Shift.AFTER))
-	private void fetchMetadata(CallbackInfo ci, @Local(name = "tag") CompoundTag tag)
+	private void fetchData(CallbackInfo ci, @Local(name = "version") int version, @Local(name = "tag") CompoundTag tag)
 	{
+		// Store the dataVersion of the hotbar from disk
+		this.dataVersion = version;
+
+		// If present, fetch our own metadata as well
 		tag.getCompound("librarian").ifPresent(meta ->
 		{
-			int version = meta.getInt("version").orElse(HotbarPageMetadata.getCurrentVersion());
+			int modVersion = meta.getInt("version").orElse(HotbarPageMetadata.getCurrentVersion());
 			String name = meta.getString("name").orElse(null);
 			String description = meta.getString("description").orElse(null);
 			List<String> authors = new ArrayList<>(meta.getListOrEmpty("authors").stream()
 					.map(Tag::asString).filter(Optional::isPresent).map(Optional::get).toList());
 
-			if (version > HotbarPageMetadata.getCurrentVersion())
+			if (modVersion > HotbarPageMetadata.getCurrentVersion())
 			{
 				Librarian.getLogger().error("Hotbar metadata rejected - data is intended for a newer version of " +
 								"Librarian than what we are currently running (current version {}, file version {})",
-						HotbarPageMetadata.getCurrentVersion(), version);
+						HotbarPageMetadata.getCurrentVersion(), modVersion);
 
 				metadata = HotbarPageMetadata.builder().build();
 			}
 			else
 			{
 				metadata = HotbarPageMetadata.builder()
-						.version(version)
+						.version(modVersion)
 						.name(name != null && !name.isBlank() ? librarian$serializer.deserializeOrNull(name) : null)
 						.description(description != null && !description.isBlank() ?
 								librarian$serializer.deserializeOrNull(description) : null)
@@ -134,8 +142,12 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	@Inject(method = "save", at = @At(value = "INVOKE", target =
 			"Lnet/minecraft/nbt/NbtIo;write(Lnet/minecraft/nbt/CompoundTag;Ljava/nio/file/Path;)V",
 			shift = At.Shift.BEFORE))
-	private void addMetadata(CallbackInfo ci, @Local(name = "tag") CompoundTag compound)
+	private void addData(CallbackInfo ci, @Local(name = "tag") CompoundTag tag)
 	{
+		// Update the data version
+		dataVersion = SharedConstants.getCurrentVersion().dataVersion().version();
+
+		// Write our metadata
 		if (metadata != null)
 		{
 			CompoundTag meta = new CompoundTag();
@@ -155,8 +167,14 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 				meta.put("authors", list);
 			}
 
-			compound.put("librarian", meta);
+			tag.put("librarian", meta);
 		}
+	}
+
+	@Override
+	public int librarian$dataVersion()
+	{
+		return dataVersion;
 	}
 
 	@Override

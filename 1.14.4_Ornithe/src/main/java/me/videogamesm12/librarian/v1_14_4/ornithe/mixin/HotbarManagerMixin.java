@@ -26,6 +26,7 @@ import me.videogamesm12.librarian.api.event.LoadFailureEvent;
 import me.videogamesm12.librarian.api.event.SaveFailureEvent;
 import me.videogamesm12.librarian.util.FNF;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.HotbarManager;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
@@ -66,6 +67,9 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	@Unique
 	private HotbarPageMetadata metadata = null;
 
+	@Unique
+	private int dataVersion = 0;
+
 	/**
 	 * <p>Hijacks what is used as the location by HotbarStorage on initialization.</p>
 	 * @param file      File
@@ -103,6 +107,10 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 			shift = At.Shift.AFTER))
 	private void fetchMetadata(CallbackInfo ci, @Local NbtCompound compound)
 	{
+		// Store the DataVersion of the hotbar from disk
+		this.dataVersion = compound.getInt("DataVersion");
+
+		// If present, fetch our own metadata as well
 		NbtCompound meta = compound.getCompound("librarian");
 
 		if (meta != null)
@@ -139,6 +147,10 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 			shift = At.Shift.BEFORE))
 	private void addMetadata(CallbackInfo ci, @Local NbtCompound compound)
 	{
+		// Update the data version
+		dataVersion = SharedConstants.m_0171173().getWorldVersion();
+
+		// Write our metadata
 		if (metadata != null)
 		{
 			NbtCompound meta = new NbtCompound();
@@ -160,6 +172,12 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 
 			compound.put("librarian", meta);
 		}
+	}
+
+	@Override
+	public int librarian$dataVersion()
+	{
+		return dataVersion;
 	}
 
 	@Override

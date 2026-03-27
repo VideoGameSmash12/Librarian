@@ -62,6 +62,9 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Unique
 	private HotbarPageMetadata metadata = null;
 
+	@Unique
+	private int dataVersion = 1343;
+
 	/**
 	 * <p>Hijacks what is used as the location by HotbarStorage on initialization.</p>
 	 * @param instance  Minecraft
@@ -96,7 +99,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	}
 
 	@ModifyVariable(method = "method_14449", at = @At(value = "STORE", ordinal = 0))
-	private NbtCompound fetchMetadata(NbtCompound compound)
+	private NbtCompound fetchData(NbtCompound compound)
 	{
 		// Ignore if null/no data
 		if (compound == null)
@@ -104,6 +107,13 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 			return null;
 		}
 
+		// Store the dataVersion of the hotbar from disk (if present)
+		if (compound.contains("DataVersion", 99))
+		{
+			this.dataVersion = compound.getInt("DataVersion");
+		}
+
+		// Fetch our metadata while we're at it
 		NbtCompound meta = compound.getCompound("librarian");
 
 		if (meta != null)
@@ -145,8 +155,12 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Inject(method = "method_14451", at = @At(value = "INVOKE", target =
 			"Lnet/minecraft/nbt/NbtIo;write(Lnet/minecraft/nbt/NbtCompound;Ljava/io/File;)V",
 			shift = At.Shift.BEFORE))
-	private void addMetadata(CallbackInfo ci, @Local NbtCompound compound)
+	private void addData(CallbackInfo ci, @Local NbtCompound compound)
 	{
+		// Update the data version
+		dataVersion = 1343;
+
+		// Write our metadata
 		if (metadata != null)
 		{
 			NbtCompound meta = new NbtCompound();
@@ -168,6 +182,12 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 
 			compound.put("librarian", meta);
 		}
+	}
+
+	@Override
+	public int librarian$dataVersion()
+	{
+		return this.dataVersion;
 	}
 
 	@Override

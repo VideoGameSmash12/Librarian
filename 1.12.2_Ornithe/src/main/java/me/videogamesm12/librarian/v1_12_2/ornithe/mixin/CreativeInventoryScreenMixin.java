@@ -28,6 +28,7 @@ import me.videogamesm12.librarian.api.event.CacheClearEvent;
 import me.videogamesm12.librarian.api.event.NavigationEvent;
 import me.videogamesm12.librarian.api.event.ReloadPageEvent;
 import me.videogamesm12.librarian.util.ComponentProcessor;
+import me.videogamesm12.librarian.v1_12_2.ornithe.FixedConfirmScreen;
 import me.videogamesm12.librarian.v1_12_2.ornithe.ILButtonWidget;
 import me.videogamesm12.librarian.v1_12_2.ornithe.addon.OSLAddon;
 import me.videogamesm12.librarian.v1_12_2.ornithe.widget.FormattedTextFieldWidget;
@@ -35,7 +36,6 @@ import net.kyori.adventure.text.Component;
 import net.minecraft.client.Hotbar;
 import net.minecraft.client.HotbarManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.menu.CreativeInventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -53,6 +53,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Mixin(CreativeInventoryScreen.class)
@@ -329,39 +331,74 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 
 	@WrapMethod(method = "saveOrLoadToolbar")
-	private static void checkForAccidentalOverwrites(Minecraft client, int index, boolean restore, boolean save, Operation<Void> original)
+	private static void checkForAccidentalItemLoss(Minecraft client, int index, boolean restore, boolean save,
+												   Operation<Void> original)
 	{
 		if (save)
 		{
 			final HotbarManager storage = (HotbarManager) Librarian.getInstance().getCurrentPage();
-			final Hotbar storageEntry = storage.get(index);
+			final IWrappedHotbarStorage wrappedStorage = (IWrappedHotbarStorage) storage;
+			final List<String> issues = new ArrayList<>();
 
-			if (storageEntry.isEmpty())
+			downgradeCheck:
 			{
-				original.call(client, index, restore, save);
-				return;
-			}
-
-			boolean confirm = false;
-
-			for (int i = 0; i < PlayerInventory.getHotbarSize(); i++)
-			{
-				ItemStack inventoryStack = Objects.requireNonNull(client.player).inventory.getStack(i);
-				ItemStack hotbarEntry = storageEntry.get(i);
-
-				if (!hotbarEntry.isEmpty() && !inventoryStack.matchesItem(hotbarEntry))
+				if (wrappedStorage.librarian$dataVersion() > 1343)
 				{
-					confirm = true;
-					break;
+					issues.add("downgrade");
+					break downgradeCheck;
 				}
 			}
 
-			if (confirm)
+			overwriteCheck:
 			{
-				Minecraft.getInstance().openScreen(new ConfirmScreen((bl, i) ->
+				final Hotbar storageEntry = storage.get(index);
+
+				if (storageEntry.isEmpty())
 				{
-					if (bl) original.call(client, index, restore, save);
-				}, I18n.translate("librarian.messages.possible_overwrite_detected.title"), I18n.translate("librarian.messages.possible_overwrite_detected.description"), 1337));
+					break overwriteCheck;
+				}
+
+				for (int i = 0; i < PlayerInventory.getHotbarSize(); i++)
+				{
+					ItemStack inventoryStack = Objects.requireNonNull(client.player).inventory.getStack(i);
+					ItemStack hotbarEntry = storageEntry.get(i);
+
+					if (!hotbarEntry.isEmpty() && !inventoryStack.equals(hotbarEntry))
+					{
+						issues.add("nonmatching");
+						break overwriteCheck;
+					}
+				}
+			}
+
+			if (!issues.isEmpty())
+			{
+				final String title;
+				final String description;
+
+				// Only one issue found, use more specific message for that
+				if (issues.size() == 1)
+				{
+					title = I18n.translate("librarian.messages.issues." + issues.get(0) + ".title");
+					description = I18n.translate("librarian.messages.issues." + issues.get(0) + ".description");
+				}
+				// Otherwise, use more brief versions instead
+				else
+				{
+					title = I18n.translate("librarian.messages.possible_loss_scenario_detected.title");
+
+					final StringBuilder builder = new StringBuilder(I18n.translate("librarian.messages.possible_loss_scenario_detected.description"));
+					issues.forEach(issue -> builder.append(I18n.translate("librarian.messages.issues." + issue + ".summary")).append("\n\n"));
+					builder.append(I18n.translate("librarian.messages.possible_loss_scenario_detected.footer"));
+
+					description = builder.toString();
+				}
+
+				Minecraft.getInstance().openScreen(new FixedConfirmScreen((value, id) ->
+				{
+					if (value) original.call(client, index, restore, save);
+					Minecraft.getInstance().openScreen(null);
+				}, title, description, 1337));
 			}
 			else
 			{

@@ -78,6 +78,11 @@ public interface IWrappedHotbarStorage
 		// Don't do anything, this should be implemented when implementing in HotbarStorage as a mixin
 	}
 
+	default int librarian$dataVersion()
+	{
+		return 0;
+	}
+
 	default Optional<HotbarPageMetadata> librarian$getMetadata()
 	{
 		return Optional.empty();
