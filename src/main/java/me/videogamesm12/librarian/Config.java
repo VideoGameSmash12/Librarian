@@ -30,7 +30,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.file.Files;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,11 +49,9 @@ public class Config
 	private int version = currentVersion;
 
 	@Builder.Default
-	@NonNull
 	private MemorizerSettings memorizer = MemorizerSettings.builder().build();
 
 	@Builder.Default
-	@NonNull
 	private CommandSystemSettings commandSystem = CommandSystemSettings.builder().build();
 
 	/**
@@ -71,6 +69,9 @@ public class Config
 	 */
 	public MemorizerSettings memorizer()
 	{
+		if (memorizer == null)
+			memorizer = MemorizerSettings.builder().build();
+
 		return memorizer;
 	}
 
@@ -80,6 +81,9 @@ public class Config
 	 */
 	public CommandSystemSettings commandSystem()
 	{
+		if (commandSystem == null)
+			commandSystem = CommandSystemSettings.builder().build();
+
 		return commandSystem;
 	}
 
@@ -161,6 +165,11 @@ public class Config
 			try (final BufferedReader reader = Files.newBufferedReader(configFile.toPath()))
 			{
 				config = gson.fromJson(reader, Config.class);
+				if (config.version > currentVersion)
+				{
+					Librarian.getLogger().warn("The configuration file is for a newer version of Librarian and can't be loaded");
+					config = builder().build();
+				}
 			}
 			catch (JsonParseException ex)
 			{
@@ -190,6 +199,8 @@ public class Config
 	{
 		try (final BufferedWriter writer = Files.newBufferedWriter(configFile.toPath()))
 		{
+			this.version = currentVersion;
+
 			gson.toJson(this, Config.class, new JsonWriter(writer));
 		}
 		catch (IOException ex)
