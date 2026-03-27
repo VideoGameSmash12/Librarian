@@ -8,9 +8,11 @@
     "defaultRequire": 1
   },
   "client": [
+    "ConfirmScreenAccessor",
     "CreativeInventoryScreenMixin",
     "HandledScreenAccessor",
     "HotbarStorageMixin",
-    "MinecraftClientMixin"
+    "MinecraftClientMixin",
+    "ScreenAccessor"
   ]
 }
