@@ -17,6 +17,9 @@
 
 package me.videogamesm12.librarian.v1_21_11.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.datafixers.DataFixer;
 import me.videogamesm12.librarian.Librarian;
@@ -27,11 +30,10 @@ import me.videogamesm12.librarian.api.event.SaveFailureEvent;
 import me.videogamesm12.librarian.util.FNF;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.SharedConstants;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.HotbarStorage;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
+import net.minecraft.nbt.*;
+import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -42,7 +44,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.File;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -168,6 +172,71 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 			}
 
 			compound.put("librarian", meta);
+		}
+
+	}
+
+	@WrapOperation(method = "load", at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/nbt/NbtIo;read(Ljava/nio/file/Path;)Lnet/minecraft/nbt/NbtCompound;"))
+	public NbtCompound addSupportForLoadingCompressedPages(Path path, Operation<NbtCompound> original)
+	{
+		try
+		{
+			return original.call(path);
+		}
+		catch (Exception ex)
+		{
+			try
+			{
+				return NbtIo.readCompressed(Files.newInputStream(path), NbtSizeTracker.ofUnlimitedBytes());
+			}
+			catch (Exception ouch)
+			{
+				return new NbtCompound();
+			}
+		}
+	}
+
+	@WrapOperation(method = "save", at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/nbt/NbtIo;write(Lnet/minecraft/nbt/NbtCompound;Ljava/nio/file/Path;)V"))
+	public void addSupportForSavingCompressedPages(NbtCompound nbtCompound, Path path, Operation<Void> original) throws IOException
+	{
+		if (Librarian.getInstance().getConfig().optimizations().useFileCompression())
+		{
+			NbtIo.writeCompressed(nbtCompound, path);
+		}
+		else
+		{
+			original.call(nbtCompound, path);
+		}
+	}
+
+	@WrapMethod(method = "save")
+	public void savesAsyncIfEnabled(Operation<Void> original)
+	{
+		if (Librarian.getInstance().getConfig().optimizations().saveAsynchronously())
+		{
+			Librarian.getInstance().queue(() ->
+			{
+				original.call();
+
+				MinecraftClient mc = MinecraftClient.getInstance();
+				mc.execute(() ->
+				{
+					if (mc.world != null)
+					{
+						final Text message = Text.translatable("inventory.hotbarSaved",
+								mc.options.loadToolbarActivatorKey.getBoundKeyLocalizedText(),
+								"<row>");
+
+						mc.inGameHud.setOverlayMessage(message, false);
+					}
+				});
+			});
+		}
+		else
+		{
+			original.call();
 		}
 	}
 

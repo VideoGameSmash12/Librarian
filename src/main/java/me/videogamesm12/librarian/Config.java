@@ -43,7 +43,7 @@ public class Config
 {
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 	private static final File configFile = new File(FabricLoader.getInstance().getConfigDir().toFile(), "librarian.json");
-	private static final int currentVersion = 1;
+	private static final int currentVersion = 2;
 
 	@Builder.Default
 	private int version = currentVersion;
@@ -53,6 +53,9 @@ public class Config
 
 	@Builder.Default
 	private CommandSystemSettings commandSystem = CommandSystemSettings.builder().build();
+
+	@Builder.Default
+	private OptimizationSettings optimizations = OptimizationSettings.builder().build();
 
 	/**
 	 * Gets this configuration's version.
@@ -85,6 +88,18 @@ public class Config
 			commandSystem = CommandSystemSettings.builder().build();
 
 		return commandSystem;
+	}
+
+	/**
+	 * Gets the configuration for the command system.
+	 * @return	{@link CommandSystemSettings}
+	 */
+	public OptimizationSettings optimizations()
+	{
+		if (optimizations == null)
+			optimizations = OptimizationSettings.builder().build();
+
+		return optimizations;
 	}
 
 	/**
@@ -149,6 +164,44 @@ public class Config
 		@Builder.Default
 		@NonNull
 		private List<String> aliases = Collections.singletonList("lb");
+	}
+
+	/**
+	 * <h2>OptimizationSettings</h2>
+	 * <p>All configuration options for the mod's optimization features.</p>
+	 */
+	@Builder
+	public static class OptimizationSettings
+	{
+		/**
+		 * Controls whether to use file compression when saving hotbar files.
+		 */
+		@Builder.Default
+		private boolean useFileCompression = false;
+
+		/**
+		 * Controls whether to save pages asynchronously.
+		 */
+		@Builder.Default
+		private boolean saveAsynchronously = true;
+
+		/**
+		 * A list of page numbers for pages that should get automatically loaded on startup.
+		 */
+		@Getter
+		@Builder.Default
+		@NonNull
+		private List<BigInteger> pagesToPreload = new ArrayList<>();
+
+		public boolean useFileCompression()
+		{
+			return useFileCompression;
+		}
+
+		public boolean saveAsynchronously()
+		{
+			return saveAsynchronously;
+		}
 	}
 
 	/**

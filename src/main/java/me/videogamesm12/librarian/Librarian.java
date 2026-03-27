@@ -34,6 +34,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Getter
 public class Librarian implements ClientModInitializer
@@ -54,6 +56,7 @@ public class Librarian implements ClientModInitializer
 	private final Map<BigInteger, IWrappedHotbarStorage> map = new HashMap<>();
 
 	private final EventBus eventBus = new EventBus();
+	private final ThreadPoolExecutor threadPool = new ScheduledThreadPoolExecutor(4);
 
 	@Override
 	public void onInitializeClient()
@@ -88,6 +91,10 @@ public class Librarian implements ClientModInitializer
 
 		// Initialize our add-ons
 		addons.values().forEach(IAddon::init);
+
+		// Preload user-requested hotbar pages
+		config.optimizations().getPagesToPreload().parallelStream()
+				.forEach(page -> getHotbarPage(page).librarian$load());
 	}
 
 	public <T extends IAddon> T getAddon(Class<T> clazz)
@@ -167,5 +174,10 @@ public class Librarian implements ClientModInitializer
 		}
 
 		return map.get(page);
+	}
+
+	public void queue(Runnable runnable)
+	{
+		threadPool.execute(runnable);
 	}
 }
