@@ -218,16 +218,17 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 		{
 			Librarian.getInstance().queue(() ->
 			{
+				long startTime = System.currentTimeMillis();
 				original.call();
+				long endTime = System.currentTimeMillis();
 
 				MinecraftClient mc = MinecraftClient.getInstance();
 				mc.execute(() ->
 				{
 					if (mc.world != null)
 					{
-						final Text message = Text.translatable("inventory.hotbarSaved",
-								mc.options.loadToolbarActivatorKey.getBoundKeyLocalizedText(),
-								"<row>");
+						final Text message = Text.translatable("librarian.messages.saving.completed",
+								endTime - startTime);
 
 						mc.inGameHud.setOverlayMessage(message, false);
 					}

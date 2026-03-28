@@ -20,7 +20,8 @@ package me.videogamesm12.librarian.v1_21_11.mixin;
 import com.google.common.eventbus.Subscribe;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IMechanicFactory;
@@ -37,7 +38,6 @@ import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
@@ -47,7 +47,6 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.CharInput;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.option.HotbarStorage;
-import net.minecraft.client.util.NarratorManager;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemGroups;
@@ -62,6 +61,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -484,6 +484,25 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		{
 			original.call(client, index, restore, save);
 		}
+	}
+
+	// The following two mixins are a really stupid way of doing it, but it makes IDEA and (presumably) mixin happy, so
+	// 	I'm just going to roll with it...
+
+	@ModifyArg(method = "onHotbarKeyPress", at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/client/gui/hud/InGameHud;setOverlayMessage(Lnet/minecraft/text/Text;Z)V"))
+	private static Text changeSavedOverlayMessage(Text message)
+	{
+		return Librarian.getInstance().getConfig().optimizations().saveAsynchronously() ?
+				Text.translatable("librarian.messages.saving") : message;
+	}
+
+	@ModifyArg(method = "onHotbarKeyPress", at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/client/util/NarratorManager;narrateSystemImmediately(Lnet/minecraft/text/Text;)V"))
+	private static Text changeNarrationMessage(Text message)
+	{
+		return Librarian.getInstance().getConfig().optimizations().saveAsynchronously() ?
+				Text.translatable("librarian.messages.saving") : message;
 	}
 
 	@Subscribe
