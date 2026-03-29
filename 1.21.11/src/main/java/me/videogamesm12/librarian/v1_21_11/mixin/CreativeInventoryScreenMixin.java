@@ -20,6 +20,7 @@ package me.videogamesm12.librarian.v1_21_11.mixin;
 import com.google.common.eventbus.Subscribe;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IMechanicFactory;
@@ -484,23 +485,12 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		}
 	}
 
-	// The following two mixins are a really stupid way of doing it, but it makes IDEA and (presumably) mixin happy, so
-	// 	I'm just going to roll with it...
-
-	@ModifyArg(method = "onHotbarKeyPress", at = @At(value = "INVOKE",
-			target = "Lnet/minecraft/client/gui/hud/InGameHud;setOverlayMessage(Lnet/minecraft/text/Text;Z)V"))
-	private static Text changeSavedOverlayMessage(Text message)
+	@WrapOperation(method = "onHotbarKeyPress", at = @At(value = "INVOKE", target =
+			"Lnet/minecraft/text/Text;translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/text/MutableText;"))
+	private static MutableText changeSavedMessageWhenAsync(String key, Object[] args, Operation<MutableText> original)
 	{
 		return Librarian.getInstance().getConfig().optimizations().saveAsynchronously() ?
-				Text.translatable("librarian.messages.saving") : message;
-	}
-
-	@ModifyArg(method = "onHotbarKeyPress", at = @At(value = "INVOKE",
-			target = "Lnet/minecraft/client/util/NarratorManager;narrateSystemImmediately(Lnet/minecraft/text/Text;)V"))
-	private static Text changeNarrationMessage(Text message)
-	{
-		return Librarian.getInstance().getConfig().optimizations().saveAsynchronously() ?
-				Text.translatable("librarian.messages.saving") : message;
+				Text.translatable("librarian.messages.saving") : original.call(key, args);
 	}
 
 	@Subscribe
