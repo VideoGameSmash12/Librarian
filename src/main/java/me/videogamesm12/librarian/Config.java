@@ -183,7 +183,7 @@ public class Config
 		private boolean useFileCompression = false;
 
 		/**
-		 * Controls whether to save pages asynchronously.
+		 * Controls whether to save pages in the background.
 		 */
 		@Builder.Default
 		private boolean backgroundSaving = true;

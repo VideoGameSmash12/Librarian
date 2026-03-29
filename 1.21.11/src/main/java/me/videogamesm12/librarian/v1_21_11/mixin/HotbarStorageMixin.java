@@ -211,30 +211,14 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@WrapMethod(method = "save")
 	public void savesInBackgroundIfEnabled(Operation<Void> original)
 	{
-		if (Librarian.getInstance().getConfig().optimizations().backgroundSaving())
+		// Don't queue a save if we're already running in a thread pool
+		if (Thread.currentThread().getName().startsWith("pool-"))
 		{
-			Librarian.getInstance().queue(() ->
-			{
-				long startTime = System.currentTimeMillis();
-				original.call();
-				long endTime = System.currentTimeMillis();
-
-				MinecraftClient mc = MinecraftClient.getInstance();
-				mc.execute(() ->
-				{
-					if (mc.world != null)
-					{
-						final Text message = Text.translatable("librarian.messages.saving.completed",
-								endTime - startTime);
-
-						mc.inGameHud.setOverlayMessage(message, false);
-					}
-				});
-			});
+			original.call();
 		}
 		else
 		{
-			original.call();
+			Librarian.getInstance().queue(original::call);
 		}
 	}
 

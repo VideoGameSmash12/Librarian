@@ -20,7 +20,6 @@ package me.videogamesm12.librarian.v1_21_11.mixin;
 import com.google.common.eventbus.Subscribe;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IMechanicFactory;
@@ -155,7 +154,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		{
 			renameHotbarField.setMessage(mechanic.createText(Librarian.getInstance().getCurrentPage().librarian$getMetadata()
 					.map(HotbarPageMetadata::getName).orElse(Component.translatable("librarian.saved_hotbars.tab",
-					Component.text(Librarian.getInstance().getCurrentPageNumber().toString())))));
+							Component.text(Librarian.getInstance().getCurrentPageNumber().toString())))));
 		}
 
 		// Even though we override the isVisible and isActive methods, internally ClickableWidget still uses the
@@ -167,7 +166,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		nextButton = mechanic.createButton(x + 12, y,12, 12, Component.text("→"),
 				Component.text("Next page"), () -> Librarian.getInstance().nextPage());
 		backupButton = mechanic.createButton(x, y,12, 12, Component.text("\uD83D\uDCBE")
-				.font(Key.key("librarian", "default")), Component.text("Make a backup of this page"),
+						.font(Key.key("librarian", "default")), Component.text("Make a backup of this page"),
 				() -> Librarian.getInstance().getCurrentPage().librarian$backup());
 		previousButton = mechanic.createButton(x - 12, y,12, 12, Component.text("←"),
 				Component.text("Previous page"), () -> Librarian.getInstance().previousPage());
@@ -406,76 +405,99 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	}
 
 	@WrapMethod(method = "onHotbarKeyPress")
-	private static void checkForAccidentalItemLoss(MinecraftClient client, int index, boolean restore, boolean save,
-													 Operation<Void> original)
+	private static void wrapHotbarSaving(MinecraftClient client, int index, boolean restore, boolean save,
+										 Operation<Void> original)
 	{
 		if (save)
 		{
-			final HotbarStorage storage = client.getCreativeHotbarStorage();
-			final IWrappedHotbarStorage wrappedStorage = (IWrappedHotbarStorage) storage;
-			final List<String> issues = new ArrayList<>();
+			boolean backgroundSaving = Librarian.getInstance().getConfig().optimizations().backgroundSaving();
 
-			downgradeCheck:
+			Runnable operation = () ->
 			{
-				if (wrappedStorage.librarian$dataVersion() > SharedConstants.getGameVersion().dataVersion().id())
+				final HotbarStorage storage = client.getCreativeHotbarStorage();
+				final IWrappedHotbarStorage wrappedStorage = (IWrappedHotbarStorage) storage;
+				final List<String> issues = new ArrayList<>();
+
+				downgradeCheck:
 				{
-					issues.add("downgrade");
-					break downgradeCheck;
-				}
-			}
-
-			overwriteCheck:
-			{
-				final List<ItemStack> storageEntry = storage.getSavedHotbar(index).deserialize(Objects.requireNonNull(client.world)
-						.getRegistryManager());
-
-				if (storageEntry.isEmpty())
-				{
-					break overwriteCheck;
-				}
-
-				for (int i = 0; i < PlayerInventory.getHotbarSize(); i++)
-				{
-					ItemStack inventoryStack = Objects.requireNonNull(client.player).getInventory().getStack(i);
-					ItemStack hotbarEntry = storageEntry.get(i);
-
-					if (!hotbarEntry.isEmpty() && !ItemStack.areItemsAndComponentsEqual(inventoryStack, hotbarEntry))
+					if (wrappedStorage.librarian$dataVersion() > SharedConstants.getGameVersion().dataVersion().id())
 					{
-						issues.add("nonmatching");
-						break overwriteCheck;
+						issues.add("downgrade");
+						break downgradeCheck;
 					}
 				}
-			}
 
-			if (!issues.isEmpty())
-			{
-				final MutableText title;
-				final MutableText description;
-
-				// Only one issue found, use more specific message for that
-				if (issues.size() == 1)
+				overwriteCheck:
 				{
-					title = Text.translatable("librarian.messages.issues." + issues.getFirst() + ".title");
-					description = Text.translatable("librarian.messages.issues." + issues.getFirst() + ".description");
+					final List<ItemStack> storageEntry = storage.getSavedHotbar(index).deserialize(Objects.requireNonNull(client.world)
+							.getRegistryManager());
+
+					if (storageEntry.isEmpty())
+					{
+						break overwriteCheck;
+					}
+
+					for (int i = 0; i < PlayerInventory.getHotbarSize(); i++)
+					{
+						ItemStack inventoryStack = Objects.requireNonNull(client.player).getInventory().getStack(i);
+						ItemStack hotbarEntry = storageEntry.get(i);
+
+						if (!hotbarEntry.isEmpty() && !ItemStack.areItemsAndComponentsEqual(inventoryStack, hotbarEntry))
+						{
+							issues.add("nonmatching");
+							break overwriteCheck;
+						}
+					}
 				}
-				// Otherwise, use more brief versions instead
+
+				if (!issues.isEmpty())
+				{
+					final MutableText title;
+					final MutableText description;
+
+					// Only one issue found, use more specific message for that
+					if (issues.size() == 1)
+					{
+						title = Text.translatable("librarian.messages.issues." + issues.getFirst() + ".title");
+						description = Text.translatable("librarian.messages.issues." + issues.getFirst() + ".description");
+					}
+					// Otherwise, use more brief versions instead
+					else
+					{
+						title = Text.translatable("librarian.messages.possible_loss_scenario_detected.title");
+						description = Text.translatable("librarian.messages.possible_loss_scenario_detected.description");
+						issues.forEach(issue -> description.append(Text.translatable("librarian.messages.issues." + issue + ".summary")).append("\n\n"));
+						description.append(Text.translatable("librarian.messages.possible_loss_scenario_detected.footer"));
+					}
+
+					// This is unbelievably bad for an optimization hack, but if I don't run setScreen() on the game
+					// 	thread, the entire game crashes. If I don't account for background saving in the nested block,
+					// 	then the game runs the "save" code on the game thread when it shouldn't, causing lagspikes
+					client.execute(() -> client.setScreen(new ConfirmScreen((value) ->
+					{
+						if (value)
+						{
+							if (backgroundSaving)
+								Librarian.getInstance().queue(() -> original.call(client, index, restore, save));
+							else
+								original.call(client, index, restore, save);
+						}
+						MinecraftClient.getInstance().setScreen(null);
+					}, title, description)));
+				}
 				else
 				{
-					title = Text.translatable("librarian.messages.possible_loss_scenario_detected.title");
-					description = Text.translatable("librarian.messages.possible_loss_scenario_detected.description");
-					issues.forEach(issue -> description.append(Text.translatable("librarian.messages.issues." + issue + ".summary")).append("\n\n"));
-					description.append(Text.translatable("librarian.messages.possible_loss_scenario_detected.footer"));
+					original.call(client, index, restore, save);
 				}
+			};
 
-				MinecraftClient.getInstance().setScreen(new ConfirmScreen((value) ->
-				{
-					if (value) original.call(client, index, restore, save);
-					MinecraftClient.getInstance().setScreen(null);
-				}, title, description));
+			if (backgroundSaving)
+			{
+				Librarian.getInstance().queue(operation);
 			}
 			else
 			{
-				original.call(client, index, restore, save);
+				operation.run();
 			}
 		}
 		else
@@ -484,13 +506,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		}
 	}
 
-	@WrapOperation(method = "onHotbarKeyPress", at = @At(value = "INVOKE", target =
+	/*@WrapOperation(method = "onHotbarKeyPress", at = @At(value = "INVOKE", target =
 			"Lnet/minecraft/text/Text;translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/text/MutableText;"))
-	private static MutableText changeSavedMessageWhenAsync(String key, Object[] args, Operation<MutableText> original)
+	private static MutableText useBackgroundSavingMessage(String key, Object[] args, Operation<MutableText> original)
 	{
 		return Librarian.getInstance().getConfig().optimizations().backgroundSaving() ?
 				Text.translatable("librarian.messages.saving") : original.call(key, args);
-	}
+	}*/
 
 	@Subscribe
 	@Unique
@@ -528,7 +550,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	{
 		return group.getType() == ItemGroup.Type.HOTBAR;
 	}
-	
+
 	@Accessor
 	public abstract ItemGroup getSelectedTab();
 }

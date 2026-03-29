@@ -57,8 +57,6 @@
   "librarian.messages.save_failed.action_bar": "Failed to save hotbar page: %1$s",
   "librarian.messages.save_failed.toast.title": "Save failed",
   "librarian.messages.save_failed.toast.description": "Check logs for more info",
-  "librarian.messages.saving": "Saving hotbar page...",
-  "librarian.messages.saving.completed": "Hotbar page saved in %1$dms",
 
   "librarian.tooltip.authors": "Authors:",
   "librarian.tooltip.click_to_rename": "Click to Rename"
