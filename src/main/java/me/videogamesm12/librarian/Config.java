@@ -25,6 +25,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import me.videogamesm12.librarian.api.event.NavigationEvent;
+import me.videogamesm12.librarian.util.ConfigUpdater;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.*;
@@ -41,9 +42,11 @@ import java.util.List;
 @Builder
 public class Config
 {
+	@Getter
+	private static final int currentVersion = 3;
+
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 	private static final File configFile = new File(FabricLoader.getInstance().getConfigDir().toFile(), "librarian.json");
-	private static final int currentVersion = 2;
 
 	@Builder.Default
 	private int version = currentVersion;
@@ -183,7 +186,7 @@ public class Config
 		 * Controls whether to save pages asynchronously.
 		 */
 		@Builder.Default
-		private boolean saveAsynchronously = true;
+		private boolean backgroundSaving = true;
 
 		/**
 		 * A list of page numbers for pages that should get automatically loaded on startup.
@@ -191,16 +194,16 @@ public class Config
 		@Getter
 		@Builder.Default
 		@NonNull
-		private List<BigInteger> pagesToPreload = new ArrayList<>();
+		private List<BigInteger> bookmarks = new ArrayList<>();
 
 		public boolean useFileCompression()
 		{
 			return useFileCompression;
 		}
 
-		public boolean saveAsynchronously()
+		public boolean backgroundSaving()
 		{
-			return saveAsynchronously;
+			return backgroundSaving;
 		}
 	}
 
@@ -217,19 +220,34 @@ public class Config
 		{
 			try (final BufferedReader reader = Files.newBufferedReader(configFile.toPath()))
 			{
-				config = gson.fromJson(reader, Config.class);
-				if (config.version > currentVersion)
+				final JsonObject object = gson.fromJson(reader, JsonObject.class);
+				if (!object.has("version"))
 				{
-					Librarian.getLogger().warn("The configuration file is for a newer version of Librarian and can't be loaded");
-					config = builder().build();
+					throw new JsonParseException("Missing version entry!");
 				}
+
+				final int version = object.get("version").getAsInt();
+
+				// Reject configurations from newer versions of Librarian
+				if (version > currentVersion)
+				{
+					throw new IllegalStateException("Configuration file is for a newer version of Librarian (expected " + currentVersion + ", got " + version + ")");
+				}
+
+				// If the configuration is outdated, update it
+				if (version < currentVersion)
+				{
+					ConfigUpdater.update(object);
+				}
+
+				config = gson.fromJson(object, Config.class);
 			}
 			catch (JsonParseException ex)
 			{
 				Librarian.getLogger().warn("The configuration file is corrupted and could not be read.", ex);
 				config = builder().build();
 			}
-			catch (IOException ex)
+			catch (Exception ex)
 			{
 				Librarian.getLogger().error("Failed to read configuration file", ex);
 				config = builder().build();

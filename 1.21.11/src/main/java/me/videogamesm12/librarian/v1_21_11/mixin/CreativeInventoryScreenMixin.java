@@ -60,7 +60,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -489,7 +488,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			"Lnet/minecraft/text/Text;translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/text/MutableText;"))
 	private static MutableText changeSavedMessageWhenAsync(String key, Object[] args, Operation<MutableText> original)
 	{
-		return Librarian.getInstance().getConfig().optimizations().saveAsynchronously() ?
+		return Librarian.getInstance().getConfig().optimizations().backgroundSaving() ?
 				Text.translatable("librarian.messages.saving") : original.call(key, args);
 	}
 

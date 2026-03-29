@@ -93,7 +93,7 @@ public class Librarian implements ClientModInitializer
 		addons.values().forEach(IAddon::init);
 
 		// Preload user-requested hotbar pages
-		config.optimizations().getPagesToPreload().parallelStream()
+		config.optimizations().getBookmarks().parallelStream()
 				.forEach(page -> getHotbarPage(page).librarian$load());
 	}
 

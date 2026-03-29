@@ -209,9 +209,9 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	}
 
 	@WrapMethod(method = "save")
-	public void savesAsyncIfEnabled(Operation<Void> original)
+	public void savesInBackgroundIfEnabled(Operation<Void> original)
 	{
-		if (Librarian.getInstance().getConfig().optimizations().saveAsynchronously())
+		if (Librarian.getInstance().getConfig().optimizations().backgroundSaving())
 		{
 			Librarian.getInstance().queue(() ->
 			{
