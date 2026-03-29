@@ -173,27 +173,24 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 
 			compound.put("librarian", meta);
 		}
-
 	}
 
 	@WrapOperation(method = "load", at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/nbt/NbtIo;read(Ljava/nio/file/Path;)Lnet/minecraft/nbt/NbtCompound;"))
-	public NbtCompound addSupportForLoadingCompressedPages(Path path, Operation<NbtCompound> original)
+	public NbtCompound addSupportForLoadingCompressedPages(Path path, Operation<NbtCompound> original) throws IOException
 	{
+		// The way this works is rather simple. NbtIo.read will throw an exception if it fails to read a file. We can
+		// 	leverage this by putting the call for NbtIo.read into a try-catch block to make it try to read the file as a
+		//	compressed file if it fails to read it as a regular file. This effectively makes the game support both
+		//	regular hotbar files and compressed files.
+
 		try
 		{
 			return original.call(path);
 		}
-		catch (Exception ex)
+		catch (NbtCrashException ex)
 		{
-			try
-			{
-				return NbtIo.readCompressed(Files.newInputStream(path), NbtSizeTracker.ofUnlimitedBytes());
-			}
-			catch (Exception ouch)
-			{
-				return new NbtCompound();
-			}
+			return NbtIo.readCompressed(Files.newInputStream(path), NbtSizeTracker.ofUnlimitedBytes());
 		}
 	}
 
