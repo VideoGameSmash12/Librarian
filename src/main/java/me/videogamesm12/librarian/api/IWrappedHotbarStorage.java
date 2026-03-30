@@ -94,9 +94,7 @@ public interface IWrappedHotbarStorage
 			}
 			else
 			{
-				Librarian.getLogger().warn("Calling event");
 				Librarian.getInstance().getEventBus().post(new AsyncPageLoadEvent(storage));
-				Librarian.getLogger().warn("Called event");
 			}
 		});
 	}

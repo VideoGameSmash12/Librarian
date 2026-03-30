@@ -17,6 +17,7 @@
 
 package me.videogamesm12.librarian.v1_21_11.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.mojang.datafixers.DataFixer;
 import com.mojang.serialization.DataResult;
 import me.videogamesm12.librarian.Librarian;
@@ -33,7 +34,6 @@ import net.minecraft.client.option.HotbarStorage;
 import net.minecraft.client.option.HotbarStorageEntry;
 import net.minecraft.datafixer.DataFixTypes;
 import net.minecraft.nbt.*;
-import net.minecraft.registry.BuiltinRegistries;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
@@ -253,14 +253,17 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Inject(method = "getSavedHotbar", at = @At("HEAD"), cancellable = true)
 	private void preventPrematureHotbarGrabbing(int i, CallbackInfoReturnable<HotbarStorageEntry> cir)
 	{
-		if (status == LoadStatus.NOT_LOADED)
+		if (Librarian.getInstance().getConfig().optimizations().backgroundLoading())
 		{
-			librarian$loadAsync();
-			cir.setReturnValue(new HotbarStorageEntry());
-		}
-		else if (status == LoadStatus.LOADING)
-		{
-			cir.setReturnValue(new HotbarStorageEntry());
+			if (status == LoadStatus.NOT_LOADED)
+			{
+				librarian$loadAsync();
+				cir.setReturnValue(new HotbarStorageEntry());
+			}
+			else if (status == LoadStatus.LOADING)
+			{
+				cir.setReturnValue(new HotbarStorageEntry());
+			}
 		}
 	}
 

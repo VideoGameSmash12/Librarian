@@ -91,14 +91,6 @@ public class Librarian implements ClientModInitializer
 
 		// Initialize our add-ons
 		addons.values().forEach(IAddon::init);
-
-		// What the fuck?
-		Librarian.getLogger().warn("Debugging time - Wtf is going on");
-		Librarian.getLogger().warn("Current page number {}", getCurrentPageNumber());
-		Librarian.getLogger().warn("Mechanic is being retarded? {}", mechanic.createHotbarStorage(BigInteger.valueOf(1337)) == null);
-		Librarian.getLogger().warn("Current page is null? {}", getCurrentPage() == null);
-		Librarian.getLogger().warn("Get page is null? {}", getHotbarPage(BigInteger.ZERO) == null);
-		Librarian.getLogger().warn("Cache is being weird? {}", map);
 	}
 
 	public <T extends IAddon> T getAddon(Class<T> clazz)
