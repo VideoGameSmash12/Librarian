@@ -93,7 +93,7 @@ public class FabricAPIAddon implements IAddon
 			}
 			else if (backupKey.wasPressed())
 			{
-				Librarian.getInstance().getCurrentPage().librarian$backup();
+				Librarian.getInstance().queue(() -> Librarian.getInstance().getCurrentPage().librarian$backup());
 			}
 		});
 
@@ -125,7 +125,7 @@ public class FabricAPIAddon implements IAddon
 						.then(ClientCommandManager.literal("backup")
 								.executes(context ->
 								{
-									Librarian.getInstance().getCurrentPage().librarian$backup();
+									Librarian.getInstance().queue(() -> Librarian.getInstance().getCurrentPage().librarian$backup());
 									return 0;
 								}))
 						.then(ClientCommandManager.literal("cache")

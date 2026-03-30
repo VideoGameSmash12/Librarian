@@ -176,7 +176,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 				Component.text("Next page"), () -> librarian.nextPage());
 		backupButton = mechanic.createButton(x, y,12, 12, Component.text("\uD83D\uDCBE")
 						.font(Key.key("librarian", "default")), Component.text("Make a backup of this page"),
-				() -> librarian.getCurrentPage().librarian$backup());
+				() -> librarian.queue(() -> librarian.getCurrentPage().librarian$backup()));
 		previousButton = mechanic.createButton(x - 12, y,12, 12, Component.text("←"),
 				Component.text("Previous page"), () -> librarian.previousPage());
 
@@ -376,7 +376,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			}
 			else if (fabric.getBackupKey().matchesKey(input))
 			{
-				librarian.getCurrentPage().librarian$backup();
+				librarian.queue(() -> librarian.getCurrentPage().librarian$backup());
 				cir.setReturnValue(true);
 				return;
 			}
