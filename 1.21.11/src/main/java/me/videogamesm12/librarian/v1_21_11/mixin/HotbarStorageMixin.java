@@ -30,10 +30,9 @@ import me.videogamesm12.librarian.api.event.SaveFailureEvent;
 import me.videogamesm12.librarian.util.FNF;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.SharedConstants;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.HotbarStorage;
+import net.minecraft.client.option.HotbarStorageEntry;
 import net.minecraft.nbt.*;
-import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -51,6 +50,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 @Mixin(HotbarStorage.class)
 public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
@@ -60,6 +60,10 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Shadow protected abstract void load();
 
 	@Shadow private boolean loaded;
+
+	@Shadow
+	@Final
+	private HotbarStorageEntry[] entries;
 
 	@Unique
 	private static final GsonComponentSerializer librarian$serializer = GsonComponentSerializer.gson();
@@ -107,7 +111,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	}
 
 	@Inject(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/datafixer/DataFixTypes;update(Lcom/mojang/datafixers/DataFixer;Lnet/minecraft/nbt/NbtCompound;I)Lnet/minecraft/nbt/NbtCompound;",
-			shift = At.Shift.AFTER))
+			shift = At.Shift.AFTER), cancellable = true)
 	private void fetchData(CallbackInfo ci, @Local int dataVersion, @Local NbtCompound compound)
 	{
 		// Store the dataVersion of the hotbar from disk
@@ -141,6 +145,15 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 						.build();
 			}
 		});
+
+		long startTime = System.currentTimeMillis();
+		Librarian.getLogger().warn("Start time {}", startTime);
+		ci.cancel();
+		IntStream.range(0, 9).parallel().forEach(i -> loadRow(i, compound));
+		long endTime = System.currentTimeMillis();
+		Librarian.getLogger().warn("End time {}", endTime);
+		Librarian.getLogger().warn("Loading time was {} ms", endTime - startTime);
+
 	}
 
 	@Inject(method = "save", at = @At(value = "INVOKE", target =
@@ -261,6 +274,14 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	public void librarian$load()
 	{
 		load();
+	}
+
+	@Unique
+	private void loadRow(int row, NbtCompound source)
+	{
+		this.entries[row] = HotbarStorageEntry.CODEC.parse(NbtOps.INSTANCE, source.get(String.valueOf(row)))
+				.resultOrPartial(error -> Librarian.getLogger().warn("Failed to parse hotbar: {}", error))
+				.orElseGet(HotbarStorageEntry::new);
 	}
 
 	@Accessor

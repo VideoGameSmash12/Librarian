@@ -91,10 +91,6 @@ public class Librarian implements ClientModInitializer
 
 		// Initialize our add-ons
 		addons.values().forEach(IAddon::init);
-
-		// Preload user-requested hotbar pages
-		config.optimizations().getBookmarks().parallelStream()
-				.forEach(page -> getHotbarPage(page).librarian$load());
 	}
 
 	public <T extends IAddon> T getAddon(Class<T> clazz)
