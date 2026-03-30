@@ -70,11 +70,11 @@ public interface IWrappedHotbarStorage
 
 	void librarian$load();
 
-	default void librarian$loadAsync()
+	default CompletableFuture<IWrappedHotbarStorage> librarian$loadAsync()
 	{
 		final IWrappedHotbarStorage page = this;
 
-		CompletableFuture.supplyAsync(() ->
+		return CompletableFuture.supplyAsync(() ->
 		{
 			librarian$load();
 			return page;

@@ -17,7 +17,6 @@
 
 package me.videogamesm12.librarian.v1_21_11.mixin;
 
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.mojang.datafixers.DataFixer;
 import com.mojang.serialization.DataResult;
 import me.videogamesm12.librarian.Librarian;
@@ -282,11 +281,6 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Override
 	public Optional<HotbarPageMetadata> librarian$getMetadata()
 	{
-		//if (!loaded)
-		//{
-		//load();
-		//}
-
 		return Optional.ofNullable(metadata);
 	}
 
