@@ -43,7 +43,7 @@ import java.util.List;
 public class Config
 {
 	@Getter
-	private static final int currentVersion = 3;
+	private static final int currentVersion = 4;
 
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 	private static final File configFile = new File(FabricLoader.getInstance().getConfigDir().toFile(), "librarian.json");
@@ -189,6 +189,19 @@ public class Config
 		private boolean backgroundSaving = true;
 
 		/**
+		 * Controls whether to process hotbar rows ahead of time and only update them when necessary
+		 * Offers a massive performance boost, but needs refinement.
+		 */
+		@Builder.Default
+		private boolean preprocessHotbarRows = true;
+
+		/**
+		 * Controls whether to load hotbar rows from the NBT tag in parallel.
+		 */
+		@Builder.Default
+		private boolean readHotbarRowsInParallel = true;
+
+		/**
 		 * A list of page numbers for pages that should get automatically loaded on startup.
 		 */
 		@Getter
@@ -204,6 +217,16 @@ public class Config
 		public boolean backgroundSaving()
 		{
 			return backgroundSaving;
+		}
+
+		public boolean preprocessHotbarRows()
+		{
+			return preprocessHotbarRows;
+		}
+
+		public boolean readHotbarRowsInParallel()
+		{
+			return readHotbarRowsInParallel;
 		}
 	}
 

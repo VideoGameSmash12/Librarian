@@ -57,7 +57,7 @@ public class ConfigUpdater
 
 			Librarian.getLogger().warn("Version 2 -> {}", root);
 		}));
-		// Version 3 (publicly released development builds):
+		// Version 3 (publicly released development builds between 3/28/2026 and 3/29/2026):
 		//	[>] optimizations.saveAsynchronously -> optimizations.backgroundSaving
 		//	[>]	optimizations.pagesToPreload	 -> optimizations.bookmarks
 		updaters.add(new ConfigUpdater(3, root ->
@@ -75,6 +75,20 @@ public class ConfigUpdater
 			root.addProperty("version", 3);
 
 			Librarian.getLogger().warn("Version 3 -> {}", root);
+		}));
+		// Version 4:
+		//	[+] optimizations.preprocessHotbarRows
+		//	[+] optimizations.readHotbarRowsInParallel
+		updaters.add(new ConfigUpdater(4, root ->
+		{
+			final JsonObject optimization = root.getAsJsonObject("optimizations");
+
+			optimization.addProperty("preprocessHotbarRows", true);
+			optimization.addProperty("readHotbarRowsInParallel", true);
+
+			root.addProperty("version", 4);
+
+			Librarian.getLogger().warn("Version 4 -> {}", root);
 		}));
 	}
 

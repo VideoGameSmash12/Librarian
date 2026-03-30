@@ -21,6 +21,7 @@ import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.serialization.Dynamic;
 import me.videogamesm12.librarian.Librarian;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.HotbarStorageEntry;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
@@ -34,9 +35,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Objects;
 
 @Mixin(HotbarStorageEntry.class)
 public abstract class HotbarStorageEntryMixin
@@ -48,36 +49,60 @@ public abstract class HotbarStorageEntryMixin
 	public abstract List<ItemStack> deserialize(RegistryWrapper.WrapperLookup par1);
 
 	@Unique
-	private final List<ItemStack> processed = new ArrayList<>();
+	private final ItemStack[] cache =  new ItemStack[9];
+
+	@Unique
+	private boolean alreadyProcessed;
 
 	@Inject(method = "<init>(Ljava/util/List;)V", at = @At("TAIL"))
 	private void preprocess(List<Dynamic<?>> stacks, CallbackInfo ci)
 	{
-		CompletableFuture.runAsync(() ->
+		if (Librarian.getInstance().getConfig().optimizations().preprocessHotbarRows())
 		{
-			processed.clear();
-			deserialize(WRAPPER_LOOKUP);
-		});
+			Librarian.getInstance().queue(() ->
+					deserialize(MinecraftClient.getInstance().world != null ?
+							MinecraftClient.getInstance().world.getRegistryManager() : WRAPPER_LOOKUP));
+		}
 	}
 
 	@Inject(method = "serialize", at = @At("TAIL"))
 	private void processAfterUpdate(PlayerInventory playerInventory, DynamicRegistryManager registryManager, CallbackInfo ci)
 	{
-		CompletableFuture.runAsync(() ->
+		if (Librarian.getInstance().getConfig().optimizations().preprocessHotbarRows())
 		{
-			processed.clear();
-			deserialize(WRAPPER_LOOKUP);
-		});
+			clear();
+			deserialize(Objects.requireNonNull(MinecraftClient.getInstance().world).getRegistryManager());
+		}
 	}
 
 	@WrapMethod(method = "deserialize")
 	private List<ItemStack> process(RegistryWrapper.WrapperLookup registries, Operation<List<ItemStack>> original)
 	{
-		if (processed.isEmpty())
+		if (Librarian.getInstance().getConfig().optimizations().preprocessHotbarRows())
 		{
-			processed.addAll(original.call(registries));
+			// Return cached entries if present
+			if (alreadyProcessed)
+			{
+				return Arrays.stream(cache).toList();
+			}
+
+			final List<ItemStack> processed = original.call(registries);
+			for (int i = 0; i < processed.size(); i++)
+			{
+				cache[i] = processed.get(i);
+			}
+			alreadyProcessed = true;
+
+			return processed;
 		}
 
-		return processed;
+		return original.call(registries);
+	}
+
+	@Unique
+	private void clear()
+	{
+		Arrays.fill(cache, null);
+		alreadyProcessed = false;
 	}
 }

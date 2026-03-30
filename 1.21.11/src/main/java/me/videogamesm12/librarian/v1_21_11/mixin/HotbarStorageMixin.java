@@ -22,6 +22,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.datafixers.DataFixer;
+import com.mojang.serialization.DataResult;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
@@ -30,24 +31,23 @@ import me.videogamesm12.librarian.api.event.SaveFailureEvent;
 import me.videogamesm12.librarian.util.FNF;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.SharedConstants;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.HotbarStorage;
 import net.minecraft.client.option.HotbarStorageEntry;
+import net.minecraft.datafixer.DataFixTypes;
 import net.minecraft.nbt.*;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.File;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -57,13 +57,15 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 {
 	@Shadow @Final private Path file;
 
-	@Shadow protected abstract void load();
-
 	@Shadow private boolean loaded;
 
 	@Shadow
 	@Final
 	private HotbarStorageEntry[] entries;
+
+	@Shadow @Final private DataFixer dataFixer;
+
+	@Shadow public abstract HotbarStorageEntry getSavedHotbar(int i);
 
 	@Unique
 	private static final GsonComponentSerializer librarian$serializer = GsonComponentSerializer.gson();
@@ -90,148 +92,173 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 		this.setFile(file);
 	}
 
-	@Inject(method = "load", at = @At(value = "INVOKE",
-			target = "Lorg/slf4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V", shift = At.Shift.AFTER, remap = false))
-	private void hookLoadFailure(CallbackInfo ci, @Local Exception ex)
+	/**
+	 * Reimplements the hotbar page loading logic using existing optimizations and features.
+	 * @author	Video
+	 * @reason	Mod already heavily modifies
+	 */
+	@Overwrite
+	private void load()
 	{
-		Librarian.getInstance().getEventBus().post(new LoadFailureEvent(this, ex));
-	}
+		try
+		{
+			NbtCompound tag;
 
-	@Inject(method = "save", at = @At(value = "INVOKE",
-			target = "Lorg/slf4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V", shift = At.Shift.AFTER, remap = false))
-	private void hookSaveFailure(CallbackInfo ci, @Local Exception ex)
-	{
-		Librarian.getInstance().getEventBus().post(new SaveFailureEvent(this, ex));
-	}
+			// Try to load the page as a regular hotbar.nbt file, otherwise
+			try
+			{
+				tag = NbtIo.read(librarian$getLocation().toPath());
+			}
+			catch (NbtCrashException ex)
+			{
+				tag = NbtIo.readCompressed(Files.newInputStream(librarian$getLocation().toPath()), NbtSizeTracker.ofUnlimitedBytes());
+			}
 
-	@Inject(method = "load", at = @At("RETURN"))
-	private void markLoaded(CallbackInfo ci)
-	{
+			// Usually means the file doesn't exist
+			if (tag == null)
+			{
+				setLoaded(true);
+				return;
+			}
+
+			// Get and update the page's data version
+			this.dataVersion = NbtHelper.getDataVersion(tag, 1343);
+			tag = DataFixTypes.HOTBAR.update(dataFixer, tag, dataVersion);
+
+			// Fetch our metadata
+			tag.getCompound("librarian").ifPresent(meta ->
+			{
+				int version = meta.getInt("version").orElse(HotbarPageMetadata.getCurrentVersion());
+				String name = meta.getString("name").orElse(null);
+				String description = meta.getString("description").orElse(null);
+				List<String> authors = new ArrayList<>(meta.getListOrEmpty("authors").stream()
+						.map(NbtElement::asString).filter(Optional::isPresent).map(Optional::get).toList());
+
+				if (version > HotbarPageMetadata.getCurrentVersion())
+				{
+					Librarian.getLogger().error("Hotbar metadata rejected - data is intended for a newer version of " +
+									"Librarian than what we are currently running (current version {}, file version {})",
+							HotbarPageMetadata.getCurrentVersion(), version);
+
+					metadata = HotbarPageMetadata.builder().build();
+				}
+				else
+				{
+					metadata = HotbarPageMetadata.builder()
+							.version(version)
+							.name(name != null && !name.isBlank() ? librarian$serializer.deserializeOrNull(name) : null)
+							.description(description != null && !description.isBlank() ?
+									librarian$serializer.deserializeOrNull(description) : null)
+							.authors(authors)
+							.build();
+				}
+			});
+
+			long startTime = System.currentTimeMillis();
+			Librarian.getLogger().warn("Start time {}", startTime);
+
+			// Read the rows in parallel to try to speed up load times
+			final NbtCompound shutUpIntellij = tag;
+			IntStream rows = IntStream.range(0, 9);
+
+			if (Librarian.getInstance().getConfig().optimizations().readHotbarRowsInParallel())
+			{
+				rows = rows.parallel();
+			}
+
+			rows.forEach(i ->
+			{
+				Librarian.getLogger().warn("Loading row {}", i);
+				loadRow(i, shutUpIntellij);
+			});
+
+			long endTime = System.currentTimeMillis();
+			Librarian.getLogger().warn("End time {}", endTime);
+			Librarian.getLogger().warn("Loading time was {} ms", endTime - startTime);
+		}
+		catch (Throwable ex)
+		{
+			Librarian.getLogger().error("Failed to load saved hotbar page {}", librarian$getLocation().getName(), ex);
+			Librarian.getInstance().getEventBus().post(new LoadFailureEvent(this, ex));
+		}
+
 		setLoaded(true);
 	}
 
-	@Inject(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/datafixer/DataFixTypes;update(Lcom/mojang/datafixers/DataFixer;Lnet/minecraft/nbt/NbtCompound;I)Lnet/minecraft/nbt/NbtCompound;",
-			shift = At.Shift.AFTER), cancellable = true)
-	private void fetchData(CallbackInfo ci, @Local int dataVersion, @Local NbtCompound compound)
-	{
-		// Store the dataVersion of the hotbar from disk
-		this.dataVersion = dataVersion;
-
-		// If present, fetch our own metadata as well
-		compound.getCompound("librarian").ifPresent(meta ->
-		{
-			int version = meta.getInt("version").orElse(HotbarPageMetadata.getCurrentVersion());
-			String name = meta.getString("name").orElse(null);
-			String description = meta.getString("description").orElse(null);
-			List<String> authors = new ArrayList<>(meta.getListOrEmpty("authors").stream()
-					.map(NbtElement::asString).filter(Optional::isPresent).map(Optional::get).toList());
-
-			if (version > HotbarPageMetadata.getCurrentVersion())
-			{
-				Librarian.getLogger().error("Hotbar metadata rejected - data is intended for a newer version of " +
-								"Librarian than what we are currently running (current version {}, file version {})",
-						HotbarPageMetadata.getCurrentVersion(), version);
-
-				metadata = HotbarPageMetadata.builder().build();
-			}
-			else
-			{
-				metadata = HotbarPageMetadata.builder()
-						.version(version)
-						.name(name != null && !name.isBlank() ? librarian$serializer.deserializeOrNull(name) : null)
-						.description(description != null && !description.isBlank() ?
-								librarian$serializer.deserializeOrNull(description) : null)
-						.authors(authors)
-						.build();
-			}
-		});
-
-		long startTime = System.currentTimeMillis();
-		Librarian.getLogger().warn("Start time {}", startTime);
-		ci.cancel();
-		IntStream.range(0, 9).parallel().forEach(i -> loadRow(i, compound));
-		long endTime = System.currentTimeMillis();
-		Librarian.getLogger().warn("End time {}", endTime);
-		Librarian.getLogger().warn("Loading time was {} ms", endTime - startTime);
-
-	}
-
-	@Inject(method = "save", at = @At(value = "INVOKE", target =
-			"Lnet/minecraft/nbt/NbtIo;write(Lnet/minecraft/nbt/NbtCompound;Ljava/nio/file/Path;)V",
-			shift = At.Shift.BEFORE))
-	private void addData(CallbackInfo ci, @Local NbtCompound compound)
+	/**
+	 * Reimplements the hotbar page loading logic using existing optimizations and features.
+	 * @author	Video
+	 * @reason	Same reason as load.
+	 */
+	@Overwrite
+	public void save()
 	{
 		// Update the data version
 		dataVersion = SharedConstants.getGameVersion().dataVersion().id();
 
-		// Write our metadata
-		if (metadata != null)
+		// Actual operation, specified here as a Runnable so to avoid duplicate code
+		final Runnable operation = () ->
 		{
-			NbtCompound meta = new NbtCompound();
-
-			meta.putInt("version", HotbarPageMetadata.getCurrentVersion());
-
-			if (metadata.getName() != null)
-				meta.putString("name", librarian$serializer.serialize(metadata.getName()));
-
-			if (metadata.getDescription() != null)
-				meta.putString("description", librarian$serializer.serialize(metadata.getDescription()));
-
-			if (!metadata.getAuthors().isEmpty())
+			try
 			{
-				final NbtList list = new NbtList();
-				metadata.getAuthors().forEach(author -> list.add(NbtString.of(author)));
-				meta.put("authors", list);
+				// Create base compound tag
+				final NbtCompound tag = NbtHelper.putDataVersion(new NbtCompound());
+
+				// Write our metadata
+				if (metadata != null)
+				{
+					NbtCompound meta = new NbtCompound();
+
+					meta.putInt("version", HotbarPageMetadata.getCurrentVersion());
+
+					if (metadata.getName() != null)
+						meta.putString("name", librarian$serializer.serialize(metadata.getName()));
+
+					if (metadata.getDescription() != null)
+						meta.putString("description", librarian$serializer.serialize(metadata.getDescription()));
+
+					if (!metadata.getAuthors().isEmpty())
+					{
+						final NbtList list = new NbtList();
+						metadata.getAuthors().forEach(author -> list.add(NbtString.of(author)));
+						meta.put("authors", list);
+					}
+
+					tag.put("librarian", meta);
+				}
+
+				// Convert the items and add them to the tag
+				IntStream.range(0, 9).forEach(i ->
+				{
+					final HotbarStorageEntry entry = getSavedHotbar(i);
+					final DataResult<NbtElement> dataResult = HotbarStorageEntry.CODEC.encodeStart(NbtOps.INSTANCE, entry);
+					tag.put(String.valueOf(i), dataResult.getOrThrow());
+				});
+
+				// Use file compression if enabled
+				if (Librarian.getInstance().getConfig().optimizations().useFileCompression())
+				{
+					NbtIo.writeCompressed(tag, librarian$getLocation().toPath());
+				}
+				else
+				{
+					NbtIo.write(tag, librarian$getLocation().toPath());
+				}
 			}
+			catch (Throwable ex)
+			{
+				Librarian.getLogger().error("Failed to save hotbar page {}", librarian$getLocation().getName(), ex);
+				Librarian.getInstance().getEventBus().post(new SaveFailureEvent(this, ex));
+			}
+		};
 
-			compound.put("librarian", meta);
-		}
-	}
-
-	@WrapOperation(method = "load", at = @At(value = "INVOKE",
-			target = "Lnet/minecraft/nbt/NbtIo;read(Ljava/nio/file/Path;)Lnet/minecraft/nbt/NbtCompound;"))
-	public NbtCompound addSupportForLoadingCompressedPages(Path path, Operation<NbtCompound> original) throws IOException
-	{
-		// The way this works is rather simple. NbtIo.read will throw an exception if it fails to read a file. We can
-		// 	leverage this by putting the call for NbtIo.read into a try-catch block to make it try to read the file as a
-		//	compressed file if it fails to read it as a regular file. This effectively makes the game support both
-		//	regular hotbar files and compressed files.
-
-		try
+		if (Thread.currentThread().getName().startsWith("pool-") || !Librarian.getInstance().getConfig().optimizations().backgroundSaving())
 		{
-			return original.call(path);
-		}
-		catch (NbtCrashException ex)
-		{
-			return NbtIo.readCompressed(Files.newInputStream(path), NbtSizeTracker.ofUnlimitedBytes());
-		}
-	}
-
-	@WrapOperation(method = "save", at = @At(value = "INVOKE",
-			target = "Lnet/minecraft/nbt/NbtIo;write(Lnet/minecraft/nbt/NbtCompound;Ljava/nio/file/Path;)V"))
-	public void addSupportForSavingCompressedPages(NbtCompound nbtCompound, Path path, Operation<Void> original) throws IOException
-	{
-		if (Librarian.getInstance().getConfig().optimizations().useFileCompression())
-		{
-			NbtIo.writeCompressed(nbtCompound, path);
+			operation.run();
 		}
 		else
 		{
-			original.call(nbtCompound, path);
-		}
-	}
-
-	@WrapMethod(method = "save")
-	public void savesInBackgroundIfEnabled(Operation<Void> original)
-	{
-		// Don't queue a save if we're already running in a thread pool
-		if (Thread.currentThread().getName().startsWith("pool-"))
-		{
-			original.call();
-		}
-		else
-		{
-			Librarian.getInstance().queue(original::call);
+			Librarian.getInstance().queue(operation);
 		}
 	}
 
@@ -244,6 +271,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Override
 	public Optional<HotbarPageMetadata> librarian$getMetadata()
 	{
+		Librarian.getLogger().error("Called from metadata?");
 		if (!loaded)
 		{
 			load();
