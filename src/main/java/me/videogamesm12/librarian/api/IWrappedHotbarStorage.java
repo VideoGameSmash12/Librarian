@@ -18,6 +18,7 @@
 package me.videogamesm12.librarian.api;
 
 import me.videogamesm12.librarian.Librarian;
+import me.videogamesm12.librarian.api.event.AsyncPageLoadEvent;
 import me.videogamesm12.librarian.api.event.BackupOutcomeEvent;
 import me.videogamesm12.librarian.util.FNF;
 
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * <h1>IWrappedHotbarStorage</h1>
@@ -67,6 +69,46 @@ public interface IWrappedHotbarStorage
 	}
 
 	void librarian$load();
+
+	default void librarian$loadAsync()
+	{
+		final IWrappedHotbarStorage page = this;
+
+		CompletableFuture.supplyAsync(() ->
+		{
+			librarian$load();
+			return page;
+		}).thenApply((storage) ->
+		{
+			if (Librarian.getInstance().getConfig().optimizations().preprocessHotbarRows())
+			{
+				storage.librarian$preprocess();
+			}
+
+			return storage;
+		}).whenCompleteAsync((storage, throwable) ->
+		{
+			if (throwable != null)
+			{
+				Librarian.getLogger().fatal("Somehow this threw an exception! Wtf?", throwable);
+			}
+			else
+			{
+				Librarian.getLogger().warn("Calling event");
+				Librarian.getInstance().getEventBus().post(new AsyncPageLoadEvent(storage));
+				Librarian.getLogger().warn("Called event");
+			}
+		});
+	}
+
+	default void librarian$preprocess()
+	{
+	}
+
+	default LoadStatus librarian$getLoadStatus()
+	{
+		return LoadStatus.NOT_LOADED;
+	}
 
 	default boolean isLoaded()
 	{

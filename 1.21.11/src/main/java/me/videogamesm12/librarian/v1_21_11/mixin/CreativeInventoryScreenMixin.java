@@ -24,6 +24,8 @@ import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IMechanicFactory;
 import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
+import me.videogamesm12.librarian.api.LoadStatus;
+import me.videogamesm12.librarian.api.event.AsyncPageLoadEvent;
 import me.videogamesm12.librarian.api.event.CacheClearEvent;
 import me.videogamesm12.librarian.api.event.NavigationEvent;
 import me.videogamesm12.librarian.api.event.ReloadPageEvent;
@@ -71,6 +73,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 {
 	@Shadow protected abstract void setSelectedTab(ItemGroup group);
 
+	@Shadow
+	private TextFieldWidget searchBox;
+	@Shadow
+	private float scrollPosition;
+
+	@Unique
+	private Librarian librarian = Librarian.getInstance();
 	@Unique
 	private IMechanicFactory mechanic;
 
@@ -96,8 +105,8 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			target = "Lnet/minecraft/screen/PlayerScreenHandler;addListener(Lnet/minecraft/screen/ScreenHandlerListener;)V"))
 	public void injectInit(CallbackInfo ci)
 	{
-		Librarian.getInstance().getEventBus().register(this);
-		mechanic = Librarian.getInstance().getMechanic();
+		librarian.getEventBus().register(this);
+		mechanic = librarian.getMechanic();
 
 		// Offset
 		int x = ((HandledScreenAccessor) this).getX() + 167;
@@ -152,9 +161,9 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		// 	the current page isn't loaded
 		if (tabIsHotbar(getSelectedTab()))
 		{
-			renameHotbarField.setMessage(mechanic.createText(Librarian.getInstance().getCurrentPage().librarian$getMetadata()
+			renameHotbarField.setMessage(mechanic.createText(librarian.getCurrentPage().librarian$getMetadata()
 					.map(HotbarPageMetadata::getName).orElse(Component.translatable("librarian.saved_hotbars.tab",
-							Component.text(Librarian.getInstance().getCurrentPageNumber().toString())))));
+							Component.text(librarian.getCurrentPageNumber().toString())))));
 		}
 
 		// Even though we override the isVisible and isActive methods, internally ClickableWidget still uses the
@@ -164,17 +173,17 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 		// Initialize buttons
 		nextButton = mechanic.createButton(x + 12, y,12, 12, Component.text("→"),
-				Component.text("Next page"), () -> Librarian.getInstance().nextPage());
+				Component.text("Next page"), () -> librarian.nextPage());
 		backupButton = mechanic.createButton(x, y,12, 12, Component.text("\uD83D\uDCBE")
 						.font(Key.key("librarian", "default")), Component.text("Make a backup of this page"),
-				() -> Librarian.getInstance().getCurrentPage().librarian$backup());
+				() -> librarian.getCurrentPage().librarian$backup());
 		previousButton = mechanic.createButton(x - 12, y,12, 12, Component.text("←"),
-				Component.text("Previous page"), () -> Librarian.getInstance().previousPage());
+				Component.text("Previous page"), () -> librarian.previousPage());
 
 		// Marks visibility and usability of the buttons
 		nextButton.visible = tabIsHotbar(getSelectedTab());
 		backupButton.visible = tabIsHotbar(getSelectedTab());
-		backupButton.active = Librarian.getInstance().getCurrentPage().exists();
+		backupButton.active = librarian.getCurrentPage().exists();
 		previousButton.visible = tabIsHotbar(getSelectedTab());
 
 		// Adds the "rename hotbar" text field
@@ -190,7 +199,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	public void unregisterOnRemoval(CallbackInfo ci)
 	{
 		// Unregisters us as an event listener when the menu is closed
-		Librarian.getInstance().getEventBus().unregister(this);
+		librarian.getEventBus().unregister(this);
 	}
 
 	@Inject(method = "setSelectedTab", at = @At("HEAD"))
@@ -201,12 +210,12 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		// Determine visibility and other stuff
 		if (renameHotbarField != null)
 		{
-			if (shouldShowElements)
+			if (shouldShowElements && librarian.getCurrentPage().librarian$getLoadStatus() == LoadStatus.LOADED)
 			{
 				// Updates the "message" which we use to display the formatted text in non-edit mode
-				renameHotbarField.setMessage(mechanic.createText(Librarian.getInstance().getCurrentPage().librarian$getMetadata()
+				renameHotbarField.setMessage(mechanic.createText(librarian.getCurrentPage().librarian$getMetadata()
 						.map(HotbarPageMetadata::getName).orElse(Component.translatable("librarian.saved_hotbars.tab",
-								Component.text(Librarian.getInstance().getCurrentPageNumber().toString())))));
+								Component.text(librarian.getCurrentPageNumber().toString())))));
 			}
 
 			// Updates the text in the field to be the contents of the label so that it stays consistent in the
@@ -226,7 +235,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		if (backupButton != null)
 		{
 			backupButton.visible = shouldShowElements;
-			backupButton.active = Librarian.getInstance().getCurrentPage().exists();
+			backupButton.active = librarian.getCurrentPage().exists();
 		}
 		if (previousButton != null) previousButton.visible = shouldShowElements;
 
@@ -234,6 +243,55 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		((ScreenAccessor) this).getDrawables().stream().filter(entry ->
 				entry instanceof FabricCreativeGuiComponents.ItemGroupButtonWidget).forEach(button ->
 				((ButtonWidget) button).visible = !shouldShowElements);
+	}
+
+	@Inject(method = "setSelectedTab", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;getCreativeHotbarStorage()Lnet/minecraft/client/option/HotbarStorage;", shift = At.Shift.AFTER), cancellable = true)
+	private void insertEmptyLoadingScreen(ItemGroup group, CallbackInfo ci)
+	{
+		if (tabIsHotbar(group))
+		{
+			final IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
+			switch (page.librarian$getLoadStatus())
+			{
+				case NOT_LOADED:
+				{
+					if (Librarian.getInstance().getConfig().optimizations().backgroundLoading())
+					{
+						page.librarian$loadAsync();
+					}
+					else
+					{
+						return;
+					}
+				}
+				case LOADING:
+				{
+					((CreativeInventoryScreen.CreativeScreenHandler) ((HandledScreenAccessor) this).getHandler()).itemList.clear();
+
+					if (renameHotbarField != null)
+					{
+						renameHotbarField.setMessage(Text.translatable("librarian.messages.loading",
+								page.librarian$getLocation().getName()));
+						renameHotbarField.setFocused(false);
+						renameHotbarField.active = false;
+					}
+
+					searchBox.setVisible(false);
+					searchBox.setFocusUnlocked(false);
+					searchBox.setFocused(false);
+					searchBox.setText("");
+
+					scrollPosition = 0.0f;
+					((CreativeInventoryScreen.CreativeScreenHandler) ((HandledScreenAccessor) this).getHandler()).scrollItems(0.0f);
+					ci.cancel();
+					break;
+				}
+				default:
+				{
+					// Do nothing
+				}
+			}
+		}
 	}
 
 	@Inject(method = "drawForeground", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemGroup;shouldRenderName()Z", shift = At.Shift.AFTER), cancellable = true)
@@ -256,7 +314,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			// Handle key presses if the field is focused
 			if (renameHotbarField.isFocused())
 			{
-				final IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
+				final IWrappedHotbarStorage page = librarian.getCurrentPage();
 
 				// Abort changes if the user presses ESC
 				if (input.getKeycode() == GLFW.GLFW_KEY_ESCAPE)
@@ -282,7 +340,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					lastSuccessfulChange = renameHotbarField.getText();
 
 					// Hacky fix, but oh well
-					backupButton.active = Librarian.getInstance().getCurrentPage().exists();
+					backupButton.active = librarian.getCurrentPage().exists();
 				}
 
 				cir.setReturnValue(true);
@@ -303,22 +361,22 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		if (tabIsHotbar(getSelectedTab()))
 		{
 			// Fabric API keybinds
-			final FabricAPIAddon fabric = Librarian.getInstance().getAddon(FabricAPIAddon.class);
+			final FabricAPIAddon fabric = librarian.getAddon(FabricAPIAddon.class);
 			if (fabric.getNextKey().matchesKey(input))
 			{
-				Librarian.getInstance().nextPage();
+				librarian.nextPage();
 				cir.setReturnValue(true);
 				return;
 			}
 			else if (fabric.getPreviousKey().matchesKey(input))
 			{
-				Librarian.getInstance().previousPage();
+				librarian.previousPage();
 				cir.setReturnValue(true);
 				return;
 			}
 			else if (fabric.getBackupKey().matchesKey(input))
 			{
-				Librarian.getInstance().getCurrentPage().librarian$backup();
+				librarian.getCurrentPage().librarian$backup();
 				cir.setReturnValue(true);
 				return;
 			}
@@ -332,7 +390,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					// R
 					if (input.getKeycode() == GLFW.GLFW_KEY_R)
 					{
-						Librarian.getInstance().reloadCurrentPage();
+						librarian.reloadCurrentPage();
 						cir.setReturnValue(true);
 					}
 				}
@@ -342,13 +400,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					// LEFT ARROW
 					if (input.getKeycode() == GLFW.GLFW_KEY_LEFT)
 					{
-						Librarian.getInstance().previousPage();
+						librarian.previousPage();
 						cir.setReturnValue(true);
 					}
 					// RIGHT ARROW
 					else if (input.getKeycode() == GLFW.GLFW_KEY_RIGHT)
 					{
-						Librarian.getInstance().nextPage();
+						librarian.nextPage();
 						cir.setReturnValue(true);
 					}
 				}
@@ -358,13 +416,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					// LEFT ARROW
 					if (input.getKeycode() == GLFW.GLFW_KEY_LEFT)
 					{
-						Librarian.getInstance().advanceBy(-5);
+						librarian.advanceBy(-5);
 						cir.setReturnValue(true);
 					}
 					// RIGHT ARROW
 					else if (input.getKeycode() == GLFW.GLFW_KEY_RIGHT)
 					{
-						Librarian.getInstance().advanceBy(5);
+						librarian.advanceBy(5);
 						cir.setReturnValue(true);
 					}
 				}
@@ -374,13 +432,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					// LEFT ARROW
 					if (input.getKeycode() == GLFW.GLFW_KEY_LEFT)
 					{
-						Librarian.getInstance().advanceBy(-10);
+						librarian.advanceBy(-10);
 						cir.setReturnValue(true);
 					}
 					// RIGHT ARROW
 					else if (input.getKeycode() == GLFW.GLFW_KEY_RIGHT)
 					{
-						Librarian.getInstance().advanceBy(10);
+						librarian.advanceBy(10);
 						cir.setReturnValue(true);
 					}
 				}
@@ -408,19 +466,42 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	private static void wrapHotbarSaving(MinecraftClient client, int index, boolean restore, boolean save,
 										 Operation<Void> original)
 	{
+		final HotbarStorage storage = client.getCreativeHotbarStorage();
+		final IWrappedHotbarStorage wrappedStorage = (IWrappedHotbarStorage) storage;
+
+		if (Librarian.getInstance().getConfig().optimizations().backgroundLoading())
+		{
+			switch (wrappedStorage.librarian$getLoadStatus())
+			{
+				case NOT_LOADED:
+				{
+					wrappedStorage.librarian$loadAsync();
+				}
+				case LOADING:
+				{
+					Objects.requireNonNull(client.player).sendMessage(Text.translatable("librarian.messages.loading"), true);
+					return;
+				}
+				default:
+				{
+					break;
+				}
+			}
+		}
+
 		if (save)
 		{
 			boolean backgroundSaving = Librarian.getInstance().getConfig().optimizations().backgroundSaving();
 
 			Runnable operation = () ->
 			{
-				final HotbarStorage storage = client.getCreativeHotbarStorage();
-				final IWrappedHotbarStorage wrappedStorage = (IWrappedHotbarStorage) storage;
+				final HotbarStorage str = client.getCreativeHotbarStorage();
+				final IWrappedHotbarStorage wrapped = (IWrappedHotbarStorage) str;
 				final List<String> issues = new ArrayList<>();
 
 				downgradeCheck:
 				{
-					if (wrappedStorage.librarian$dataVersion() > SharedConstants.getGameVersion().dataVersion().id())
+					if (wrapped.librarian$dataVersion() > SharedConstants.getGameVersion().dataVersion().id())
 					{
 						issues.add("downgrade");
 						break downgradeCheck;
@@ -510,7 +591,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			"Lnet/minecraft/text/Text;translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/text/MutableText;"))
 	private static MutableText useBackgroundSavingMessage(String key, Object[] args, Operation<MutableText> original)
 	{
-		return Librarian.getInstance().getConfig().optimizations().backgroundSaving() ?
+		return librarian.getConfig().optimizations().backgroundSaving() ?
 				Text.translatable("librarian.messages.saving") : original.call(key, args);
 	}*/
 
@@ -542,6 +623,16 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		if (tabIsHotbar(getSelectedTab()))
 		{
 			setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
+		}
+	}
+
+	@Subscribe
+	@Unique
+	public void onPageLoad(AsyncPageLoadEvent event)
+	{
+		if (tabIsHotbar(getSelectedTab()) && event.getPage().librarian$getPageNumber().equals(librarian.getCurrentPageNumber()))
+		{
+			MinecraftClient.getInstance().execute(() -> setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR)));
 		}
 	}
 

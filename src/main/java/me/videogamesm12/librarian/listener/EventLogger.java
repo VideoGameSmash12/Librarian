@@ -46,20 +46,6 @@ public class EventLogger extends AbstractEventListener
 	}
 
 	@Subscribe
-	public void onLoadFailure(LoadFailureEvent event)
-	{
-		// The exception was already covered earlier
-		Librarian.getLogger().error("Failed to load hotbar file {}", event.getStorage().librarian$getLocation().getName());
-	}
-
-	@Subscribe
-	public void onSaveFailure(SaveFailureEvent event)
-	{
-		// Exception already covered
-		Librarian.getLogger().error("Hotbar file {} could not be saved", event.getStorage().librarian$getLocation().getName());
-	}
-
-	@Subscribe
 	public void onNavigation(NavigationEvent event)
 	{
 		Librarian.getLogger().info("Navigated from hotbar page {} to page {}", event.getCurrentPage().toString(),

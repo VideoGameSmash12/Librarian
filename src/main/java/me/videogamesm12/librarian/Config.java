@@ -43,7 +43,7 @@ import java.util.List;
 public class Config
 {
 	@Getter
-	private static final int currentVersion = 4;
+	private static final int currentVersion = 5;
 
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 	private static final File configFile = new File(FabricLoader.getInstance().getConfigDir().toFile(), "librarian.json");
@@ -189,17 +189,18 @@ public class Config
 		private boolean backgroundSaving = true;
 
 		/**
-		 * Controls whether to process hotbar rows ahead of time and only update them when necessary
-		 * Offers a massive performance boost, but needs refinement.
+		 * Controls whether to load pages asynchronously. Fixes a major lagspike in all versions of the game caused by
+		 * 	loading pages with large amounts of data.
+		 */
+		@Builder.Default
+		private boolean backgroundLoading = true;
+
+		/**
+		 * Controls whether to process hotbar rows ahead of time and only update them when necessary, fixing some
+		 * 	lagspikes in versions 1.20.6+. This has no effect in 1.20.4 and earlier.
 		 */
 		@Builder.Default
 		private boolean preprocessHotbarRows = true;
-
-		/**
-		 * Controls whether to load hotbar rows from the NBT tag in parallel.
-		 */
-		@Builder.Default
-		private boolean readHotbarRowsInParallel = true;
 
 		/**
 		 * A list of page numbers for pages that should get automatically loaded on startup.
@@ -219,14 +220,14 @@ public class Config
 			return backgroundSaving;
 		}
 
+		public boolean backgroundLoading()
+		{
+			return backgroundLoading;
+		}
+
 		public boolean preprocessHotbarRows()
 		{
 			return preprocessHotbarRows;
-		}
-
-		public boolean readHotbarRowsInParallel()
-		{
-			return readHotbarRowsInParallel;
 		}
 	}
 

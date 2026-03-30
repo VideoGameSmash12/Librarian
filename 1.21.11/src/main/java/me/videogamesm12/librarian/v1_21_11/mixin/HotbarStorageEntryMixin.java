@@ -57,7 +57,8 @@ public abstract class HotbarStorageEntryMixin
 	@Inject(method = "<init>(Ljava/util/List;)V", at = @At("TAIL"))
 	private void preprocess(List<Dynamic<?>> stacks, CallbackInfo ci)
 	{
-		if (Librarian.getInstance().getConfig().optimizations().preprocessHotbarRows())
+		if (Librarian.getInstance().getConfig().optimizations().preprocessHotbarRows()
+				&& !Librarian.getInstance().getConfig().optimizations().backgroundLoading())
 		{
 			Librarian.getInstance().queue(() ->
 					deserialize(MinecraftClient.getInstance().world != null ?

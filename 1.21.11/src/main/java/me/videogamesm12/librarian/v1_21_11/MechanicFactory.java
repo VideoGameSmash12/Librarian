@@ -46,7 +46,7 @@ public class MechanicFactory implements IMechanicFactory
 	static
 	{
 		MinecraftClient.getInstance().execute(() ->
-				Librarian.getInstance().getConfig().optimizations().getBookmarks().parallelStream()
+				Librarian.getInstance().getConfig().optimizations().getBookmarks().parallelStream().distinct()
 						.forEach(page -> Librarian.getInstance().getHotbarPage(page).librarian$load()));
 	}
 

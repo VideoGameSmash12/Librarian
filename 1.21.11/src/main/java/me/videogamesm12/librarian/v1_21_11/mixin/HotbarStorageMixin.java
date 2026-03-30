@@ -17,15 +17,12 @@
 
 package me.videogamesm12.librarian.v1_21_11.mixin;
 
-import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.datafixers.DataFixer;
 import com.mojang.serialization.DataResult;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
+import me.videogamesm12.librarian.api.LoadStatus;
 import me.videogamesm12.librarian.api.event.LoadFailureEvent;
 import me.videogamesm12.librarian.api.event.SaveFailureEvent;
 import me.videogamesm12.librarian.util.FNF;
@@ -36,20 +33,19 @@ import net.minecraft.client.option.HotbarStorage;
 import net.minecraft.client.option.HotbarStorageEntry;
 import net.minecraft.datafixer.DataFixTypes;
 import net.minecraft.nbt.*;
+import net.minecraft.registry.BuiltinRegistries;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.io.File;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.IntStream;
 
 @Mixin(HotbarStorage.class)
@@ -57,11 +53,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 {
 	@Shadow @Final private Path file;
 
-	@Shadow private boolean loaded;
-
-	@Shadow
-	@Final
-	private HotbarStorageEntry[] entries;
+	@Shadow @Final private HotbarStorageEntry[] entries;
 
 	@Shadow @Final private DataFixer dataFixer;
 
@@ -79,6 +71,9 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Unique
 	private int dataVersion = 0;
 
+	@Unique
+	private LoadStatus status = LoadStatus.NOT_LOADED;
+
 	/**
 	 * <p>Hijacks what is used as the location by HotbarStorage on initialization.</p>
 	 * @param ci        CallbackInfo
@@ -95,16 +90,19 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	/**
 	 * Reimplements the hotbar page loading logic using existing optimizations and features.
 	 * @author	Video
-	 * @reason	Mod already heavily modifies
+	 * @reason	Mod already heavily modifies game behavior, might as well just do it to keep things organized
 	 */
 	@Overwrite
 	private void load()
 	{
+		// Indicate that we are now loading
+		this.status = LoadStatus.LOADING;
+
 		try
 		{
 			NbtCompound tag;
 
-			// Try to load the page as a regular hotbar.nbt file, otherwise
+			// Try to load the page as a regular hotbar.nbt file, otherwise treat it as compressed
 			try
 			{
 				tag = NbtIo.read(librarian$getLocation().toPath());
@@ -115,8 +113,9 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 			}
 
 			// Usually means the file doesn't exist
-			if (tag == null)
+			if (tag == null || tag.isEmpty())
 			{
+				status = LoadStatus.LOADED;
 				setLoaded(true);
 				return;
 			}
@@ -154,27 +153,8 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 				}
 			});
 
-			long startTime = System.currentTimeMillis();
-			Librarian.getLogger().warn("Start time {}", startTime);
-
-			// Read the rows in parallel to try to speed up load times
 			final NbtCompound shutUpIntellij = tag;
-			IntStream rows = IntStream.range(0, 9);
-
-			if (Librarian.getInstance().getConfig().optimizations().readHotbarRowsInParallel())
-			{
-				rows = rows.parallel();
-			}
-
-			rows.forEach(i ->
-			{
-				Librarian.getLogger().warn("Loading row {}", i);
-				loadRow(i, shutUpIntellij);
-			});
-
-			long endTime = System.currentTimeMillis();
-			Librarian.getLogger().warn("End time {}", endTime);
-			Librarian.getLogger().warn("Loading time was {} ms", endTime - startTime);
+			IntStream.range(0, 9).forEach(i -> loadRow(i, shutUpIntellij));
 		}
 		catch (Throwable ex)
 		{
@@ -182,6 +162,8 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 			Librarian.getInstance().getEventBus().post(new LoadFailureEvent(this, ex));
 		}
 
+		// Ok, we're done
+		status = LoadStatus.LOADED;
 		setLoaded(true);
 	}
 
@@ -193,6 +175,12 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Overwrite
 	public void save()
 	{
+		// Do nothing if the page isn't even loaded yet and we're loading asynchronously
+		if (status != LoadStatus.LOADED && Librarian.getInstance().getConfig().optimizations().backgroundLoading())
+		{
+			return;
+		}
+
 		// Update the data version
 		dataVersion = SharedConstants.getGameVersion().dataVersion().id();
 
@@ -262,6 +250,26 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 		}
 	}
 
+	@Inject(method = "getSavedHotbar", at = @At("HEAD"), cancellable = true)
+	private void preventPrematureHotbarGrabbing(int i, CallbackInfoReturnable<HotbarStorageEntry> cir)
+	{
+		if (status == LoadStatus.NOT_LOADED)
+		{
+			librarian$loadAsync();
+			cir.setReturnValue(new HotbarStorageEntry());
+		}
+		else if (status == LoadStatus.LOADING)
+		{
+			cir.setReturnValue(new HotbarStorageEntry());
+		}
+	}
+
+	@Override
+	public LoadStatus librarian$getLoadStatus()
+	{
+		return status;
+	}
+
 	@Override
 	public int librarian$dataVersion()
 	{
@@ -271,11 +279,10 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Override
 	public Optional<HotbarPageMetadata> librarian$getMetadata()
 	{
-		Librarian.getLogger().error("Called from metadata?");
-		if (!loaded)
-		{
-			load();
-		}
+		//if (!loaded)
+		//{
+		//load();
+		//}
 
 		return Optional.ofNullable(metadata);
 	}
@@ -302,6 +309,13 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	public void librarian$load()
 	{
 		load();
+	}
+
+	@Override
+	public void librarian$preprocess()
+	{
+		Arrays.stream(entries).forEach(entry ->
+				entry.deserialize(Objects.requireNonNull(MinecraftClient.getInstance().world).getRegistryManager()));
 	}
 
 	@Unique

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Video
+ * Copyright (C) 2026 Video
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,22 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.videogamesm12.librarian.v1_21_11.mixin;
+package me.videogamesm12.librarian.api;
 
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.screen.ScreenHandler;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
-
-@Mixin(HandledScreen.class)
-public interface HandledScreenAccessor
+/**
+ * <h1>LoadStatus</h1>
+ * <p>Enum for the state of a hotbar page.</p>
+ */
+public enum LoadStatus
 {
-	@Accessor(value = "x")
-	int getX();
-
-	@Accessor(value = "y")
-	int getY();
-
-	@Accessor(value = "handler")
-	<T extends ScreenHandler> T getHandler();
+	NOT_LOADED,
+	LOADING,
+	LOADED
 }

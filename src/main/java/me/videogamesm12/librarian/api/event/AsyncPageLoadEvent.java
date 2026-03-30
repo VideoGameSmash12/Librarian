@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Video
+ * Copyright (C) 2026 Video
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,22 +15,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.videogamesm12.librarian.v1_21_11.mixin;
+package me.videogamesm12.librarian.api.event;
 
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.screen.ScreenHandler;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
 
-@Mixin(HandledScreen.class)
-public interface HandledScreenAccessor
+/**
+ * <h1>AsyncPageLoadEvent</h1>
+ * <p>An event indicating that a page has finished loading.</p>
+ */
+@Getter
+@RequiredArgsConstructor
+public class AsyncPageLoadEvent extends LibrarianEvent
 {
-	@Accessor(value = "x")
-	int getX();
-
-	@Accessor(value = "y")
-	int getY();
-
-	@Accessor(value = "handler")
-	<T extends ScreenHandler> T getHandler();
+	private final IWrappedHotbarStorage page;
 }
