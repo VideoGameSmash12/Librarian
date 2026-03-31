@@ -430,8 +430,8 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	}
 
 	@WrapMethod(method = "saveOrLoadToolbar")
-	private static void checkForAccidentalItemLoss(Minecraft client, int index, boolean restore, boolean save,
-												   Operation<Void> original)
+	private static void wrapHotbarSaving(Minecraft client, int index, boolean restore, boolean save,
+										 Operation<Void> original)
 	{
 		if (librarian == null) librarian = Librarian.getInstance();
 
