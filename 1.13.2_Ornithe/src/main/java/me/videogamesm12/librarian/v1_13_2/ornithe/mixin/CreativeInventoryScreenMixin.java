@@ -334,7 +334,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		}
 		else if (osl.getBackupKey().matches(keyCode, scanCode))
 		{
-			librarian.getCurrentPage().librarian$backup();
+			Librarian.getInstance().queue(() -> librarian.getCurrentPage().librarian$backup());
 			cir.setReturnValue(true);
 			return;
 		}
