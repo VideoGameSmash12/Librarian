@@ -476,7 +476,8 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 				}
 				case LOADING:
 				{
-					Objects.requireNonNull(client.player).sendMessage(Text.translatable("librarian.messages.loading"), true);
+					Objects.requireNonNull(client.player).sendMessage(Text.translatable("librarian.messages.loading",
+							wrappedStorage.librarian$getLocation().getName()), true);
 					return;
 				}
 				default:

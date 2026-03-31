@@ -11,6 +11,7 @@
     "ContainerScreenAccessor",
     "CreativeInventoryScreenMixin",
     "HotbarStorageMixin",
-    "MinecraftClientMixin"
+    "MinecraftClientMixin",
+    "AbstractButtonWidgetAccessor"
   ]
 }

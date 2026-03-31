@@ -467,7 +467,6 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	private static void wrapHotbarSaving(MinecraftClient client, int index, boolean restore, boolean save,
 										 Operation<Void> original)
 	{
-
 		if (librarian == null) librarian = Librarian.getInstance();
 
 		final HotbarStorage storage = client.getCreativeHotbarStorage();
@@ -483,7 +482,8 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 				}
 				case LOADING:
 				{
-					Objects.requireNonNull(client.player).sendMessage(new TranslatableText("librarian.messages.loading"), true);
+					Objects.requireNonNull(client.player).sendMessage(new TranslatableText("librarian.messages.loading",
+							wrappedStorage.librarian$getLocation().getName()), true);
 					return;
 				}
 				default:
