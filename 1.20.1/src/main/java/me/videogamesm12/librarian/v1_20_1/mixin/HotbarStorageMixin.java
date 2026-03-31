@@ -17,7 +17,6 @@
 
 package me.videogamesm12.librarian.v1_20_1.mixin;
 
-import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.datafixers.DataFixer;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
