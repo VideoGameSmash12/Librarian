@@ -21,6 +21,7 @@ import lombok.Getter;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.addon.AddonMeta;
 import me.videogamesm12.librarian.api.addon.IAddon;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
@@ -67,9 +68,13 @@ public class FabricAPIAddon implements IAddon
 				}
 				else if (backupKey.wasPressed())
 				{
-					Librarian.getInstance().getCurrentPage().librarian$backup();
+					Librarian.getInstance().queue(() -> Librarian.getInstance().getCurrentPage().librarian$backup());
 				}
 			}
 		});
+
+		ClientLifecycleEvents.CLIENT_STARTED.register(client ->
+				Librarian.getInstance().getConfig().optimizations().getBookmarks().parallelStream().distinct()
+						.forEach(page -> Librarian.getInstance().getHotbarPage(page).librarian$load()));
 	}
 }

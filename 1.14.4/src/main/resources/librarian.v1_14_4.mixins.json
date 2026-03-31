@@ -8,8 +8,9 @@
     "defaultRequire": 1
   },
   "client": [
-    "CreativeInventoryScreenMixin",
+    "AbstractButtonWidgetAccessor",
     "ContainerScreenAccessor",
+    "CreativeInventoryScreenMixin",
     "HotbarStorageMixin",
     "MinecraftClientMixin"
   ]

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Video
+ * Copyright (C) 2026 Video
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,20 +17,13 @@
 
 package me.videogamesm12.librarian.v1_14_4.mixin;
 
-import net.minecraft.client.gui.screen.ingame.ContainerScreen;
-import net.minecraft.container.Container;
+import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
+import org.spongepowered.asm.mixin.gen.Invoker;
 
-@Mixin(ContainerScreen.class)
-public interface ContainerScreenAccessor
+@Mixin(AbstractButtonWidget.class)
+public interface AbstractButtonWidgetAccessor
 {
-	@Accessor(value = "x")
-	int getX();
-
-	@Accessor(value = "y")
-	int getY();
-
-	@Accessor(value = "container")
-	<T extends Container> T getContainer();
+	@Invoker("setFocused")
+	void invokeSetFocused(boolean value);
 }
