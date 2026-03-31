@@ -26,6 +26,7 @@ import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IMechanicFactory;
 import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
+import me.videogamesm12.librarian.api.LoadStatus;
 import me.videogamesm12.librarian.api.addon.AddonMeta;
 import me.videogamesm12.librarian.api.addon.IAddon;
 import me.videogamesm12.librarian.util.ComponentProcessor;
@@ -377,16 +378,22 @@ public class FabricAPIAddon implements IAddon
 	private void loadAndThen(FabricClientCommandSource source, BigInteger page, Runnable action)
 	{
 		final IWrappedHotbarStorage storage =  Librarian.getInstance().getHotbarPage(page);
-		feedback(source, Component.translatable("librarian.messages.loading", storage.librarian$getLocation().getName()));
+		if (storage.librarian$getLoadStatus() != LoadStatus.LOADED)
+		{
+			feedback(source, Component.translatable("librarian.messages.loading", storage.librarian$getLocation().getName()));
 
-		if (Librarian.getInstance().getConfig().optimizations().backgroundLoading())
-		{
-			storage.librarian$loadAsync().whenComplete((wrapped, throwable) -> action.run());
-		}
-		else
-		{
-			storage.librarian$load();
-			action.run();
+			if (storage.librarian$getLoadStatus() == LoadStatus.NOT_LOADED)
+			{
+				if (Librarian.getInstance().getConfig().optimizations().backgroundLoading())
+				{
+					storage.librarian$loadAsync().whenComplete((wrapped, throwable) -> action.run());
+				}
+				else
+				{
+					storage.librarian$load();
+					action.run();
+				}
+			}
 		}
 	}
 }

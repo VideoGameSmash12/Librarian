@@ -73,13 +73,14 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 {
 	@Shadow protected abstract void setSelectedTab(ItemGroup group);
 
+	@Unique
+	private static Librarian librarian;
+
 	@Shadow
 	private TextFieldWidget searchBox;
 	@Shadow
 	private float scrollPosition;
 
-	@Unique
-	private Librarian librarian = Librarian.getInstance();
 	@Unique
 	private IMechanicFactory mechanic;
 
@@ -105,6 +106,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			target = "Lnet/minecraft/screen/PlayerScreenHandler;addListener(Lnet/minecraft/screen/ScreenHandlerListener;)V"))
 	public void injectInit(CallbackInfo ci)
 	{
+		if (librarian == null) librarian = Librarian.getInstance();
 		librarian.getEventBus().register(this);
 		mechanic = librarian.getMechanic();
 
@@ -250,12 +252,12 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	{
 		if (tabIsHotbar(group))
 		{
-			final IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
+			final IWrappedHotbarStorage page = librarian.getCurrentPage();
 			switch (page.librarian$getLoadStatus())
 			{
 				case NOT_LOADED:
 				{
-					if (Librarian.getInstance().getConfig().optimizations().backgroundLoading())
+					if (librarian.getConfig().optimizations().backgroundLoading())
 					{
 						page.librarian$loadAsync();
 					}
@@ -466,10 +468,12 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	private static void wrapHotbarSaving(MinecraftClient client, int index, boolean restore, boolean save,
 										 Operation<Void> original)
 	{
+		if (librarian == null) librarian = Librarian.getInstance();
+
 		final HotbarStorage storage = client.getCreativeHotbarStorage();
 		final IWrappedHotbarStorage wrappedStorage = (IWrappedHotbarStorage) storage;
 
-		if (Librarian.getInstance().getConfig().optimizations().backgroundLoading())
+		if (librarian.getConfig().optimizations().backgroundLoading())
 		{
 			switch (wrappedStorage.librarian$getLoadStatus())
 			{
@@ -491,7 +495,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 		if (save)
 		{
-			boolean backgroundSaving = Librarian.getInstance().getConfig().optimizations().backgroundSaving();
+			boolean backgroundSaving = librarian.getConfig().optimizations().backgroundSaving();
 
 			Runnable operation = () ->
 			{
@@ -559,7 +563,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 						if (value)
 						{
 							if (backgroundSaving)
-								Librarian.getInstance().queue(() -> original.call(client, index, restore, save));
+								librarian.queue(() -> original.call(client, index, restore, save));
 							else
 								original.call(client, index, restore, save);
 						}
@@ -574,7 +578,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 			if (backgroundSaving)
 			{
-				Librarian.getInstance().queue(operation);
+				librarian.queue(operation);
 			}
 			else
 			{
@@ -586,14 +590,6 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			original.call(client, index, restore, save);
 		}
 	}
-
-	/*@WrapOperation(method = "onHotbarKeyPress", at = @At(value = "INVOKE", target =
-			"Lnet/minecraft/text/Text;translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/text/MutableText;"))
-	private static MutableText useBackgroundSavingMessage(String key, Object[] args, Operation<MutableText> original)
-	{
-		return librarian.getConfig().optimizations().backgroundSaving() ?
-				Text.translatable("librarian.messages.saving") : original.call(key, args);
-	}*/
 
 	@Subscribe
 	@Unique
