@@ -41,7 +41,6 @@ import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.option.HotbarStorage;
-import net.minecraft.client.option.HotbarStorageEntry;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemGroup;
@@ -617,7 +616,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	{
 		if (tabIsHotbar(selectedTab) && event.getPage().librarian$getPageNumber().equals(librarian.getCurrentPageNumber()))
 		{
-			MinecraftClient.getInstance().execute(() -> setSelectedTab(ItemGroups.HOTBAR));
+			MinecraftClient.getInstance().execute(() -> setSelectedTab(ItemGroup.HOTBAR));
 		}
 	}
 
