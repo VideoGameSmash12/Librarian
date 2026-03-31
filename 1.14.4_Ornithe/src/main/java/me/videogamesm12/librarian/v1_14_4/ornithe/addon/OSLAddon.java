@@ -66,5 +66,9 @@ public class OSLAddon implements IAddon
 				}
 			}
 		});
+
+		MinecraftClientEvents.START.register((instance) ->
+				Librarian.getInstance().getConfig().optimizations().getBookmarks().parallelStream().distinct()
+						.forEach(page -> Librarian.getInstance().getHotbarPage(page).librarian$load()));
 	}
 }
