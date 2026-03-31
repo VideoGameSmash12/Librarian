@@ -152,7 +152,17 @@ public class Librarian implements ClientModInitializer
 
 	public void reloadCurrentPage()
 	{
-		getCurrentPage().librarian$load();
+		final IWrappedHotbarStorage page = getCurrentPage();
+
+		if (Librarian.getInstance().getConfig().optimizations().backgroundLoading())
+		{
+			page.librarian$loadAsync();
+		}
+		else
+		{
+			page.librarian$load();
+		}
+
 		eventBus.post(new ReloadPageEvent(currentPageNumber));
 	}
 
