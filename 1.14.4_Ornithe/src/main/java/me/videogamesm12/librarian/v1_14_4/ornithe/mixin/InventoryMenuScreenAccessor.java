@@ -31,7 +31,6 @@ public interface InventoryMenuScreenAccessor
 	@Accessor(value = "y")
 	int getY();
 
-
 	@Accessor(value = "menu")
 	<T extends InventoryMenu> T getMenu();
 }

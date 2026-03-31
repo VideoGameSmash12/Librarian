@@ -65,13 +65,8 @@ import java.util.Objects;
 public abstract class CreativeInventoryScreenMixin extends Screen
 {
 	@Shadow protected abstract void setSelectedTab(CreativeModeTab tab);
-	
-	@Shadow private static int selectedTab;
 
-	protected CreativeInventoryScreenMixin(Text text)
-	{
-		super(text);
-	}
+	@Shadow private static int selectedTab;
 
 	@Unique
 	private static Librarian librarian;
@@ -95,6 +90,11 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	private ButtonWidget backupButton;
 	@Unique
 	private ButtonWidget previousButton;
+
+	protected CreativeInventoryScreenMixin(Text text)
+	{
+		super(text);
+	}
 
 	@Inject(method = "init", at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/inventory/menu/PlayerMenu;addListener(Lnet/minecraft/inventory/menu/InventoryMenuListener;)V"))

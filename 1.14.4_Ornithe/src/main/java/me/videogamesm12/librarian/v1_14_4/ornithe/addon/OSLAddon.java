@@ -56,13 +56,13 @@ public class OSLAddon implements IAddon
 				{
 					Librarian.getInstance().nextPage();
 				}
+				else if (backupKey.consumeClick())
+				{
+					Librarian.getInstance().queue(() -> Librarian.getInstance().getCurrentPage().librarian$backup());
+				}
 				else if (previousKey.consumeClick())
 				{
 					Librarian.getInstance().previousPage();
-				}
-				else if (backupKey.consumeClick())
-				{
-					Librarian.getInstance().getCurrentPage().librarian$backup();
 				}
 			}
 		});
