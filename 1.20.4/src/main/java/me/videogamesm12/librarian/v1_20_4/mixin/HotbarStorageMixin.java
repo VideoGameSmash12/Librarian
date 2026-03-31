@@ -17,9 +17,7 @@
 
 package me.videogamesm12.librarian.v1_20_4.mixin;
 
-import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.datafixers.DataFixer;
-import com.mojang.serialization.DataResult;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
@@ -57,8 +55,6 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Shadow @Final private HotbarStorageEntry[] entries;
 
 	@Shadow @Final private DataFixer dataFixer;
-
-	@Shadow public abstract HotbarStorageEntry getSavedHotbar(int i);
 
 	@Unique
 	private static final GsonComponentSerializer librarian$serializer = GsonComponentSerializer.gson();
