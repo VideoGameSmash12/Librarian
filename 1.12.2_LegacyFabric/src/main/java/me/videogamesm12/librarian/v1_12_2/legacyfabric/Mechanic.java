@@ -47,14 +47,15 @@ public class Mechanic implements IMechanicFactory
 		//	not to without using some additional hacky fixes, we might as well just bite the bullet and deal with it.
 		//
 		// This sucks.
-		if (integer.equals(BigInteger.ZERO))
+		/*if (integer.equals(BigInteger.ZERO))
 		{
 			return (IWrappedHotbarStorage) MinecraftClient.getInstance().field_15872;
 		}
 		else
 		{
-			return (IWrappedHotbarStorage) new class_3251(MinecraftClient.getInstance(), FNF.getFileForPage(integer));
-		}
+
+		}*/
+		return (IWrappedHotbarStorage) new class_3251(MinecraftClient.getInstance(), FNF.getFileForPage(integer));
 	}
 
 	@Override
