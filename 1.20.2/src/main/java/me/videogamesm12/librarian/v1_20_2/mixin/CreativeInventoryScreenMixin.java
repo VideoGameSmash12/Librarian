@@ -457,8 +457,8 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	}
 
 	@WrapMethod(method = "onHotbarKeyPress")
-	private static void checkForAccidentalItemLoss(MinecraftClient client, int index, boolean restore, boolean save,
-												   Operation<Void> original)
+	private static void wrapHotbarSaving(MinecraftClient client, int index, boolean restore, boolean save,
+										 Operation<Void> original)
 	{
 
 		if (librarian == null) librarian = Librarian.getInstance();
