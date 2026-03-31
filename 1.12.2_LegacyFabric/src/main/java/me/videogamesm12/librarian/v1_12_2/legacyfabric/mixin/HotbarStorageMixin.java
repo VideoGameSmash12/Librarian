@@ -19,7 +19,6 @@ package me.videogamesm12.librarian.v1_12_2.legacyfabric.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.llamalad7.mixinextras.sugar.Local;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
@@ -50,13 +49,9 @@ import java.util.stream.IntStream;
 @Mixin(class_3251.class)
 public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 {
-	@Shadow
-	@Final
-	private File field_15864;
+	@Shadow @Final private File field_15864;
 
-	@Shadow
-	@Final
-	private class_3297[] field_15865;
+	@Shadow @Final private class_3297[] field_15865;
 
 	@Unique
 	private static final GsonComponentSerializer librarian$serializer = GsonComponentSerializer.colorDownsamplingGson();
@@ -75,7 +70,6 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 
 	/**
 	 * <p>Hijacks what is used as the location by HotbarStorage on initialization.</p>
-	 *
 	 * @param instance MinecraftClient
 	 * @param file     File
 	 * @param ci       CallbackInfo
@@ -85,12 +79,6 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	{
 		this.pageNumber = FNF.getNumberFromFileName(file.getName());
 		this.setFile(file);
-		/*// Suppress error caused by the game loading the original saved hotbar entry on start-up, because of course
-		//	we have to do this crap
-		if (!file.getName().toLowerCase().contains("minecraft"))
-		{
-
-		}*/
 	}
 
 	@WrapOperation(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/class_3251;method_14449()V"))
