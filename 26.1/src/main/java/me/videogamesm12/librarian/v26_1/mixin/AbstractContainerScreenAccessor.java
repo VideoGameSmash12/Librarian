@@ -18,6 +18,7 @@
 package me.videogamesm12.librarian.v26_1.mixin;
 
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
@@ -29,4 +30,7 @@ public interface AbstractContainerScreenAccessor
 
 	@Accessor(value = "topPos")
 	int getTopPos();
+
+	@Accessor(value = "menu")
+	<T extends AbstractContainerMenu> T getMenu();
 }

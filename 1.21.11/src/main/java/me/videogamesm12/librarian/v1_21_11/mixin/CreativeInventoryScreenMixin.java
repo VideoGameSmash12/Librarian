@@ -515,7 +515,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 				overwriteCheck:
 				{
-					final List<ItemStack> storageEntry = storage.getSavedHotbar(index).deserialize(Objects.requireNonNull(client.world)
+					final List<ItemStack> storageEntry = str.getSavedHotbar(index).deserialize(Objects.requireNonNull(client.world)
 							.getRegistryManager());
 
 					if (storageEntry.isEmpty())

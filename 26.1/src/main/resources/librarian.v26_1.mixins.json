@@ -9,6 +9,7 @@
     "AbstractContainerScreenAccessor",
     "CreativeModeInventoryScreenMixin",
     "HotbarManagerMixin",
+    "HotbarMixin",
     "MinecraftClientMixin",
     "ScreenAccessor"
   ]
