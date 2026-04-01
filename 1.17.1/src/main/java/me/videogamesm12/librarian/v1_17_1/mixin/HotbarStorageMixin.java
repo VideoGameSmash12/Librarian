@@ -119,7 +119,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 
 			// Get and update the page's data version
 			this.dataVersion = tag.getInt("DataVersion") != 0 ? tag.getInt("DataVersion") : 1343;
-			tag = NbtHelper.update(this.dataFixer, DataFixTypes.HOTBAR, tag, tag.getInt("DataVersion"));
+			tag = NbtHelper.update(this.dataFixer, DataFixTypes.HOTBAR, tag, dataVersion);
 
 			// Fetch our metadata
 			NbtCompound meta = tag.getCompound("librarian");

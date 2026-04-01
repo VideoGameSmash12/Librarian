@@ -17,7 +17,6 @@
 
 package me.videogamesm12.librarian.v1_13_2.ornithe.mixin;
 
-import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.datafixers.DataFixTypes;
 import com.mojang.datafixers.DataFixer;
 import me.videogamesm12.librarian.Librarian;
@@ -28,7 +27,6 @@ import me.videogamesm12.librarian.api.event.LoadFailureEvent;
 import me.videogamesm12.librarian.api.event.SaveFailureEvent;
 import me.videogamesm12.librarian.util.FNF;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.SharedConstants;
 import net.minecraft.client.Hotbar;
 import net.minecraft.client.HotbarManager;
 import net.minecraft.nbt.*;
@@ -39,7 +37,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.io.EOFException;
 import java.io.File;
+import java.io.UTFDataFormatException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -105,9 +105,8 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 			{
 				tag = NbtIo.read(librarian$getLocation());
 			}
-			catch (Exception ex)
+			catch (UTFDataFormatException | EOFException ex)
 			{
-				Librarian.getLogger().warn(ex.getClass().getName());
 				tag = NbtIo.readCompressed(Files.newInputStream(librarian$getLocation().toPath()));
 			}
 
@@ -121,7 +120,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 
 			// Get and update the page's data version
 			this.dataVersion = tag.getInt("DataVersion") != 0 ? tag.getInt("DataVersion") : 1343;
-			tag = NbtUtils.fix(this.f_7546488, DataFixTypes.HOTBAR, tag, tag.getInt("DataVersion"));
+			tag = NbtUtils.fix(this.f_7546488, DataFixTypes.HOTBAR, tag, dataVersion);
 
 			// Fetch our metadata
 			NbtCompound meta = tag.getCompound("librarian");

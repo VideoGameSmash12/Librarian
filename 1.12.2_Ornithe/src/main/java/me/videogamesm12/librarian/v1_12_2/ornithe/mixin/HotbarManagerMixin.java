@@ -38,11 +38,11 @@ import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.io.File;
+import java.io.UTFDataFormatException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -111,9 +111,8 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 			{
 				tag = NbtIo.read(librarian$getLocation());
 			}
-			catch (Exception ex)
+			catch (UTFDataFormatException ex)
 			{
-				Librarian.getLogger().warn(ex.getClass().getName());
 				tag = NbtIo.readCompressed(Files.newInputStream(librarian$getLocation().toPath()));
 			}
 

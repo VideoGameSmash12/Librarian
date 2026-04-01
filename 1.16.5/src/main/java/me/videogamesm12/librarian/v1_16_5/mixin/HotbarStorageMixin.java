@@ -38,7 +38,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.io.EOFException;
 import java.io.File;
+import java.io.UTFDataFormatException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +67,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	private HotbarPageMetadata metadata = null;
 
 	@Unique
-	private int dataVersion = 0;
+	private int dataVersion = 1343;
 
 	@Unique
 	private LoadStatus status = LoadStatus.NOT_LOADED;
@@ -103,9 +105,8 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 			{
 				tag = NbtIo.read(librarian$getLocation());
 			}
-			catch (Exception ex)
+			catch (UTFDataFormatException | EOFException ex)
 			{
-				Librarian.getLogger().warn(ex.getClass().getName());
 				tag = NbtIo.readCompressed(librarian$getLocation());
 			}
 
@@ -119,7 +120,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 
 			// Get and update the page's data version
 			this.dataVersion = tag.getInt("DataVersion") != 0 ? tag.getInt("DataVersion") : 1343;
-			tag = NbtHelper.update(this.dataFixer, DataFixTypes.HOTBAR, tag, tag.getInt("DataVersion"));
+			tag = NbtHelper.update(this.dataFixer, DataFixTypes.HOTBAR, tag, dataVersion);
 
 			// Fetch our metadata
 			NbtCompound meta = tag.getCompound("librarian");
