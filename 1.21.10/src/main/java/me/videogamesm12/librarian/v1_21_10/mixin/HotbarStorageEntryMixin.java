@@ -52,7 +52,7 @@ public abstract class HotbarStorageEntryMixin
 	private final ItemStack[] cache =  new ItemStack[9];
 
 	@Unique
-	private boolean alreadyProcessed;
+	private int registryHash;
 
 	@Inject(method = "<init>(Ljava/util/List;)V", at = @At("TAIL"))
 	private void preprocess(List<Dynamic<?>> stacks, CallbackInfo ci)
@@ -82,7 +82,7 @@ public abstract class HotbarStorageEntryMixin
 		if (Librarian.getInstance().getConfig().optimizations().preprocessHotbarRows())
 		{
 			// Return cached entries if present
-			if (alreadyProcessed)
+			if (registryHash != 0 && registryHash == registries.hashCode())
 			{
 				return Arrays.stream(cache).toList();
 			}
@@ -92,8 +92,8 @@ public abstract class HotbarStorageEntryMixin
 			{
 				cache[i] = processed.get(i);
 			}
-			alreadyProcessed = true;
 
+			registryHash = registries.hashCode();
 			return processed;
 		}
 
@@ -104,6 +104,6 @@ public abstract class HotbarStorageEntryMixin
 	private void clear()
 	{
 		Arrays.fill(cache, null);
-		alreadyProcessed = false;
+		registryHash = 0;
 	}
 }

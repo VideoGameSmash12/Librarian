@@ -22,6 +22,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.serialization.Dynamic;
 import me.videogamesm12.librarian.Librarian;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.inventory.Hotbar;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
@@ -52,7 +53,7 @@ public abstract class HotbarMixin
 	private final ItemStack[] cache =  new ItemStack[9];
 
 	@Unique
-	private boolean alreadyProcessed;
+	private int registryHash = 0;
 
 	@Inject(method = "<init>(Ljava/util/List;)V", at = @At("TAIL"))
 	private void preprocess(List<Dynamic<?>> stacks, CallbackInfo ci)
@@ -82,7 +83,7 @@ public abstract class HotbarMixin
 		if (Librarian.getInstance().getConfig().optimizations().preprocessHotbarRows())
 		{
 			// Return cached entries if present
-			if (alreadyProcessed)
+			if (registryHash != 0 && registryHash == registries.hashCode())
 			{
 				return Arrays.stream(cache).toList();
 			}
@@ -92,8 +93,8 @@ public abstract class HotbarMixin
 			{
 				cache[i] = processed.get(i);
 			}
-			alreadyProcessed = true;
 
+			registryHash = registries.hashCode();
 			return processed;
 		}
 
@@ -104,6 +105,6 @@ public abstract class HotbarMixin
 	private void clear()
 	{
 		Arrays.fill(cache, null);
-		alreadyProcessed = false;
+		registryHash = 0;
 	}
 }
