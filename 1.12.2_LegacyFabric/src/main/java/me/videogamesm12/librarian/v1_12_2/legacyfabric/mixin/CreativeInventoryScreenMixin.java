@@ -43,10 +43,12 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.slot.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.itemgroup.ItemGroup;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.TranslatableText;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Keyboard;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
@@ -58,6 +60,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -71,11 +74,16 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Unique
 	private static Librarian librarian;
 
+	@Unique
+	private static int lastGroup;
+
 	@Shadow
 	private TextFieldWidget searchField;
 	@Shadow
 	private float scrollPosition;
 
+	@Shadow
+	private @Nullable List<Slot> slots;
 	@Unique
 	private IMechanicFactory mechanic;
 
@@ -164,6 +172,9 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Inject(method = "setSelectedTab", at = @At("HEAD"))
 	public void hookTabSelected(ItemGroup group, CallbackInfo ci)
 	{
+		// Keep track of the last group prior for later use
+		lastGroup = selectedTab;
+
 		// Determine visibility and other stuff
 		boolean shouldShowElements = tabIsHotbar(group);
 
@@ -231,6 +242,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					searchField.setFocused(false);
 					searchField.setVisible(false);
 					searchField.setText("");
+
+					if (lastGroup == ItemGroup.INVENTORY.getIndex())
+					{
+						((HandledScreenAccessor) this).getScreenHandler().slots.clear();
+						((HandledScreenAccessor) this).getScreenHandler().slots.addAll(Objects.requireNonNull(this.slots));
+						this.slots = null;
+					}
 
 					scrollPosition = 0.0f;
 					((CreativeInventoryScreen.CreativeScreenHandler) ((HandledScreenAccessor) this).getScreenHandler()).scrollItems(0.0f);

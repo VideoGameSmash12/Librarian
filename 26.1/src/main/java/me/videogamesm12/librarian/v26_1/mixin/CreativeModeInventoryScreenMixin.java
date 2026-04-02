@@ -50,9 +50,11 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -74,6 +76,9 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 	@Unique
 	private static Librarian librarian;
 
+	@Unique
+	private static CreativeModeTab lastTab;
+
 	@Shadow
 	private EditBox searchBox;
 	@Shadow
@@ -81,6 +86,8 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 
 	@Shadow
 	private static CreativeModeTab selectedTab;
+	@Shadow
+	private @Nullable List<Slot> originalSlots;
 	@Unique
 	private IMechanicFactory mechanic;
 
@@ -214,6 +221,9 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 	@Inject(method = "selectTab", at = @At("HEAD"))
 	public void hookTabSelected(CreativeModeTab tab, CallbackInfo ci)
 	{
+		// Keep track of the last group prior for later use
+		lastTab = selectedTab;
+
 		boolean shouldShowElements = tabIsHotbar(tab);
 
 		// Determine visibility and other stuff
@@ -289,6 +299,13 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 					searchBox.setCanLoseFocus(true);
 					searchBox.setFocused(false);
 					searchBox.setValue("");
+
+					if (lastTab != null && lastTab.getType() == CreativeModeTab.Type.INVENTORY)
+					{
+						((AbstractContainerScreenAccessor) this).getMenu().slots.clear();
+						((AbstractContainerScreenAccessor) this).getMenu().slots.addAll(Objects.requireNonNull(this.originalSlots));
+						this.originalSlots = null;
+					}
 
 					scrollOffs = 0.0f;
 					((CreativeModeInventoryScreen.ItemPickerMenu) ((AbstractContainerScreenAccessor) this).getMenu()).scrollTo(0.0f);

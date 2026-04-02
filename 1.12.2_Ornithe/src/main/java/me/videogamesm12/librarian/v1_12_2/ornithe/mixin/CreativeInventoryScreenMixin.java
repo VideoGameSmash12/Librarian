@@ -43,6 +43,7 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.slot.InventorySlot;
 import net.minecraft.item.CreativeModeTab;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.LiteralText;
@@ -71,11 +72,16 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Unique
 	private static Librarian librarian;
 
+	@Unique
+	private static int lastGroup;
+
 	@Shadow
 	private TextFieldWidget searchField;
 	@Shadow
 	private float scrollPosition;
 
+	@Shadow
+	private List<InventorySlot> slots;
 	@Unique
 	private IMechanicFactory mechanic;
 
@@ -164,6 +170,9 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Inject(method = "setSelectedTab", at = @At("HEAD"))
 	public void hookTabSelected(CreativeModeTab group, CallbackInfo ci)
 	{
+		// Keep track of the last group prior for later use
+		lastGroup = selectedTab;
+
 		// Determine visibility and other stuff
 		boolean shouldShowElements = tabIsHotbar(group);
 
@@ -233,6 +242,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					searchField.setFocused(false);
 					searchField.setVisible(false);
 					searchField.setText("");
+
+					if (lastGroup == CreativeModeTab.INVENTORY.getId())
+					{
+						((InventoryMenuScreenAccessor) this).getMenu().slots.clear();
+						((InventoryMenuScreenAccessor) this).getMenu().slots.addAll(Objects.requireNonNull(this.slots));
+						this.slots = null;
+					}
 
 					scrollPosition = 0.0f;
 					((CreativeInventoryScreen.CreativePlayerMenu) ((InventoryMenuScreenAccessor) this).getMenu()).scrollItems(0.0f);

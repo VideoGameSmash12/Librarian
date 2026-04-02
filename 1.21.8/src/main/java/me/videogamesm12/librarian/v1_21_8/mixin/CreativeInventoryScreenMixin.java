@@ -49,8 +49,10 @@ import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -73,11 +75,16 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Unique
 	private static Librarian librarian;
 
+	@Unique
+	private static ItemGroup lastGroup = null;
+
 	@Shadow
 	private TextFieldWidget searchBox;
 	@Shadow
 	private float scrollPosition;
 
+	@Shadow
+	private @Nullable List<Slot> slots;
 	@Unique
 	private IMechanicFactory mechanic;
 
@@ -204,6 +211,9 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Inject(method = "setSelectedTab", at = @At("HEAD"))
 	public void hookTabSelected(ItemGroup group, CallbackInfo ci)
 	{
+		// Keep track of the last group prior for later use
+		lastGroup = getSelectedTab();
+
 		boolean shouldShowElements = tabIsHotbar(group);
 
 		// Determine visibility and other stuff
@@ -279,6 +289,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					searchBox.setFocusUnlocked(false);
 					searchBox.setFocused(false);
 					searchBox.setText("");
+
+					if (lastGroup != null && lastGroup.getType() == ItemGroup.Type.INVENTORY)
+					{
+						((HandledScreenAccessor) this).getHandler().slots.clear();
+						((HandledScreenAccessor) this).getHandler().slots.addAll(Objects.requireNonNull(this.slots));
+						this.slots = null;
+					}
 
 					scrollPosition = 0.0f;
 					((CreativeInventoryScreen.CreativeScreenHandler) ((HandledScreenAccessor) this).getHandler()).scrollItems(0.0f);

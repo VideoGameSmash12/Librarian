@@ -10,6 +10,7 @@
   "client": [
     "ButtonWidgetMixin",
     "ConfirmScreenAccessor",
+    "CreativeInventoryScreenAccessor",
     "CreativeInventoryScreenMixin",
     "HandledScreenAccessor",
     "HotbarStorageMixin"
