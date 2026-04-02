@@ -514,13 +514,11 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 			Runnable operation = () ->
 			{
-				final HotbarStorage str = client.getCreativeHotbarStorage();
-				final IWrappedHotbarStorage wrapped = (IWrappedHotbarStorage) str;
 				final List<String> issues = new ArrayList<>();
 
 				downgradeCheck:
 				{
-					if (wrapped.librarian$dataVersion() > SharedConstants.getGameVersion().dataVersion().id())
+					if (wrappedStorage.librarian$dataVersion() > SharedConstants.getGameVersion().dataVersion().id())
 					{
 						issues.add("downgrade");
 						break downgradeCheck;

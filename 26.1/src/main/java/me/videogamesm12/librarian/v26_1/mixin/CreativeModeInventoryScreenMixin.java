@@ -524,13 +524,11 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 
 			Runnable operation = () ->
 			{
-				final HotbarManager str = minecraft.getHotbarManager();
-				final IWrappedHotbarStorage wrapped = (IWrappedHotbarStorage) str;
 				final List<String> issues = new ArrayList<>();
 
 				downgradeCheck:
 				{
-					if (wrapped.librarian$dataVersion() > SharedConstants.getCurrentVersion().dataVersion().version())
+					if (wrappedStorage.librarian$dataVersion() > SharedConstants.getCurrentVersion().dataVersion().version())
 					{
 						issues.add("downgrade");
 						break downgradeCheck;
@@ -539,7 +537,7 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 
 				overwriteCheck:
 				{
-					final List<ItemStack> storageEntry = str.get(index).load(Objects.requireNonNull(minecraft.level)
+					final List<ItemStack> storageEntry = storage.get(index).load(Objects.requireNonNull(minecraft.level)
 							.registryAccess());
 
 					if (storageEntry.isEmpty())
