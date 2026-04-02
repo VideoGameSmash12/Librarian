@@ -18,10 +18,14 @@
 package me.videogamesm12.librarian.v1_12_2.legacyfabric.listeners;
 
 import com.google.common.eventbus.Subscribe;
+import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.AbstractEventListener;
 import me.videogamesm12.librarian.api.event.*;
 import me.videogamesm12.librarian.util.FNF;
+import me.videogamesm12.librarian.v1_12_2.legacyfabric.mixin.CreativeInventoryScreenAccessor;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
+import net.minecraft.item.itemgroup.ItemGroup;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
@@ -73,6 +77,18 @@ public class ActionBarNotifier extends AbstractEventListener
 	public void onCacheClear(CacheClearEvent event)
 	{
 		sendActionBar(new TranslatableText("librarian.messages.cache_cleared.action_bar"));
+	}
+
+	@Subscribe
+	public void onPageLoad(AsyncPageLoadEvent event)
+	{
+		if (!(MinecraftClient.getInstance().currentScreen instanceof CreativeInventoryScreen
+				&& CreativeInventoryScreenAccessor.getSelectedTab() == ItemGroup.field_15657.getIndex()
+				&& Librarian.getInstance().getCurrentPageNumber().equals(event.getPage().librarian$getPageNumber())))
+		{
+			sendActionBar(new TranslatableText("librarian.messages.loaded.action_bar",
+					Librarian.getInstance().getCurrentPage().librarian$getLocation().getName()));
+		}
 	}
 
 	private void sendActionBar(Text message)

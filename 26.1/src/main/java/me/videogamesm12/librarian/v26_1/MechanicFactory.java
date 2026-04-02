@@ -20,6 +20,7 @@ package me.videogamesm12.librarian.v26_1;
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.JsonOps;
 import lombok.NonNull;
+import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.IMechanicFactory;
 import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
 import me.videogamesm12.librarian.util.FNF;
@@ -36,6 +37,13 @@ import java.math.BigInteger;
 public class MechanicFactory implements IMechanicFactory
 {
 	private static final GsonComponentSerializer GSON_COMPONENT_SERIALIZER = GsonComponentSerializer.gson();
+
+	static
+	{
+		Minecraft.getInstance().execute(() ->
+				Librarian.getInstance().getConfig().optimizations().getBookmarks().parallelStream().distinct()
+						.forEach(page -> Librarian.getInstance().getHotbarPage(page).librarian$load()));
+	}
 
 	@Override
 	public IWrappedHotbarStorage createHotbarStorage(@NonNull BigInteger integer)

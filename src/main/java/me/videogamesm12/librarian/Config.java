@@ -25,6 +25,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import me.videogamesm12.librarian.api.event.NavigationEvent;
+import me.videogamesm12.librarian.util.ConfigUpdater;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.*;
@@ -41,9 +42,11 @@ import java.util.List;
 @Builder
 public class Config
 {
+	@Getter
+	private static final int currentVersion = 5;
+
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 	private static final File configFile = new File(FabricLoader.getInstance().getConfigDir().toFile(), "librarian.json");
-	private static final int currentVersion = 1;
 
 	@Builder.Default
 	private int version = currentVersion;
@@ -53,6 +56,9 @@ public class Config
 
 	@Builder.Default
 	private CommandSystemSettings commandSystem = CommandSystemSettings.builder().build();
+
+	@Builder.Default
+	private OptimizationSettings optimizations = OptimizationSettings.builder().build();
 
 	/**
 	 * Gets this configuration's version.
@@ -85,6 +91,18 @@ public class Config
 			commandSystem = CommandSystemSettings.builder().build();
 
 		return commandSystem;
+	}
+
+	/**
+	 * Gets the configuration for the command system.
+	 * @return	{@link CommandSystemSettings}
+	 */
+	public OptimizationSettings optimizations()
+	{
+		if (optimizations == null)
+			optimizations = OptimizationSettings.builder().build();
+
+		return optimizations;
 	}
 
 	/**
@@ -152,6 +170,68 @@ public class Config
 	}
 
 	/**
+	 * <h2>OptimizationSettings</h2>
+	 * <p>All configuration options for the mod's optimization features.</p>
+	 */
+	@Builder
+	public static class OptimizationSettings
+	{
+		/**
+		 * Controls whether to use file compression when saving hotbar files.
+		 */
+		@Builder.Default
+		private boolean useFileCompression = false;
+
+		/**
+		 * Controls whether to save pages in the background.
+		 */
+		@Builder.Default
+		private boolean backgroundSaving = true;
+
+		/**
+		 * Controls whether to load pages asynchronously. Fixes a major lagspike in all versions of the game caused by
+		 * 	loading pages with large amounts of data.
+		 */
+		@Builder.Default
+		private boolean backgroundLoading = true;
+
+		/**
+		 * Controls whether to process hotbar rows ahead of time and only update them when necessary, fixing some
+		 * 	lagspikes in versions 1.20.6+. This has no effect in 1.20.4 and earlier.
+		 */
+		@Builder.Default
+		private boolean preprocessHotbarRows = true;
+
+		/**
+		 * A list of page numbers for pages that should get automatically loaded on startup.
+		 */
+		@Getter
+		@Builder.Default
+		@NonNull
+		private List<BigInteger> bookmarks = new ArrayList<>();
+
+		public boolean useFileCompression()
+		{
+			return useFileCompression;
+		}
+
+		public boolean backgroundSaving()
+		{
+			return backgroundSaving;
+		}
+
+		public boolean backgroundLoading()
+		{
+			return backgroundLoading;
+		}
+
+		public boolean preprocessHotbarRows()
+		{
+			return preprocessHotbarRows;
+		}
+	}
+
+	/**
 	 * Create an instance by either loading it from disk or by generating a fresh one on the fly, depending on if a file
 	 * 	exists already and if it could be loaded.
 	 * @return	Config
@@ -164,19 +244,34 @@ public class Config
 		{
 			try (final BufferedReader reader = Files.newBufferedReader(configFile.toPath()))
 			{
-				config = gson.fromJson(reader, Config.class);
-				if (config.version > currentVersion)
+				final JsonObject object = gson.fromJson(reader, JsonObject.class);
+				if (!object.has("version"))
 				{
-					Librarian.getLogger().warn("The configuration file is for a newer version of Librarian and can't be loaded");
-					config = builder().build();
+					throw new JsonParseException("Missing version entry!");
 				}
+
+				final int version = object.get("version").getAsInt();
+
+				// Reject configurations from newer versions of Librarian
+				if (version > currentVersion)
+				{
+					throw new IllegalStateException("Configuration file is for a newer version of Librarian (expected " + currentVersion + ", got " + version + ")");
+				}
+
+				// If the configuration is outdated, update it
+				if (version < currentVersion)
+				{
+					ConfigUpdater.update(object);
+				}
+
+				config = gson.fromJson(object, Config.class);
 			}
 			catch (JsonParseException ex)
 			{
 				Librarian.getLogger().warn("The configuration file is corrupted and could not be read.", ex);
 				config = builder().build();
 			}
-			catch (IOException ex)
+			catch (Exception ex)
 			{
 				Librarian.getLogger().error("Failed to read configuration file", ex);
 				config = builder().build();

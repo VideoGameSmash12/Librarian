@@ -24,6 +24,8 @@ import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IMechanicFactory;
 import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
+import me.videogamesm12.librarian.api.LoadStatus;
+import me.videogamesm12.librarian.api.event.AsyncPageLoadEvent;
 import me.videogamesm12.librarian.api.event.CacheClearEvent;
 import me.videogamesm12.librarian.api.event.NavigationEvent;
 import me.videogamesm12.librarian.api.event.ReloadPageEvent;
@@ -48,9 +50,11 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -69,8 +73,21 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 {
 	@Shadow protected abstract void selectTab(CreativeModeTab group);
 
+	@Unique
+	private static Librarian librarian;
+
+	@Unique
+	private static CreativeModeTab lastTab;
+
+	@Shadow
+	private EditBox searchBox;
+	@Shadow
+	private float scrollOffs;
+
 	@Shadow
 	private static CreativeModeTab selectedTab;
+	@Shadow
+	private @Nullable List<Slot> originalSlots;
 	@Unique
 	private IMechanicFactory mechanic;
 
@@ -96,8 +113,9 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 			target = "Lnet/minecraft/world/inventory/InventoryMenu;addSlotListener(Lnet/minecraft/world/inventory/ContainerListener;)V"))
 	public void injectInit(CallbackInfo ci)
 	{
-		Librarian.getInstance().getEventBus().register(this);
-		mechanic = Librarian.getInstance().getMechanic();
+		if (librarian == null) librarian = Librarian.getInstance();
+		librarian.getEventBus().register(this);
+		mechanic = librarian.getMechanic();
 
 		// Offset
 		int x = ((AbstractContainerScreenAccessor) this).getLeftPos() + 167;
@@ -159,9 +177,9 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 		// 	the current page isn't loaded
 		if (tabIsHotbar(selectedTab))
 		{
-			renameHotbarField.setMessage(mechanic.createText(Librarian.getInstance().getCurrentPage().librarian$getMetadata()
+			renameHotbarField.setMessage(mechanic.createText(librarian.getCurrentPage().librarian$getMetadata()
 					.map(HotbarPageMetadata::getName).orElse(net.kyori.adventure.text.Component.translatable("librarian.saved_hotbars.tab",
-							net.kyori.adventure.text.Component.text(Librarian.getInstance().getCurrentPageNumber().toString())))));
+							net.kyori.adventure.text.Component.text(librarian.getCurrentPageNumber().toString())))));
 		}
 
 		// Even though we override the isVisible and isActive methods, internally ClickableWidget still uses the
@@ -171,17 +189,17 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 
 		// Initialize buttons
 		nextButton = mechanic.createButton(x + 12, y,12, 12, net.kyori.adventure.text.Component.text("→"),
-				net.kyori.adventure.text.Component.text("Next page"), () -> Librarian.getInstance().nextPage());
+				net.kyori.adventure.text.Component.text("Next page"), () -> librarian.nextPage());
 		backupButton = mechanic.createButton(x, y,12, 12, net.kyori.adventure.text.Component.text("\uD83D\uDCBE")
 						.font(Key.key("librarian", "default")), net.kyori.adventure.text.Component.text("Make a backup of this page"),
-				() -> Librarian.getInstance().getCurrentPage().librarian$backup());
+				() -> librarian.queue(() -> librarian.getCurrentPage().librarian$backup()));
 		previousButton = mechanic.createButton(x - 12, y,12, 12, net.kyori.adventure.text.Component.text("←"),
-				net.kyori.adventure.text.Component.text("Previous page"), () -> Librarian.getInstance().previousPage());
+				net.kyori.adventure.text.Component.text("Previous page"), () -> librarian.previousPage());
 
 		// Marks visibility and usability of the buttons
 		nextButton.visible = tabIsHotbar(selectedTab);
 		backupButton.visible = tabIsHotbar(selectedTab);
-		backupButton.active = Librarian.getInstance().getCurrentPage().exists();
+		backupButton.active = librarian.getCurrentPage().exists();
 		previousButton.visible = tabIsHotbar(selectedTab);
 
 		// Adds the "rename hotbar" text field
@@ -197,23 +215,26 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 	public void unregisterOnRemoval(CallbackInfo ci)
 	{
 		// Unregisters us as an event listener when the menu is closed
-		Librarian.getInstance().getEventBus().unregister(this);
+		librarian.getEventBus().unregister(this);
 	}
 
 	@Inject(method = "selectTab", at = @At("HEAD"))
-	public void hookTabSelected(CreativeModeTab group, CallbackInfo ci)
+	public void hookTabSelected(CreativeModeTab tab, CallbackInfo ci)
 	{
-		boolean shouldShowElements = tabIsHotbar(group);
+		// Keep track of the last group prior for later use
+		lastTab = selectedTab;
+
+		boolean shouldShowElements = tabIsHotbar(tab);
 
 		// Determine visibility and other stuff
 		if (renameHotbarField != null)
 		{
-			if (shouldShowElements)
+			if (shouldShowElements && librarian.getCurrentPage().librarian$getLoadStatus() == LoadStatus.LOADED)
 			{
 				// Updates the "message" which we use to display the formatted text in non-edit mode
-				renameHotbarField.setMessage(mechanic.createText(Librarian.getInstance().getCurrentPage().librarian$getMetadata()
+				renameHotbarField.setMessage(mechanic.createText(librarian.getCurrentPage().librarian$getMetadata()
 						.map(HotbarPageMetadata::getName).orElse(net.kyori.adventure.text.Component.translatable("librarian.saved_hotbars.tab",
-								net.kyori.adventure.text.Component.text(Librarian.getInstance().getCurrentPageNumber().toString())))));
+								net.kyori.adventure.text.Component.text(librarian.getCurrentPageNumber().toString())))));
 			}
 
 			// Updates the text in the field to be the contents of the label so that it stays consistent in the
@@ -233,7 +254,7 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 		if (backupButton != null)
 		{
 			backupButton.visible = shouldShowElements;
-			backupButton.active = Librarian.getInstance().getCurrentPage().exists();
+			backupButton.active = librarian.getCurrentPage().exists();
 		}
 		if (previousButton != null) previousButton.visible = shouldShowElements;
 
@@ -241,6 +262,62 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 		((ScreenAccessor) this).getRenderables().stream().filter(entry ->
 				entry instanceof FabricCreativeGuiComponents.CreativeModeTabButton).forEach(button ->
 				((Button) button).visible = !shouldShowElements);
+	}
+
+	@Inject(method = "selectTab", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getHotbarManager()Lnet/minecraft/client/HotbarManager;", shift = At.Shift.AFTER), cancellable = true)
+	private void insertEmptyLoadingScreen(CreativeModeTab group, CallbackInfo ci)
+	{
+		if (tabIsHotbar(group))
+		{
+			final IWrappedHotbarStorage page = librarian.getCurrentPage();
+			switch (page.librarian$getLoadStatus())
+			{
+				case NOT_LOADED:
+				{
+					if (librarian.getConfig().optimizations().backgroundLoading())
+					{
+						page.librarian$loadAsync();
+					}
+					else
+					{
+						return;
+					}
+				}
+				case LOADING:
+				{
+					((CreativeModeInventoryScreen.ItemPickerMenu) ((AbstractContainerScreenAccessor) this).getMenu()).items.clear();
+
+					if (renameHotbarField != null)
+					{
+						renameHotbarField.setMessage(net.minecraft.network.chat.Component.translatable("librarian.messages.loading",
+								page.librarian$getLocation().getName()));
+						renameHotbarField.setFocused(false);
+						renameHotbarField.active = false;
+					}
+
+					searchBox.setVisible(false);
+					searchBox.setCanLoseFocus(true);
+					searchBox.setFocused(false);
+					searchBox.setValue("");
+
+					if (lastTab != null && lastTab.getType() == CreativeModeTab.Type.INVENTORY)
+					{
+						((AbstractContainerScreenAccessor) this).getMenu().slots.clear();
+						((AbstractContainerScreenAccessor) this).getMenu().slots.addAll(Objects.requireNonNull(this.originalSlots));
+						this.originalSlots = null;
+					}
+
+					scrollOffs = 0.0f;
+					((CreativeModeInventoryScreen.ItemPickerMenu) ((AbstractContainerScreenAccessor) this).getMenu()).scrollTo(0.0f);
+					ci.cancel();
+					break;
+				}
+				default:
+				{
+					// Do nothing
+				}
+			}
+		}
 	}
 
 	@Inject(method = "extractLabels", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/CreativeModeTab;showTitle()Z", shift = At.Shift.AFTER), cancellable = true)
@@ -263,7 +340,7 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 			// Handle key presses if the field is focused
 			if (renameHotbarField.isFocused())
 			{
-				final IWrappedHotbarStorage page = Librarian.getInstance().getCurrentPage();
+				final IWrappedHotbarStorage page = librarian.getCurrentPage();
 
 				// Abort changes if the user presses ESC
 				if (input.key() == GLFW.GLFW_KEY_ESCAPE)
@@ -289,7 +366,7 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 					lastSuccessfulChange = renameHotbarField.getValue();
 
 					// Hacky fix, but oh well
-					backupButton.active = Librarian.getInstance().getCurrentPage().exists();
+					backupButton.active = librarian.getCurrentPage().exists();
 				}
 
 				cir.setReturnValue(true);
@@ -310,22 +387,22 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 		if (tabIsHotbar(selectedTab))
 		{
 			// Fabric API keybinds
-			final FabricAPIAddon fabric = Librarian.getInstance().getAddon(FabricAPIAddon.class);
+			final FabricAPIAddon fabric = librarian.getAddon(FabricAPIAddon.class);
 			if (fabric.getNextKey().matches(input))
 			{
-				Librarian.getInstance().nextPage();
+				librarian.nextPage();
 				cir.setReturnValue(true);
 				return;
 			}
 			else if (fabric.getPreviousKey().matches(input))
 			{
-				Librarian.getInstance().previousPage();
+				librarian.previousPage();
 				cir.setReturnValue(true);
 				return;
 			}
 			else if (fabric.getBackupKey().matches(input))
 			{
-				Librarian.getInstance().getCurrentPage().librarian$backup();
+				librarian.getCurrentPage().librarian$backup();
 				cir.setReturnValue(true);
 				return;
 			}
@@ -339,7 +416,7 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 					// R
 					if (input.key() == GLFW.GLFW_KEY_R)
 					{
-						Librarian.getInstance().reloadCurrentPage();
+						librarian.reloadCurrentPage();
 						cir.setReturnValue(true);
 					}
 				}
@@ -349,13 +426,13 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 					// LEFT ARROW
 					if (input.key() == GLFW.GLFW_KEY_LEFT)
 					{
-						Librarian.getInstance().previousPage();
+						librarian.previousPage();
 						cir.setReturnValue(true);
 					}
 					// RIGHT ARROW
 					else if (input.key() == GLFW.GLFW_KEY_RIGHT)
 					{
-						Librarian.getInstance().nextPage();
+						librarian.nextPage();
 						cir.setReturnValue(true);
 					}
 				}
@@ -365,13 +442,13 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 					// LEFT ARROW
 					if (input.key() == GLFW.GLFW_KEY_LEFT)
 					{
-						Librarian.getInstance().advanceBy(-5);
+						librarian.advanceBy(-5);
 						cir.setReturnValue(true);
 					}
 					// RIGHT ARROW
 					else if (input.key() == GLFW.GLFW_KEY_RIGHT)
 					{
-						Librarian.getInstance().advanceBy(5);
+						librarian.advanceBy(5);
 						cir.setReturnValue(true);
 					}
 				}
@@ -381,13 +458,13 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 					// LEFT ARROW
 					if (input.key() == GLFW.GLFW_KEY_LEFT)
 					{
-						Librarian.getInstance().advanceBy(-10);
+						librarian.advanceBy(-10);
 						cir.setReturnValue(true);
 					}
 					// RIGHT ARROW
 					else if (input.key() == GLFW.GLFW_KEY_RIGHT)
 					{
-						Librarian.getInstance().advanceBy(10);
+						librarian.advanceBy(10);
 						cir.setReturnValue(true);
 					}
 				}
@@ -412,76 +489,123 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 	}
 
 	@WrapMethod(method = "handleHotbarLoadOrSave")
-	private static void checkForAccidentalItemLoss(Minecraft minecraft, int index, boolean isLoadPressed, boolean isSavePressed,
-												   Operation<Void> original)
+	private static void wrapHotbarSaving(Minecraft minecraft, int index, boolean isLoadPressed, boolean isSavePressed,
+										 Operation<Void> original)
 	{
+		if (librarian == null) librarian = Librarian.getInstance();
+
+		final HotbarManager storage = minecraft.getHotbarManager();
+		final IWrappedHotbarStorage wrappedStorage = (IWrappedHotbarStorage) storage;
+
+		if (librarian.getConfig().optimizations().backgroundLoading())
+		{
+			switch (wrappedStorage.librarian$getLoadStatus())
+			{
+				case NOT_LOADED:
+				{
+					wrappedStorage.librarian$loadAsync();
+				}
+				case LOADING:
+				{
+					Objects.requireNonNull(minecraft.player).sendOverlayMessage(net.minecraft.network.chat.Component.translatable("librarian.messages.loading",
+							wrappedStorage.librarian$getLocation().getName()));
+					return;
+				}
+				default:
+				{
+					break;
+				}
+			}
+		}
+
 		if (isSavePressed)
 		{
-			final HotbarManager storage = minecraft.getHotbarManager();
-			final IWrappedHotbarStorage wrappedStorage = (IWrappedHotbarStorage) storage;
-			final List<String> issues = new ArrayList<>();
+			boolean backgroundSaving = librarian.getConfig().optimizations().backgroundSaving();
 
-			downgradeCheck:
+			Runnable operation = () ->
 			{
-				if (wrappedStorage.librarian$dataVersion() > SharedConstants.getCurrentVersion().dataVersion().version())
+				final List<String> issues = new ArrayList<>();
+
+				downgradeCheck:
 				{
-					issues.add("downgrade");
-					break downgradeCheck;
-				}
-			}
-
-			overwriteCheck:
-			{
-				final List<ItemStack> storageEntry = storage.get(index).load(Objects.requireNonNull(minecraft.level)
-						.registryAccess());
-
-				if (storageEntry.isEmpty())
-				{
-					break overwriteCheck;
-				}
-
-				for (int i = 0; i < Inventory.getSelectionSize(); i++)
-				{
-					ItemStack inventoryStack = Objects.requireNonNull(minecraft.player).getInventory().getItem(i);
-					ItemStack hotbarEntry = storageEntry.get(i);
-
-					if (!hotbarEntry.isEmpty() && !ItemStack.isSameItemSameComponents(inventoryStack, hotbarEntry))
+					if (wrappedStorage.librarian$dataVersion() > SharedConstants.getCurrentVersion().dataVersion().version())
 					{
-						issues.add("nonmatching");
-						break overwriteCheck;
+						issues.add("downgrade");
+						break downgradeCheck;
 					}
 				}
-			}
 
-			if (!issues.isEmpty())
-			{
-				final MutableComponent title;
-				final MutableComponent description;
-
-				// Only one issue found, use more specific message for that
-				if (issues.size() == 1)
+				overwriteCheck:
 				{
-					title = Component.translatable("librarian.messages.issues." + issues.getFirst() + ".title");
-					description = Component.translatable("librarian.messages.issues." + issues.getFirst() + ".description");
+					final List<ItemStack> storageEntry = storage.get(index).load(Objects.requireNonNull(minecraft.level)
+							.registryAccess());
+
+					if (storageEntry.isEmpty())
+					{
+						break overwriteCheck;
+					}
+
+					for (int i = 0; i < Inventory.getSelectionSize(); i++)
+					{
+						ItemStack inventoryStack = Objects.requireNonNull(minecraft.player).getInventory().getItem(i);
+						ItemStack hotbarEntry = storageEntry.get(i);
+
+						if (!hotbarEntry.isEmpty() && !ItemStack.isSameItemSameComponents(inventoryStack, hotbarEntry))
+						{
+							issues.add("nonmatching");
+							break overwriteCheck;
+						}
+					}
 				}
-				// Otherwise, use more brief versions instead
+
+				if (!issues.isEmpty())
+				{
+					final MutableComponent title;
+					final MutableComponent description;
+
+					// Only one issue found, use more specific message for that
+					if (issues.size() == 1)
+					{
+						title = Component.translatable("librarian.messages.issues." + issues.getFirst() + ".title");
+						description = Component.translatable("librarian.messages.issues." + issues.getFirst() + ".description");
+					}
+					// Otherwise, use more brief versions instead
+					else
+					{
+						title = Component.translatable("librarian.messages.possible_loss_scenario_detected.title");
+						description = Component.translatable("librarian.messages.possible_loss_scenario_detected.description");
+						issues.forEach(issue -> description.append(Component.translatable("librarian.messages.issues." + issue + ".summary")).append("\n\n"));
+						description.append(Component.translatable("librarian.messages.possible_loss_scenario_detected.footer"));
+					}
+
+					// This is unbelievably bad for an optimization hack, but if I don't run setScreen() on the game
+					// 	thread, the entire game crashes. If I don't account for background saving in the nested block,
+					// 	then the game runs the "save" code on the game thread when it shouldn't, causing lagspikes
+					minecraft.execute(() -> minecraft.setScreen(new ConfirmScreen((value) ->
+					{
+						if (value)
+						{
+							if (backgroundSaving)
+								librarian.queue(() -> original.call(minecraft, index, isLoadPressed, isSavePressed));
+							else
+								original.call(minecraft, index, isLoadPressed, isSavePressed);
+						}
+						minecraft.setScreen(null);
+					}, title, description)));
+				}
 				else
 				{
-					title = Component.translatable("librarian.messages.possible_loss_scenario_detected.title");
-					description = Component.translatable("librarian.messages.possible_loss_scenario_detected.description");
-					issues.forEach(issue -> description.append(Component.translatable("librarian.messages.issues." + issue + ".summary")).append("\n\n"));
-					description.append(Component.translatable("librarian.messages.possible_loss_scenario_detected.footer"));
+					original.call(minecraft, index, isLoadPressed, isSavePressed);
 				}
+			};
 
-				Minecraft.getInstance().setScreen(new ConfirmScreen((value) ->
-				{
-					if (value) original.call(minecraft, index, isLoadPressed, isSavePressed);
-					Minecraft.getInstance().setScreen(null);
-				}, title, description));
+			if (backgroundSaving)
+			{
+				librarian.queue(operation);
 			}
 			else
 			{
-				original.call(minecraft, index, isLoadPressed, isSavePressed);
+				operation.run();
 			}
 		}
 		else
@@ -520,6 +644,17 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 			selectTab(BuiltInRegistries.CREATIVE_MODE_TAB.getValue(CreativeModeTabs.HOTBAR));
 		}
 	}
+
+	@Subscribe
+	@Unique
+	public void onPageLoad(AsyncPageLoadEvent event)
+	{
+		if (tabIsHotbar(selectedTab) && event.getPage().librarian$getPageNumber().equals(librarian.getCurrentPageNumber()))
+		{
+			Minecraft.getInstance().execute(() -> selectTab(BuiltInRegistries.CREATIVE_MODE_TAB.getValue(CreativeModeTabs.HOTBAR)));
+		}
+	}
+
 
 	@Unique
 	private boolean tabIsHotbar(CreativeModeTab group)

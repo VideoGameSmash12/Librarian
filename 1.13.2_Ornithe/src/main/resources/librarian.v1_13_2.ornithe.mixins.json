@@ -9,6 +9,7 @@
   },
   "client": [
     "ConfirmScreenAccessor",
+    "CreativeInventoryScreenAccessor",
     "CreativeInventoryScreenMixin",
     "HotbarManagerMixin",
     "InventoryMenuScreenAccessor",

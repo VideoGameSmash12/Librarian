@@ -18,6 +18,7 @@
 package me.videogamesm12.librarian.api;
 
 import me.videogamesm12.librarian.Librarian;
+import me.videogamesm12.librarian.api.event.AsyncPageLoadEvent;
 import me.videogamesm12.librarian.api.event.BackupOutcomeEvent;
 import me.videogamesm12.librarian.util.FNF;
 
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * <h1>IWrappedHotbarStorage</h1>
@@ -68,11 +70,51 @@ public interface IWrappedHotbarStorage
 
 	void librarian$load();
 
-	default boolean isLoaded()
+	default CompletableFuture<IWrappedHotbarStorage> librarian$loadAsync()
 	{
-		return false;
+		final IWrappedHotbarStorage page = this;
+
+		return CompletableFuture.supplyAsync(() ->
+		{
+			librarian$load();
+			return page;
+		}).thenApply((storage) ->
+		{
+			if (Librarian.getInstance().getConfig().optimizations().preprocessHotbarRows())
+			{
+				storage.librarian$preprocess();
+			}
+
+			return storage;
+		}).whenCompleteAsync((storage, throwable) ->
+		{
+			if (throwable != null)
+			{
+				Librarian.getLogger().fatal("Somehow this threw an exception! Wtf?", throwable);
+			}
+			else
+			{
+				Librarian.getInstance().getEventBus().post(new AsyncPageLoadEvent(storage));
+			}
+		});
 	}
 
+	default void librarian$preprocess()
+	{
+	}
+
+	default LoadStatus librarian$getLoadStatus()
+	{
+		return LoadStatus.NOT_LOADED;
+	}
+
+	@Deprecated
+	default boolean isLoaded()
+	{
+		return librarian$getLoadStatus() == LoadStatus.LOADED;
+	}
+
+	@Deprecated
 	default void setLoaded(boolean newValue)
 	{
 		// Don't do anything, this should be implemented when implementing in HotbarStorage as a mixin

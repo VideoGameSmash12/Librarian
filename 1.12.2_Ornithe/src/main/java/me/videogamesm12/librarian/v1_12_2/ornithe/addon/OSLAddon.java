@@ -58,7 +58,7 @@ public class OSLAddon implements IAddon
 				}
 				else if (backupKey.consumeClick())
 				{
-					Librarian.getInstance().getCurrentPage().librarian$backup();
+					Librarian.getInstance().queue(() -> Librarian.getInstance().getCurrentPage().librarian$backup());
 				}
 				else if (previousKey.consumeClick())
 				{
@@ -66,5 +66,9 @@ public class OSLAddon implements IAddon
 				}
 			}
 		});
+
+		MinecraftClientEvents.START.register((instance) ->
+				Librarian.getInstance().getConfig().optimizations().getBookmarks().parallelStream().distinct()
+						.forEach(page -> Librarian.getInstance().getHotbarPage(page).librarian$load()));
 	}
 }

@@ -18,6 +18,7 @@
 package me.videogamesm12.librarian.v1_14_4.mixin;
 
 import net.minecraft.client.gui.screen.ingame.ContainerScreen;
+import net.minecraft.container.Container;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
@@ -29,4 +30,7 @@ public interface ContainerScreenAccessor
 
 	@Accessor(value = "y")
 	int getY();
+
+	@Accessor(value = "container")
+	<T extends Container> T getContainer();
 }

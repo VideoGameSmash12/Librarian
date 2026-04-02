@@ -41,20 +41,7 @@ public class Mechanic implements IMechanicFactory
 	@Override
 	public IWrappedHotbarStorage createHotbarStorage(@NonNull BigInteger integer)
 	{
-		// Use the one that the game already loaded on startup if the page is 0. This isn't as big of an issue on newer
-		//	versions of the game because they load everything *as they need it* in those versions, but 1.12.2 is a
-		//	special snowflake who likes to load everything during the initialization process, and since I can't tell it
-		//	not to without using some additional hacky fixes, we might as well just bite the bullet and deal with it.
-		//
-		// This sucks.
-		if (integer.equals(BigInteger.ZERO))
-		{
-			return (IWrappedHotbarStorage) Minecraft.getInstance().hotbarManager;
-		}
-		else
-		{
-			return (IWrappedHotbarStorage) new HotbarManager(Minecraft.getInstance(), FNF.getFileForPage(integer));
-		}
+		return (IWrappedHotbarStorage) new HotbarManager(Minecraft.getInstance(), FNF.getFileForPage(integer));
 	}
 
 	@Override

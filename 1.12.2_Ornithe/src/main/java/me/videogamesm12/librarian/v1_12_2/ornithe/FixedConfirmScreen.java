@@ -24,7 +24,7 @@ import net.minecraft.client.gui.widget.OptionButtonWidget;
 import net.minecraft.util.math.MathHelper;
 
 /**
- * <h1>CoolerConfirmScreen</h1>
+ * <h1>FixedConfirmScreen</h1>
  * <p>Partial backport of the modern confirm screen to workaround bugs caused by long text.</p>
  */
 public class FixedConfirmScreen extends ConfirmScreen

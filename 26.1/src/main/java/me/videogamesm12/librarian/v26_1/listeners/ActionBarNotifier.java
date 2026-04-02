@@ -18,12 +18,15 @@
 package me.videogamesm12.librarian.v26_1.listeners;
 
 import com.google.common.eventbus.Subscribe;
+import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.AbstractEventListener;
 import me.videogamesm12.librarian.api.event.*;
 import me.videogamesm12.librarian.util.FNF;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
+import net.minecraft.world.item.CreativeModeTab;
 
 @SuppressWarnings("unused")
 public class ActionBarNotifier extends AbstractEventListener
@@ -72,6 +75,18 @@ public class ActionBarNotifier extends AbstractEventListener
 	public void onCacheClear(CacheClearEvent event)
 	{
 		sendActionBar(Component.translatable("librarian.messages.cache_cleared.action_bar"));
+	}
+
+	@Subscribe
+	public void onPageLoad(AsyncPageLoadEvent event)
+	{
+		if (!(Minecraft.getInstance().screen instanceof CreativeModeInventoryScreen screen
+				&& screen.getSelectedTab().getType() == CreativeModeTab.Type.HOTBAR
+				&& Librarian.getInstance().getCurrentPageNumber().equals(event.getPage().librarian$getPageNumber())))
+		{
+			sendActionBar(Component.translatable("librarian.messages.loaded.action_bar",
+					Librarian.getInstance().getCurrentPage().librarian$getLocation().getName()));
+		}
 	}
 
 	private void sendActionBar(Component message)

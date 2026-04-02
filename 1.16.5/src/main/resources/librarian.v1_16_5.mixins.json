@@ -3,11 +3,11 @@
   "minVersion": "0.8",
   "package": "me.videogamesm12.librarian.v1_16_5.mixin",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [],
   "injectors": {
     "defaultRequire": 1
   },
   "client": [
+    "CreativeInventoryScreenAccessor",
     "CreativeInventoryScreenMixin",
     "HandledScreenAccessor",
     "HotbarStorageMixin",
