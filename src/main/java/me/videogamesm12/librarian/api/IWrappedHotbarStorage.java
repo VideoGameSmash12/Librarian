@@ -108,11 +108,13 @@ public interface IWrappedHotbarStorage
 		return LoadStatus.NOT_LOADED;
 	}
 
+	@Deprecated
 	default boolean isLoaded()
 	{
-		return false;
+		return librarian$getLoadStatus() == LoadStatus.LOADED;
 	}
 
+	@Deprecated
 	default void setLoaded(boolean newValue)
 	{
 		// Don't do anything, this should be implemented when implementing in HotbarStorage as a mixin
