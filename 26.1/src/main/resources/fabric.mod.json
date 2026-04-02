@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "id": "librarian-resources-26_1",
   "version": "${version}",
-  "name": "Librarian Hooks (26.1)",
-  "description": "Version-specific code for 26.1.",
+  "name": "Librarian Hooks (26.1.x)",
+  "description": "Version-specific code for 26.1.x.",
   "authors": [
     "videogamesm12"
   ],
@@ -36,7 +36,7 @@
   ],
   "accessWidener": "librarian.v26_1.classtweaker",
   "depends": {
-    "minecraft": "26.1",
+    "minecraft": "26.1.x",
     "fabric-api": "*"
   },
   "custom": {
