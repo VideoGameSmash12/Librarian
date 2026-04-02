@@ -21,6 +21,8 @@ import com.google.gson.JsonParseException;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.minimessage.tag.standard.*;
 import net.kyori.adventure.text.serializer.ComponentSerializer;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -86,7 +88,7 @@ public abstract class ComponentProcessor
 		};
 		miniMessage = new ComponentProcessor()
 		{
-			private final MiniMessage miniMessage = MiniMessage.miniMessage();
+			private final MiniMessage miniMessage = createMiniMessage();
 
 			@Override
 			public MiniMessage getSerializer()
@@ -99,10 +101,49 @@ public abstract class ComponentProcessor
 			{
 				return !miniMessage.stripTags(input).equalsIgnoreCase(input);
 			}
+
+			private MiniMessage createMiniMessage()
+			{
+				final MiniMessage.Builder builder = MiniMessage.builder();
+				final TagResolver.Builder tagResolver = TagResolver.builder();
+
+				// == Standard Tags ==
+				tagResolver.resolvers(StandardTags.color());
+				tagResolver.resolvers(StandardTags.decorations());
+				tagResolver.resolvers(StandardTags.newline());
+				tagResolver.resolvers(StandardTags.reset());
+				// Despite not being supported in <=1.15.2, it doesn't matter if RGB isn't supported because it gets
+				// 	downscaled anyway.
+				tagResolver.resolvers(StandardTags.gradient());
+				tagResolver.resolvers(StandardTags.rainbow());
+				tagResolver.resolvers(StandardTags.pride());
+
+				// == Fonts (1.16+) ==
+				if (VersionChecker.isNewerThanOrEqualTo("minecraft", "1.16"))
+				{
+					tagResolver.resolvers(StandardTags.font());
+				}
+
+				// == Shadow Color (1.21.4+) ==
+				if (VersionChecker.isNewerThanOrEqualTo("minecraft", "1.21.4"))
+				{
+					tagResolver.resolvers(StandardTags.shadowColor());
+				}
+
+				// == Objects ==
+				if (VersionChecker.isNewerThanOrEqualTo("minecraft", "1.21.9"))
+				{
+					tagResolver.resolvers(StandardTags.sprite());
+					tagResolver.resolvers(StandardTags.sequentialHead());
+				}
+
+				builder.tags(tagResolver.build());
+				return builder.build();
+			}
 		};
 		json = new ComponentProcessor()
 		{
-			private final GsonComponentSerializer gson = VersionChecker.isNewerThanOrEqualTo("minecraft", "1.16.5") ?
+			private final GsonComponentSerializer gson = VersionChecker.isNewerThanOrEqualTo("minecraft", "1.16") ?
 					GsonComponentSerializer.gson() : GsonComponentSerializer.colorDownsamplingGson();
 
 			@Override
