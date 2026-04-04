@@ -14,9 +14,12 @@ Since this system is vanilla-compatible, you won't need to worry about having to
 decide to not use the mod anymore.
 
 ## Better saved hotbar performance
+
 Got a lot of data in your saved hotbars? Not a problem. Librarian optimizes the way the game loads and saved hotbars to
 run entirely in the background, completely eliminating some notorious lagspikes many have experienced while working with
 saved hotbars in the process.
+
+![38rCmKWN3qbQ](https://github.com/user-attachments/assets/a75b8895-2aab-4874-aa11-65c50057fccd)
 
 ### Accidental overwrite protection
 A common problem people experience with the saved hotbar system is the potential to unintentionally overwrite existing
