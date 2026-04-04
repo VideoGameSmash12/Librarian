@@ -4,16 +4,6 @@ capacity with a page system. It is the successor to Hotbars+, a mod by the same 
 
 ## Features
 
-### Accidental overwrite protection
-A common problem people experience with the saved hotbar system is the potential to unintentionally overwrite existing
-hotbars by pressing the wrong key, losing many items by complete accident in the process. Librarian tries to help 
-prevent this from happening by comparing the data of the items being saved to that of the items already saved. If it
-doesn't exactly match, a prompt will come up asking for confirmation before continuing, potentially saving you and your
-items.
-
-![b0120207262c68c7d534e96f0cdfa54a51d7940b](https://github.com/user-attachments/assets/88248d39-27a7-47c1-bae5-e29e09e50dcc)
-
-
 ### Infinite saved hotbar capacity
 Never run out of space in your hotbars again. Librarian introduces a page system which allows you to store as many items
 as you could possibly ever want or need.
@@ -22,6 +12,20 @@ as you could possibly ever want or need.
 
 Since this system is vanilla-compatible, you won't need to worry about having to convert or do any transfers should you
 decide to not use the mod anymore.
+
+## Better saved hotbar performance
+Got a lot of data in your saved hotbars? Not a problem. Librarian optimizes the way the game loads and saved hotbars to
+run entirely in the background, completely eliminating some notorious lagspikes many have experienced while working with
+saved hotbars in the process.
+
+### Accidental overwrite protection
+A common problem people experience with the saved hotbar system is the potential to unintentionally overwrite existing
+hotbars by pressing the wrong key, losing many items by complete accident in the process. Librarian tries to help
+prevent this from happening by comparing the data of the items being saved to that of the items already saved. If it
+doesn't exactly match, a prompt will come up asking for confirmation before continuing, potentially saving you and your
+items.
+
+![b0120207262c68c7d534e96f0cdfa54a51d7940b](https://github.com/user-attachments/assets/88248d39-27a7-47c1-bae5-e29e09e50dcc)
 
 ### Renamable saved hotbars
 To help facilitate distribution and organization, Librarian introduces a new vanilla-compatible hotbar metadata system
