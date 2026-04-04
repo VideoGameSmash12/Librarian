@@ -60,6 +60,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -602,6 +603,18 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		{
 			original.call(client, index, restore, save);
 		}
+	}
+
+	@ModifyArg(method = "onHotbarKeyPress", at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/entity/player/PlayerInventory;setStack(ILnet/minecraft/item/ItemStack;)V"))
+	private static ItemStack copyCachedItemsOnRestore(ItemStack stack)
+	{
+		if (librarian.getConfig().optimizations().preprocessHotbarRows())
+		{
+			return stack.copyWithCount(stack.getCount());
+		}
+
+		return stack;
 	}
 
 	@Subscribe
