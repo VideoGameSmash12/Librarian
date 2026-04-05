@@ -318,7 +318,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@ModifyConstant(method = "setSelectedTab", constant = @Constant(intValue = 9, ordinal = 0))
 	private int setHotbarRowCount(int constant)
 	{
-		return Librarian.getInstance().getCurrentPage().librarian$getRowCount();
+		return librarian.getCurrentPage().librarian$getRowCount();
 	}
 
 	@Inject(method = "drawForeground", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemGroup;shouldRenderName()Z", shift = At.Shift.AFTER), cancellable = true)

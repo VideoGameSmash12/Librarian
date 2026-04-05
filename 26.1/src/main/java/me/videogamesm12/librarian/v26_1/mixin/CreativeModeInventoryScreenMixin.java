@@ -325,7 +325,7 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 	@ModifyConstant(method = "selectTab", constant = @Constant(intValue = 9, ordinal = 0))
 	private int setHotbarRowCount(int constant)
 	{
-		return Librarian.getInstance().getCurrentPage().librarian$getRowCount();
+		return librarian.getCurrentPage().librarian$getRowCount();
 	}
 
 	@Inject(method = "extractLabels", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/CreativeModeTab;showTitle()Z", shift = At.Shift.AFTER), cancellable = true)
