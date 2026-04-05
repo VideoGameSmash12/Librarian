@@ -105,7 +105,6 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		super(title);
 	}
 
-	// Adds the buttons when the screen is initialized
 	@Inject(method = "init", at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/container/PlayerContainer;addListener(Lnet/minecraft/container/ContainerListener;)V"))
 	public void injectInit(CallbackInfo ci)
