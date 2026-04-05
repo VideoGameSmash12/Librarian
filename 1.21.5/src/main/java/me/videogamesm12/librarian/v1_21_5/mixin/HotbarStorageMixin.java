@@ -87,6 +87,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	{
 		this.pageNumber = FNF.getNumberFromFileName(file.toFile().getName());
 		this.setFile(file);
+		this.rowCount = entries.length;
 	}
 
 	/**
