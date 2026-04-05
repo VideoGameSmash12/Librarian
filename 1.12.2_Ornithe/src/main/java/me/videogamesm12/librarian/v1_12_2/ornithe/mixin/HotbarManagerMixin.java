@@ -41,6 +41,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.UTFDataFormatException;
 import java.math.BigInteger;
@@ -72,6 +73,9 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	@Unique
 	private LoadStatus status = LoadStatus.NOT_LOADED;
 
+	@Unique
+	private int rowCount = 0;
+
 	/**
 	 * <p>Hijacks what is used as the location by HotbarStorage on initialization.</p>
 	 * @param instance  Minecraft
@@ -83,6 +87,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	{
 		this.pageNumber = FNF.getNumberFromFileName(file.getName());
 		this.setFile(file);
+		this.rowCount = hotbars.length;
 	}
 
 	@WrapOperation(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/HotbarManager;load()V"))
@@ -111,7 +116,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 			{
 				tag = NbtIo.read(librarian$getLocation());
 			}
-			catch (UTFDataFormatException ex)
+			catch (UTFDataFormatException | EOFException ex)
 			{
 				tag = NbtIo.readCompressed(Files.newInputStream(librarian$getLocation().toPath()));
 			}
@@ -164,7 +169,16 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 			}
 
 			final NbtCompound shutUpIntellij = tag;
-			IntStream.range(0, 9).forEach(i -> this.hotbars[i].readNbt(shutUpIntellij.getList(String.valueOf(i), 10)));
+
+			rowCount = Math.max(Math.toIntExact(tag.getKeys().stream().filter(key ->
+					shutUpIntellij.contains(key, 9)).count()), 9);
+			setHotbars(new Hotbar[rowCount]);
+
+			IntStream.range(0, rowCount).forEach(i ->
+			{
+				this.hotbars[i] = new Hotbar();
+				this.hotbars[i].readNbt(shutUpIntellij.getList(String.valueOf(i), 10));
+			});
 		}
 		catch (Throwable ex)
 		{
@@ -226,7 +240,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 				}
 
 				// Convert the items and add them to the tag
-				IntStream.range(0, 9).forEach(i -> tag.put(String.valueOf(i), hotbars[i].toNbt()));
+				IntStream.range(0, rowCount).forEach(i -> tag.put(String.valueOf(i), hotbars[i].toNbt()));
 
 				// Use file compression if enabled
 				if (Librarian.getInstance().getConfig().optimizations().useFileCompression())
@@ -279,6 +293,12 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	}
 
 	@Override
+	public int librarian$getRowCount()
+	{
+		return rowCount;
+	}
+
+	@Override
 	public int librarian$dataVersion()
 	{
 		return dataVersion;
@@ -322,4 +342,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	{
 		// We already loaded, lmao
 	}
+
+	@Accessor
+	public abstract void setHotbars(Hotbar[] entries);
 }
