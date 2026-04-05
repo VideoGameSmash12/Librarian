@@ -72,17 +72,21 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	@Unique
 	private LoadStatus status = LoadStatus.NOT_LOADED;
 
+	@Unique
+	private int rowCount = 0;
+
 	/**
 	 * <p>Hijacks what is used as the location by HotbarStorage on initialization.</p>
-	 * @param file      File
-	 * @param dataFixer DataFixer
 	 * @param ci        CallbackInfo
+	 * @param dataFixer DataFixer
+	 * @param file      Path
 	 */
 	@Inject(method = "<init>", at = @At(value = "TAIL"))
 	private void change(File file, DataFixer dataFixer, CallbackInfo ci)
 	{
 		this.pageNumber = FNF.getNumberFromFileName(file.getName());
 		this.setFile(file);
+		this.rowCount = hotbars.length;
 	}
 
 	/**
@@ -154,7 +158,16 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 			}
 
 			final NbtCompound shutUpIntellij = tag;
-			IntStream.range(0, 9).forEach(i -> this.hotbars[i].readNbt(shutUpIntellij.getList(String.valueOf(i), 10)));
+
+			rowCount = Math.max(Math.toIntExact(tag.getKeys().stream().filter(key ->
+					shutUpIntellij.contains(key, 9)).count()), 9);
+			setHotbars(new Hotbar[rowCount]);
+
+			IntStream.range(0, rowCount).forEach(i ->
+			{
+				this.hotbars[i] = new Hotbar();
+				this.hotbars[i].readNbt(shutUpIntellij.getList(String.valueOf(i), 10));
+			});
 		}
 		catch (Throwable ex)
 		{
@@ -217,7 +230,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 				}
 
 				// Convert the items and add them to the tag
-				IntStream.range(0, 9).forEach(i -> tag.put(String.valueOf(i), hotbars[i].toNbt()));
+				IntStream.range(0, rowCount).forEach(i -> tag.put(String.valueOf(i), hotbars[i].toNbt()));
 
 				// Use file compression if enabled
 				if (Librarian.getInstance().getConfig().optimizations().useFileCompression())
@@ -270,6 +283,12 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	}
 
 	@Override
+	public int librarian$getRowCount()
+	{
+		return rowCount;
+	}
+
+	@Override
 	public int librarian$dataVersion()
 	{
 		return dataVersion;
@@ -310,4 +329,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 
 	@Accessor("f_2733121")
 	public abstract void setLoaded(boolean loaded);
+
+	@Accessor
+	public abstract void setHotbars(Hotbar[] entries);
 }
