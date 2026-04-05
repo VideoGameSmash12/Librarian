@@ -58,7 +58,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -311,6 +313,12 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		}
 	}
 
+	@ModifyConstant(method = "setSelectedTab", constant = @Constant(intValue = 9, ordinal = 0))
+	private int setHotbarRowCount(int constant)
+	{
+		return librarian.getCurrentPage().librarian$getRowCount();
+	}
+
 	@Inject(method = "drawForeground", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemGroup;shouldRenderName()Z", shift = At.Shift.AFTER), cancellable = true)
 	public void cancelForegroundTextRendering(DrawContext context, int mouseX, int mouseY, CallbackInfo ci)
 	{
@@ -483,7 +491,6 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	private static void wrapHotbarSaving(MinecraftClient client, int index, boolean restore, boolean save,
 										 Operation<Void> original)
 	{
-
 		if (librarian == null) librarian = Librarian.getInstance();
 
 		final HotbarStorage storage = client.getCreativeHotbarStorage();
