@@ -62,6 +62,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -620,6 +621,18 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 		{
 			original.call(minecraft, index, isLoadPressed, isSavePressed);
 		}
+	}
+
+	@ModifyArg(method = "handleHotbarLoadOrSave", at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/world/entity/player/Inventory;setItem(ILnet/minecraft/world/item/ItemStack;)V"))
+	private static ItemStack copyCachedItemsOnRestore(ItemStack stack)
+	{
+		if (librarian.getConfig().optimizations().preprocessHotbarRows())
+		{
+			return stack.copyWithCount(stack.getCount());
+		}
+
+		return stack;
 	}
 
 	@Subscribe
