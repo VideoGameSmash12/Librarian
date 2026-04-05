@@ -28,6 +28,7 @@
     ]
   },
   "breaks": {
-    "hotbarsplus": "*"
+    "hotbarsplus": "*",
+    "hotbarlagfixer": "*"
   }
 }
