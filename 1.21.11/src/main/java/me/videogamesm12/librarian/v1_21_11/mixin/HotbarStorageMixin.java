@@ -333,9 +333,16 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Unique
 	private void loadRow(int row, NbtCompound source)
 	{
-		this.entries[row] = HotbarStorageEntry.CODEC.parse(NbtOps.INSTANCE, source.get(String.valueOf(row)))
-				.resultOrPartial(error -> Librarian.getLogger().warn("Failed to parse hotbar: {}", error))
-				.orElseGet(HotbarStorageEntry::new);
+		if (source.contains(String.valueOf(row)))
+		{
+			this.entries[row] = HotbarStorageEntry.CODEC.parse(NbtOps.INSTANCE, source.get(String.valueOf(row)))
+					.resultOrPartial(error -> Librarian.getLogger().warn("Failed to parse hotbar: {}", error))
+					.orElseGet(HotbarStorageEntry::new);
+		}
+		else
+		{
+			this.entries[row] = new HotbarStorageEntry();
+		}
 	}
 
 	@Accessor
