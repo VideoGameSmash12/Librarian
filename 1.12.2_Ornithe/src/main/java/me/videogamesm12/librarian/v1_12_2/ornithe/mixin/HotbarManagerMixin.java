@@ -284,6 +284,13 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 				cir.setReturnValue(new Hotbar());
 			}
 		}
+		else
+		{
+			if (status == LoadStatus.NOT_LOADED)
+			{
+				load();
+			}
+		}
 	}
 
 	@Override
@@ -340,7 +347,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	@Override
 	public void setLoaded(boolean loaded)
 	{
-		// We already loaded, lmao
+		// We don't use this in 1.12.2 lmao
 	}
 
 	@Accessor

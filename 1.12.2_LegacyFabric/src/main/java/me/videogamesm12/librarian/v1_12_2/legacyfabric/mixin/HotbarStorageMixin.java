@@ -70,6 +70,9 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Unique
 	private LoadStatus status = LoadStatus.NOT_LOADED;
 
+	@Unique
+	private int rowCount = 0;
+
 	/**
 	 * <p>Hijacks what is used as the location by HotbarStorage on initialization.</p>
 	 * @param instance MinecraftClient
@@ -81,6 +84,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	{
 		this.pageNumber = FNF.getNumberFromFileName(file.getName());
 		this.setFile(file);
+		this.rowCount = field_15865.length;
 	}
 
 	@WrapOperation(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/class_3251;method_14449()V"))
@@ -162,7 +166,16 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 			}
 
 			final NbtCompound shutUpIntellij = tag;
-			IntStream.range(0, 9).forEach(i -> this.field_15865[i].method_14678(shutUpIntellij.getList(String.valueOf(i), 10)));
+
+			rowCount = Math.max(Math.toIntExact(tag.getKeys().stream().filter(key ->
+					shutUpIntellij.contains(key, 9)).count()), 9);
+			setEntries(new class_3297[rowCount]);
+
+			IntStream.range(0, rowCount).forEach(i ->
+			{
+				this.field_15865[i] = new class_3297();
+				this.field_15865[i].method_14678(shutUpIntellij.getList(String.valueOf(i), 10));
+			});
 		}
 		catch (Throwable ex)
 		{
@@ -224,7 +237,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 				}
 
 				// Convert the items and add them to the tag
-				IntStream.range(0, 9).forEach(i -> tag.put(String.valueOf(i), field_15865[i].method_14677()));
+				IntStream.range(0, rowCount).forEach(i -> tag.put(String.valueOf(i), field_15865[i].method_14677()));
 
 				// Use file compression if enabled
 				if (Librarian.getInstance().getConfig().optimizations().useFileCompression())
@@ -268,12 +281,25 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 				cir.setReturnValue(new class_3297());
 			}
 		}
+		else
+		{
+			if (status == LoadStatus.NOT_LOADED)
+			{
+				method_14449();
+			}
+		}
 	}
 
 	@Override
 	public LoadStatus librarian$getLoadStatus()
 	{
 		return status;
+	}
+
+	@Override
+	public int librarian$getRowCount()
+	{
+		return rowCount;
 	}
 
 	@Override
@@ -320,4 +346,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	{
 		// We don't use this in 1.12.2 lmao
 	}
+
+	@Accessor("field_15865")
+	public abstract void setEntries(class_3297[] entries);
 }
