@@ -108,6 +108,8 @@ public interface IWrappedHotbarStorage
 		return LoadStatus.NOT_LOADED;
 	}
 
+	int librarian$getRowCount();
+
 	@Deprecated
 	default boolean isLoaded()
 	{

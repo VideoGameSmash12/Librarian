@@ -73,6 +73,9 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Unique
 	private LoadStatus status = LoadStatus.NOT_LOADED;
 
+	@Unique
+	private int rowCount;
+
 	/**
 	 * <p>Hijacks what is used as the location by HotbarStorage on initialization.</p>
 	 * @param ci        CallbackInfo
@@ -84,6 +87,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	{
 		this.pageNumber = FNF.getNumberFromFileName(file.toFile().getName());
 		this.setFile(file);
+		this.rowCount = entries.length;
 	}
 
 	/**
@@ -153,7 +157,12 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 			});
 
 			final NbtCompound shutUpIntellij = tag;
-			IntStream.range(0, 9).forEach(i -> loadRow(i, shutUpIntellij));
+
+			rowCount = Math.max(Math.toIntExact(tag.getKeys().stream().filter(key ->
+							Objects.requireNonNull(shutUpIntellij.get(key)).asNbtList().isPresent()).count()), 9);
+			setEntries(new HotbarStorageEntry[rowCount]);
+
+			IntStream.range(0, rowCount).forEach(i -> loadRow(i, shutUpIntellij));
 		}
 		catch (Throwable ex)
 		{
@@ -215,7 +224,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 				}
 
 				// Convert the items and add them to the tag
-				IntStream.range(0, 9).forEach(i ->
+				IntStream.range(0, rowCount).forEach(i ->
 				{
 					final HotbarStorageEntry entry = getSavedHotbar(i);
 					final DataResult<NbtElement> dataResult = HotbarStorageEntry.CODEC.encodeStart(NbtOps.INSTANCE, entry);
@@ -273,6 +282,12 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	}
 
 	@Override
+	public int librarian$getRowCount()
+	{
+		return rowCount;
+	}
+
+	@Override
 	public int librarian$dataVersion()
 	{
 		return dataVersion;
@@ -318,13 +333,23 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Unique
 	private void loadRow(int row, NbtCompound source)
 	{
-		this.entries[row] = HotbarStorageEntry.CODEC.parse(NbtOps.INSTANCE, source.get(String.valueOf(row)))
-				.resultOrPartial(error -> Librarian.getLogger().warn("Failed to parse hotbar: {}", error))
-				.orElseGet(HotbarStorageEntry::new);
+		if (source.contains(String.valueOf(row)))
+		{
+			this.entries[row] = HotbarStorageEntry.CODEC.parse(NbtOps.INSTANCE, source.get(String.valueOf(row)))
+					.resultOrPartial(error -> Librarian.getLogger().warn("Failed to parse hotbar: {}", error))
+					.orElseGet(HotbarStorageEntry::new);
+		}
+		else
+		{
+			this.entries[row] = new HotbarStorageEntry();
+		}
 	}
 
 	@Accessor
 	public abstract void setFile(Path file);
+
+	@Accessor
+	public abstract void setEntries(HotbarStorageEntry[] entries);
 
 	@Accessor
 	public abstract void setLoaded(boolean loaded);

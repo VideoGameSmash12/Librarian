@@ -74,6 +74,9 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	@Unique
 	private LoadStatus status = LoadStatus.NOT_LOADED;
 
+	@Unique
+	private int rowCount;
+
 	/**
 	 * <p>Hijacks what is used as the location by HotbarStorage on initialization.</p>
 	 * @param ci        CallbackInfo
@@ -85,6 +88,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	{
 		this.pageNumber = FNF.getNumberFromFileName(file.toFile().getName());
 		this.setOptionsFile(file);
+		this.rowCount = hotbars.length;
 	}
 
 	/**
@@ -154,7 +158,12 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 			});
 
 			final CompoundTag shutUpIntellij = tag;
-			IntStream.range(0, 9).forEach(i -> loadRow(i, shutUpIntellij));
+
+			rowCount = Math.max(Math.toIntExact(tag.keySet().stream().filter(key ->
+					Objects.requireNonNull(shutUpIntellij.get(key)).asList().isPresent()).count()), 9);
+			setHotbars(new Hotbar[rowCount]);
+
+			IntStream.range(0, rowCount).forEach(i -> loadRow(i, shutUpIntellij));
 		}
 		catch (Throwable ex)
 		{
@@ -216,7 +225,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 				}
 
 				// Convert the items and add them to the tag
-				IntStream.range(0, 9).forEach(i ->
+				IntStream.range(0, rowCount).forEach(i ->
 				{
 					final Hotbar entry = get(i);
 					final DataResult<Tag> dataResult = Hotbar.CODEC.encodeStart(NbtOps.INSTANCE, entry);
@@ -319,9 +328,16 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	@Unique
 	private void loadRow(int row, CompoundTag source)
 	{
-		this.hotbars[row] = Hotbar.CODEC.parse(NbtOps.INSTANCE, source.get(String.valueOf(row)))
-				.resultOrPartial(error -> Librarian.getLogger().warn("Failed to parse hotbar: {}", error))
-				.orElseGet(Hotbar::new);
+		if (source.contains(String.valueOf(row)))
+		{
+			this.hotbars[row] = Hotbar.CODEC.parse(NbtOps.INSTANCE, source.get(String.valueOf(row)))
+					.resultOrPartial(error -> Librarian.getLogger().warn("Failed to parse hotbar: {}", error))
+					.orElseGet(Hotbar::new);
+		}
+		else
+		{
+			this.hotbars[row] = new Hotbar();
+		}
 	}
 
 
@@ -330,4 +346,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 
 	@Accessor
 	public abstract void setLoaded(boolean loaded);
+
+	@Accessor
+	public abstract void setHotbars(Hotbar[] hotbars);
 }

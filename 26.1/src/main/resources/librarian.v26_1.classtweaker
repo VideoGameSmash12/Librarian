@@ -1,2 +1,3 @@
 classTweaker	v1	official
 mutable   field   net/minecraft/client/HotbarManager   optionsFile   Ljava/nio/file/Path;
+mutable   field   net/minecraft/client/HotbarManager   hotbars       [Lnet/minecraft/client/player/inventory/Hotbar;
