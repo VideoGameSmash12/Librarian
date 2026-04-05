@@ -77,9 +77,9 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 
 	/**
 	 * <p>Hijacks what is used as the location by HotbarStorage on initialization.</p>
-	 * @param ci        CallbackInfo
+	 * @param file      File
 	 * @param dataFixer DataFixer
-	 * @param file      Path
+	 * @param ci        CallbackInfo
 	 */
 	@Inject(method = "<init>", at = @At(value = "TAIL"))
 	private void change(File file, DataFixer dataFixer, CallbackInfo ci)

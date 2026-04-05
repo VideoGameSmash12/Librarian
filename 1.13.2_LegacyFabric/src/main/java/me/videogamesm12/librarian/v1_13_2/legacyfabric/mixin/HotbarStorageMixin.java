@@ -72,6 +72,9 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Unique
 	private LoadStatus status = LoadStatus.NOT_LOADED;
 
+	@Unique
+	private int rowCount = 0;
+
 	/**
 	 * <p>Hijacks what is used as the location by HotbarStorage on initialization.</p>
 	 * @param file      File
@@ -83,6 +86,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	{
 		this.pageNumber = FNF.getNumberFromFileName(file.getName());
 		this.setFile(file);
+		this.rowCount = field_15865.length;
 	}
 
 	/**
@@ -154,7 +158,16 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 			}
 
 			final NbtCompound shutUpIntellij = tag;
-			IntStream.range(0, 9).forEach(i -> this.field_15865[i].method_14678(shutUpIntellij.getList(String.valueOf(i), 10)));
+
+			rowCount = Math.max(Math.toIntExact(tag.getKeys().stream().filter(key ->
+					shutUpIntellij.contains(key, 9)).count()), 9);
+			setEntries(new class_3297[rowCount]);
+
+			IntStream.range(0, rowCount).forEach(i ->
+			{
+				this.field_15865[i] = new class_3297();
+				this.field_15865[i].method_14678(shutUpIntellij.getList(String.valueOf(i), 10));
+			});
 		}
 		catch (Throwable ex)
 		{
@@ -217,7 +230,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 				}
 
 				// Convert the items and add them to the tag
-				IntStream.range(0, 9).forEach(i -> tag.put(String.valueOf(i), field_15865[i].method_14677()));
+				IntStream.range(0, rowCount).forEach(i -> tag.put(String.valueOf(i), field_15865[i].method_14677()));
 
 				// Use file compression if enabled
 				if (Librarian.getInstance().getConfig().optimizations().useFileCompression())
@@ -270,6 +283,12 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	}
 
 	@Override
+	public int librarian$getRowCount()
+	{
+		return rowCount;
+	}
+
+	@Override
 	public int librarian$dataVersion()
 	{
 		return dataVersion;
@@ -310,4 +329,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 
 	@Accessor("field_19909")
 	public abstract void setLoaded(boolean loaded);
+
+	@Accessor("field_15865")
+	public abstract void setEntries(class_3297[] entries);
 }
