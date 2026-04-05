@@ -73,6 +73,9 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	@Unique
 	private LoadStatus status = LoadStatus.NOT_LOADED;
 
+	@Unique
+	private int rowCount = 0;
+
 	/**
 	 * <p>Hijacks what is used as the location by HotbarStorage on initialization.</p>
 	 * @param ci        CallbackInfo
@@ -84,6 +87,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	{
 		this.pageNumber = FNF.getNumberFromFileName(file.getName());
 		this.setFile(file);
+		this.rowCount = entries.length;
 	}
 
 	/**
@@ -155,7 +159,16 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 			}
 
 			final CompoundTag shutUpIntellij = tag;
-			IntStream.range(0, 9).forEach(i -> this.entries[i].fromListTag(shutUpIntellij.getList(String.valueOf(i), 10)));
+
+			rowCount = Math.max(Math.toIntExact(tag.getKeys().stream().filter(key ->
+					shutUpIntellij.contains(key, 9)).count()), 9);
+			setEntries(new HotbarStorageEntry[rowCount]);
+
+			IntStream.range(0, rowCount).forEach(i ->
+			{
+				this.entries[i] = new HotbarStorageEntry();
+				this.entries[i].fromListTag(shutUpIntellij.getList(String.valueOf(i), 10));
+			});
 		}
 		catch (Throwable ex)
 		{
@@ -218,7 +231,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 				}
 
 				// Convert the items and add them to the tag
-				IntStream.range(0, 9).forEach(i -> tag.put(String.valueOf(i), entries[i].toListTag()));
+				IntStream.range(0, rowCount).forEach(i -> tag.put(String.valueOf(i), entries[i].toListTag()));
 
 				// Use file compression if enabled
 				if (Librarian.getInstance().getConfig().optimizations().useFileCompression())
@@ -271,6 +284,12 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	}
 
 	@Override
+	public int librarian$getRowCount()
+	{
+		return rowCount;
+	}
+
+	@Override
 	public int librarian$dataVersion()
 	{
 		return dataVersion;
@@ -311,4 +330,7 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 
 	@Accessor
 	public abstract void setLoaded(boolean loaded);
+
+	@Accessor
+	public abstract void setEntries(HotbarStorageEntry[] entries);
 }
