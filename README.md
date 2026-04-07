@@ -13,7 +13,7 @@ as you could possibly ever want or need.
 Since this system is vanilla-compatible, you won't need to worry about having to convert or do any transfers should you
 decide to not use the mod anymore.
 
-## Better saved hotbar performance
+### Better saved hotbar performance
 
 Got a lot of data in your saved hotbars? Not a problem. Librarian optimizes the way the game loads and saved hotbars to
 run entirely in the background, completely eliminating some notorious lagspikes many have experienced while working with
