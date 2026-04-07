@@ -192,12 +192,13 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 
 		// Initialize buttons
 		nextButton = mechanic.createButton(x + 12, y,12, 12, net.kyori.adventure.text.Component.text("→"),
-				net.kyori.adventure.text.Component.text("Next page"), () -> librarian.nextPage());
+				net.kyori.adventure.text.Component.translatable("librarian.button.next_page.tooltip"), () -> librarian.nextPage());
 		backupButton = mechanic.createButton(x, y,12, 12, net.kyori.adventure.text.Component.text("\uD83D\uDCBE")
-						.font(Key.key("librarian", "default")), net.kyori.adventure.text.Component.text("Make a backup of this page"),
+						.font(Key.key("librarian", "default")),
+				net.kyori.adventure.text.Component.translatable("librarian.button.backup.tooltip"),
 				() -> librarian.queue(() -> librarian.getCurrentPage().librarian$backup()));
 		previousButton = mechanic.createButton(x - 12, y,12, 12, net.kyori.adventure.text.Component.text("←"),
-				net.kyori.adventure.text.Component.text("Previous page"), () -> librarian.previousPage());
+				net.kyori.adventure.text.Component.translatable("librarian.button.previous_page.tooltip"), () -> librarian.previousPage());
 
 		// Marks visibility and usability of the buttons
 		nextButton.visible = tabIsHotbar(selectedTab);

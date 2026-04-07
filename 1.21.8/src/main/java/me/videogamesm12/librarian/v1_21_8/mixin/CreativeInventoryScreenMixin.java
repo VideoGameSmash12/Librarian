@@ -182,12 +182,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 		// Initialize buttons
 		nextButton = mechanic.createButton(x + 12, y,12, 12, Component.text("→"),
-				Component.text("Next page"), () -> librarian.nextPage());
+				Component.translatable("librarian.button.next_page.tooltip"), () -> librarian.nextPage());
 		backupButton = mechanic.createButton(x, y,12, 12, Component.text("\uD83D\uDCBE")
-						.font(Key.key("librarian", "default")), Component.text("Make a backup of this page"),
+						.font(Key.key("librarian", "default")),
+				Component.translatable("librarian.button.backup.tooltip"),
 				() -> librarian.queue(() -> librarian.getCurrentPage().librarian$backup()));
 		previousButton = mechanic.createButton(x - 12, y,12, 12, Component.text("←"),
-				Component.text("Previous page"), () -> librarian.previousPage());
+				Component.translatable("librarian.button.previous_page.tooltip"), () -> librarian.previousPage());
 
 		// Marks visibility and usability of the buttons
 		nextButton.visible = tabIsHotbar(getSelectedTab());

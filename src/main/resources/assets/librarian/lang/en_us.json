@@ -4,6 +4,10 @@
   "key.category.librarian.navigation": "Librarian - Navigation",
   "key.category.librarian.actions": "Librarian - Actions",
 
+  "librarian.button.next_page.tooltip": "Next page",
+  "librarian.button.previous_page.tooltip": "Previous page",
+  "librarian.button.backup.tooltip": "Make a backup of this page",
+
   "librarian.key.next_page": "Next Page",
   "librarian.key.previous_page": "Previous Page",
   "librarian.key.backup_current_page": "Backup Current Page",
