@@ -15,18 +15,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.videogamesm12.librarian.v1_19_4.mixin;
+package me.videogamesm12.librarian.v1_16_5.mixin;
 
-import net.minecraft.client.gui.Drawable;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-import java.util.List;
-
-@Mixin(Screen.class)
-public interface ScreenAccessor
+@Mixin(CreativeInventoryScreen.class)
+public interface CreativeInventoryScreenAccessor
 {
-	@Accessor
-	List<Drawable> getDrawables();
+	@Accessor("selectedTab")
+	static int getSelectedTab()
+	{
+		throw new AssertionError();
+	}
 }

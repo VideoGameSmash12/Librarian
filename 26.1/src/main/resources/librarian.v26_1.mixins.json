@@ -7,8 +7,10 @@
   },
   "client": [
     "AbstractContainerScreenAccessor",
+    "ClientPacketListenerMixin",
     "CreativeModeInventoryScreenMixin",
     "HotbarManagerMixin",
+    "HotbarMixin",
     "MinecraftClientMixin",
     "ScreenAccessor"
   ]

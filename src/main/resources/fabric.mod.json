@@ -28,6 +28,8 @@
     ]
   },
   "breaks": {
-    "hotbarsplus": "*"
+    "hotbarsplus": "*",
+    "hotbarlagfixer": "*",
+    "infinite-saved-hotbars": "*"
   }
 }

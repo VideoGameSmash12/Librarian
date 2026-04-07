@@ -18,6 +18,7 @@
 package me.videogamesm12.librarian.v1_21_1;
 
 import lombok.NonNull;
+import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.IMechanicFactory;
 import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
 import me.videogamesm12.librarian.util.FNF;
@@ -37,6 +38,13 @@ public class Mechanic implements IMechanicFactory
 {
 	private static final GsonComponentSerializer GSON_COMPONENT_SERIALIZER = GsonComponentSerializer.gson();
 	private static final RegistryWrapper.WrapperLookup WRAPPER_LOOKUP = BuiltinRegistries.createWrapperLookup();
+
+	static
+	{
+		MinecraftClient.getInstance().execute(() ->
+				Librarian.getInstance().getConfig().optimizations().getBookmarks().parallelStream().distinct()
+						.forEach(page -> Librarian.getInstance().getHotbarPage(page).librarian$load()));
+	}
 
 	@Override
 	public IWrappedHotbarStorage createHotbarStorage(@NonNull BigInteger integer)

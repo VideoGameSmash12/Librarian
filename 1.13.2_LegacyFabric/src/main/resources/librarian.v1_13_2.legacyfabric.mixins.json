@@ -8,6 +8,8 @@
     "defaultRequire": 1
   },
   "client": [
+    "ConfirmScreenAccessor",
+    "CreativeInventoryScreenAccessor",
     "CreativeInventoryScreenMixin",
     "HandledScreenAccessor",
     "HotbarStorageMixin",

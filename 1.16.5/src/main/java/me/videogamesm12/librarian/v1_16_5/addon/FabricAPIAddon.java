@@ -67,7 +67,7 @@ public class FabricAPIAddon implements IAddon
 				}
 				else if (backupKey.wasPressed())
 				{
-					Librarian.getInstance().getCurrentPage().librarian$backup();
+					Librarian.getInstance().queue(() -> Librarian.getInstance().getCurrentPage().librarian$backup());
 				}
 			}
 		});

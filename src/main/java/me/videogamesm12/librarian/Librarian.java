@@ -34,6 +34,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Getter
 public class Librarian implements ClientModInitializer
@@ -54,6 +56,7 @@ public class Librarian implements ClientModInitializer
 	private final Map<BigInteger, IWrappedHotbarStorage> map = new HashMap<>();
 
 	private final EventBus eventBus = new EventBus();
+	private final ThreadPoolExecutor threadPool = new ScheduledThreadPoolExecutor(4);
 
 	@Override
 	public void onInitializeClient()
@@ -149,7 +152,17 @@ public class Librarian implements ClientModInitializer
 
 	public void reloadCurrentPage()
 	{
-		getCurrentPage().librarian$load();
+		final IWrappedHotbarStorage page = getCurrentPage();
+
+		if (Librarian.getInstance().getConfig().optimizations().backgroundLoading())
+		{
+			page.librarian$loadAsync();
+		}
+		else
+		{
+			page.librarian$load();
+		}
+
 		eventBus.post(new ReloadPageEvent(currentPageNumber));
 	}
 
@@ -161,11 +174,23 @@ public class Librarian implements ClientModInitializer
 
 	public IWrappedHotbarStorage getHotbarPage(BigInteger page)
 	{
+		final IWrappedHotbarStorage storage;
+
 		if (!map.containsKey(page))
 		{
+			storage = mechanic.createHotbarStorage(page);
 			map.put(page, mechanic.createHotbarStorage(page));
 		}
+		else
+		{
+			storage = map.get(page);
+		}
 
-		return map.get(page);
+		return storage;
+	}
+
+	public void queue(Runnable runnable)
+	{
+		threadPool.execute(runnable);
 	}
 }

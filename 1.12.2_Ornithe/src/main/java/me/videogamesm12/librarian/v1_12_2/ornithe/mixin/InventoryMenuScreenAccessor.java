@@ -18,6 +18,7 @@
 package me.videogamesm12.librarian.v1_12_2.ornithe.mixin;
 
 import net.minecraft.client.gui.screen.inventory.menu.InventoryMenuScreen;
+import net.minecraft.inventory.menu.InventoryMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
@@ -29,4 +30,7 @@ public interface InventoryMenuScreenAccessor
 
 	@Accessor(value = "y")
 	int getY();
+
+	@Accessor(value = "menu")
+	InventoryMenu getMenu();
 }

@@ -9,8 +9,10 @@
   },
   "client": [
     "ButtonWidgetMixin",
+    "ConfirmScreenAccessor",
+    "CreativeInventoryScreenAccessor",
     "CreativeInventoryScreenMixin",
-    "HotbarStorageMixin",
-    "HandledScreenAccessor"
+    "HandledScreenAccessor",
+    "HotbarStorageMixin"
   ]
 }

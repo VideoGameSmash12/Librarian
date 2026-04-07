@@ -9,6 +9,8 @@
   },
   "client": [
     "ButtonWidgetMixin",
+    "ConfirmScreenAccessor",
+    "CreativeInventoryScreenAccessor",
     "CreativeInventoryScreenMixin",
     "HotbarManagerMixin",
     "InventoryMenuScreenAccessor"

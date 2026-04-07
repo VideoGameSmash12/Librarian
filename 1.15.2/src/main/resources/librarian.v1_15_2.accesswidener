@@ -1,2 +1,3 @@
 accessWidener	v1	named
-mutable   field   net/minecraft/options/HotbarStorage   file   Ljava/io/File;
+mutable   field   net/minecraft/options/HotbarStorage   file    Ljava/io/File;
+mutable   field   net/minecraft/options/HotbarStorage   entries [Lnet/minecraft/client/option/HotbarStorageEntry;

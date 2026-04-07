@@ -17,46 +17,45 @@
 
 package me.videogamesm12.librarian.v1_16_5.mixin;
 
-import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.datafixers.DataFixer;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
+import me.videogamesm12.librarian.api.LoadStatus;
 import me.videogamesm12.librarian.api.event.LoadFailureEvent;
 import me.videogamesm12.librarian.api.event.SaveFailureEvent;
 import me.videogamesm12.librarian.util.FNF;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.option.HotbarStorage;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
+import net.minecraft.client.option.HotbarStorageEntry;
+import net.minecraft.datafixer.DataFixTypes;
+import net.minecraft.nbt.*;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.io.EOFException;
 import java.io.File;
+import java.io.UTFDataFormatException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Mixin(HotbarStorage.class)
 public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 {
-	@Shadow
-	private boolean loaded;
+	@Shadow @Final private File file;
 
-	@Shadow protected abstract void load();
+	@Shadow @Final private HotbarStorageEntry[] entries;
 
-	@Shadow @Final
-	private File file;
+	@Shadow @Final private DataFixer dataFixer;
 
 	@Unique
 	private static final GsonComponentSerializer librarian$serializer = GsonComponentSerializer.gson();
@@ -66,6 +65,15 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 
 	@Unique
 	private HotbarPageMetadata metadata = null;
+
+	@Unique
+	private int dataVersion = 1343;
+
+	@Unique
+	private LoadStatus status = LoadStatus.NOT_LOADED;
+
+	@Unique
+	private int rowCount = 0;
 
 	/**
 	 * <p>Hijacks what is used as the location by HotbarStorage on initialization.</p>
@@ -78,99 +86,217 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	{
 		this.pageNumber = FNF.getNumberFromFileName(file.getName());
 		this.setFile(file);
+		this.rowCount = entries.length;
 	}
 
-	@Inject(method = "load", at = @At(value = "INVOKE",
-			target = "Lorg/apache/logging/log4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V", shift = At.Shift.AFTER, remap = false))
-	private void hookLoadFailure(CallbackInfo ci, @Local Exception ex)
+	/**
+	 * Reimplements the hotbar page loading logic using existing optimizations and features.
+	 * @author	Video
+	 * @reason	Mod already heavily modifies game behavior, might as well just do it to keep things organized
+	 */
+	@Overwrite
+	private void load()
 	{
-		Librarian.getInstance().getEventBus().post(new LoadFailureEvent(this, ex));
-	}
+		// Indicate that we are now loading
+		this.status = LoadStatus.LOADING;
 
-	@Inject(method = "save", at = @At(value = "INVOKE",
-			target = "Lorg/apache/logging/log4j/Logger;error(Ljava/lang/String;Ljava/lang/Throwable;)V", shift = At.Shift.AFTER, remap = false))
-	private void hookSaveFailure(CallbackInfo ci, @Local Exception ex)
-	{
-		Librarian.getInstance().getEventBus().post(new SaveFailureEvent(this, ex));
-	}
+		try
+		{
+			NbtCompound tag;
 
-	@Inject(method = "load", at = @At("RETURN"))
-	private void markLoaded(CallbackInfo ci)
-	{
+			// Try to load the page as a regular hotbar.nbt file, otherwise treat it as compressed
+			try
+			{
+				tag = NbtIo.read(librarian$getLocation());
+			}
+			catch (UTFDataFormatException | EOFException ex)
+			{
+				tag = NbtIo.readCompressed(librarian$getLocation());
+			}
+
+			// Usually means the file doesn't exist
+			if (tag == null || tag.isEmpty())
+			{
+				status = LoadStatus.LOADED;
+				setLoaded(true);
+				return;
+			}
+
+			// Get and update the page's data version
+			this.dataVersion = tag.getInt("DataVersion") != 0 ? tag.getInt("DataVersion") : 1343;
+			tag = NbtHelper.update(this.dataFixer, DataFixTypes.HOTBAR, tag, dataVersion);
+
+			// Fetch our metadata
+			NbtCompound meta = tag.getCompound("librarian");
+
+			if (meta != null)
+			{
+				int version = meta.getInt("version");
+				String name = meta.getString("name");
+				String description = meta.getString("description");
+				List<String> authors = new ArrayList<>(meta.getList("authors", 8).stream()
+						.map(NbtElement::asString).collect(Collectors.toList()));
+
+				if (version > HotbarPageMetadata.getCurrentVersion())
+				{
+					Librarian.getLogger().error("Hotbar metadata rejected - data is intended for a newer version of " +
+									"Librarian than what we are currently running (current version {}, file version {})",
+							HotbarPageMetadata.getCurrentVersion(), version);
+
+					metadata = HotbarPageMetadata.builder().build();
+				}
+				else
+				{
+					metadata = HotbarPageMetadata.builder()
+							.version(version)
+							.name(name != null && !name.isEmpty() ? librarian$serializer.deserializeOrNull(name) : null)
+							.description(description != null && !description.isEmpty() ?
+									librarian$serializer.deserializeOrNull(description) : null)
+							.authors(authors)
+							.build();
+				}
+			}
+
+			final NbtCompound shutUpIntellij = tag;
+
+			rowCount = Math.max(Math.toIntExact(tag.getKeys().stream().filter(key ->
+					shutUpIntellij.contains(key, 9)).count()), 9);
+			setEntries(new HotbarStorageEntry[rowCount]);
+
+			IntStream.range(0, rowCount).forEach(i ->
+			{
+				this.entries[i] = new HotbarStorageEntry();
+				this.entries[i].readNbtList(shutUpIntellij.getList(String.valueOf(i), 10));
+			});
+		}
+		catch (Throwable ex)
+		{
+			Librarian.getLogger().error("Failed to load saved hotbar page {}", librarian$getLocation().getName(), ex);
+			Librarian.getInstance().getEventBus().post(new LoadFailureEvent(this, ex));
+		}
+
+		// Ok, we're done
+		status = LoadStatus.LOADED;
 		setLoaded(true);
 	}
 
-	@Inject(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/NbtHelper;update(Lcom/mojang/datafixers/DataFixer;Lnet/minecraft/datafixer/DataFixTypes;Lnet/minecraft/nbt/NbtCompound;I)Lnet/minecraft/nbt/NbtCompound;",
-			shift = At.Shift.AFTER))
-	private void fetchMetadata(CallbackInfo ci, @Local NbtCompound compound)
+	/**
+	 * Reimplements the hotbar page loading logic using existing optimizations and features.
+	 * @author	Video
+	 * @reason	Same reason as load.
+	 */
+	@Overwrite
+	public void save()
 	{
-		NbtCompound meta = compound.getCompound("librarian");
-
-		if (meta != null)
+		// Do nothing if the page isn't even loaded yet and we're loading asynchronously
+		if (status != LoadStatus.LOADED && Librarian.getInstance().getConfig().optimizations().backgroundLoading())
 		{
-			int version = meta.getInt("version");
-			String name = meta.getString("name");
-			String description = meta.getString("description");
-			List<String> authors = new ArrayList<>(meta.getList("authors", 8).stream()
-					.map(NbtElement::asString).collect(Collectors.toList()));
+			return;
+		}
 
-			if (version > HotbarPageMetadata.getCurrentVersion())
+		// Update the data version
+		dataVersion = SharedConstants.getGameVersion().getWorldVersion();
+
+		// Actual operation, specified here as a Runnable so to avoid duplicate code
+		final Runnable operation = () ->
+		{
+			try
 			{
-				Librarian.getLogger().error("Hotbar metadata rejected - data is intended for a newer version of " +
-								"Librarian than what we are currently running (current version {}, file version {})",
-						HotbarPageMetadata.getCurrentVersion(), version);
+				// Create base compound tag
+				final NbtCompound tag = new NbtCompound();
+				tag.putInt("version", dataVersion);
 
-				metadata = HotbarPageMetadata.builder().build();
+				// Write our metadata
+				if (metadata != null)
+				{
+					NbtCompound meta = new NbtCompound();
+
+					meta.putInt("version", HotbarPageMetadata.getCurrentVersion());
+
+					if (metadata.getName() != null)
+						meta.putString("name", librarian$serializer.serialize(metadata.getName()));
+
+					if (metadata.getDescription() != null)
+						meta.putString("description", librarian$serializer.serialize(metadata.getDescription()));
+
+					if (!metadata.getAuthors().isEmpty())
+					{
+						final NbtList list = new NbtList();
+						metadata.getAuthors().forEach(author -> list.add(NbtString.of(author)));
+						meta.put("authors", list);
+					}
+
+					tag.put("librarian", meta);
+				}
+
+				// Convert the items and add them to the tag
+				IntStream.range(0, rowCount).forEach(i -> tag.put(String.valueOf(i), entries[i].toNbtList()));
+
+				// Use file compression if enabled
+				if (Librarian.getInstance().getConfig().optimizations().useFileCompression())
+				{
+					NbtIo.writeCompressed(tag, librarian$getLocation());
+				}
+				else
+				{
+					NbtIo.write(tag, librarian$getLocation());
+				}
 			}
-			else
+			catch (Throwable ex)
 			{
-				metadata = HotbarPageMetadata.builder()
-						.version(version)
-						.name(name != null && !name.isEmpty() ? librarian$serializer.deserializeOrNull(name) : null)
-						.description(description != null && !description.isEmpty() ?
-								librarian$serializer.deserializeOrNull(description) : null)
-						.authors(authors)
-						.build();
+				Librarian.getLogger().error("Failed to save hotbar page {}", librarian$getLocation().getName(), ex);
+				Librarian.getInstance().getEventBus().post(new SaveFailureEvent(this, ex));
+			}
+		};
+
+		if (Thread.currentThread().getName().startsWith("pool-") || !Librarian.getInstance().getConfig().optimizations().backgroundSaving())
+		{
+			operation.run();
+		}
+		else
+		{
+			Librarian.getInstance().queue(operation);
+		}
+	}
+
+	@Inject(method = "getSavedHotbar", at = @At("HEAD"), cancellable = true)
+	private void preventPrematureHotbarGrabbing(int i, CallbackInfoReturnable<HotbarStorageEntry> cir)
+	{
+		if (Librarian.getInstance().getConfig().optimizations().backgroundLoading())
+		{
+			if (status == LoadStatus.NOT_LOADED)
+			{
+				librarian$loadAsync();
+				cir.setReturnValue(new HotbarStorageEntry());
+			}
+			else if (status == LoadStatus.LOADING)
+			{
+				cir.setReturnValue(new HotbarStorageEntry());
 			}
 		}
 	}
 
-	@Inject(method = "save", at = @At(value = "INVOKE", target =
-			"Lnet/minecraft/nbt/NbtIo;write(Lnet/minecraft/nbt/NbtCompound;Ljava/io/File;)V",
-			shift = At.Shift.BEFORE))
-	private void addMetadata(CallbackInfo ci, @Local NbtCompound compound)
+	@Override
+	public LoadStatus librarian$getLoadStatus()
 	{
-		if (metadata != null)
-		{
-			NbtCompound meta = new NbtCompound();
+		return status;
+	}
 
-			meta.putInt("version", HotbarPageMetadata.getCurrentVersion());
+	@Override
+	public int librarian$getRowCount()
+	{
+		return rowCount;
+	}
 
-			if (metadata.getName() != null)
-				meta.putString("name", librarian$serializer.serialize(metadata.getName()));
-
-			if (metadata.getDescription() != null)
-				meta.putString("description", librarian$serializer.serialize(metadata.getDescription()));
-
-			if (!metadata.getAuthors().isEmpty())
-			{
-				final NbtList list = new NbtList();
-				metadata.getAuthors().forEach(author -> list.add(NbtString.of(author)));
-				meta.put("authors", list);
-			}
-
-			compound.put("librarian", meta);
-		}
+	@Override
+	public int librarian$dataVersion()
+	{
+		return dataVersion;
 	}
 
 	@Override
 	public Optional<HotbarPageMetadata> librarian$getMetadata()
 	{
-		if (!loaded)
-		{
-			load();
-		}
-
 		return Optional.ofNullable(metadata);
 	}
 
@@ -202,8 +328,8 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	public abstract void setFile(File file);
 
 	@Accessor
-	public abstract boolean isLoaded();
+	public abstract void setLoaded(boolean loaded);
 
 	@Accessor
-	public abstract void setLoaded(boolean loaded);
+	public abstract void setEntries(HotbarStorageEntry[] entries);
 }
