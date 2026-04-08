@@ -9,6 +9,7 @@
   },
   "client": [
     "ClientPlayNetworkHandlerMixin",
+    "CreativeInventoryScreenAccessor",
     "CreativeInventoryScreenMixin",
     "HandledScreenAccessor",
     "HotbarStorageEntryMixin",

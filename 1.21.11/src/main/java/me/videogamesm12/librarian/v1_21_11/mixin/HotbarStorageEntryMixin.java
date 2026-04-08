@@ -20,14 +20,19 @@ package me.videogamesm12.librarian.v1_21_11.mixin;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.DynamicOps;
 import me.videogamesm12.librarian.Librarian;
+import me.videogamesm12.librarian.api.IWrappedHotbarStorageEntry;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.HotbarStorageEntry;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.registry.BuiltinRegistries;
 import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.registry.RegistryOps;
 import net.minecraft.registry.RegistryWrapper;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -35,12 +40,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+
+import static org.apache.logging.log4j.ThreadContext.EMPTY_STACK;
 
 @Mixin(HotbarStorageEntry.class)
-public abstract class HotbarStorageEntryMixin
+public abstract class HotbarStorageEntryMixin implements IWrappedHotbarStorageEntry<ItemStack>
 {
 	@Unique
 	private static final RegistryWrapper.WrapperLookup WRAPPER_LOOKUP = BuiltinRegistries.createWrapperLookup();
@@ -48,6 +53,14 @@ public abstract class HotbarStorageEntryMixin
 	@Shadow
 	public abstract List<ItemStack> deserialize(RegistryWrapper.WrapperLookup par1);
 
+	@Shadow
+	@Final
+	private static DynamicOps<NbtElement> NBT_OPS;
+	@Shadow
+	private List<Dynamic<?>> stacks;
+	@Shadow
+	@Final
+	private static Dynamic<?> EMPTY_STACK;
 	@Unique
 	private final ItemStack[] cache =  new ItemStack[9];
 
@@ -98,6 +111,33 @@ public abstract class HotbarStorageEntryMixin
 		}
 
 		return original.call(registries);
+	}
+
+	@Override
+	public void librarian$setItem(int column, ItemStack value)
+	{
+		// Since we have the item already processed, we'll just set it in our cache
+		cache[column] = value;
+
+		// Converts the item to a Dynamic
+		final RegistryWrapper.WrapperLookup lookup = MinecraftClient.getInstance().world != null ?
+				MinecraftClient.getInstance().world.getRegistryManager() : WRAPPER_LOOKUP;
+		final RegistryOps<NbtElement> converter = lookup.getOps(NBT_OPS);
+		final Optional<Dynamic<?>> converted = ItemStack.OPTIONAL_CODEC.encodeStart(converter, value)
+				.resultOrPartial(error -> Librarian.getLogger().warn("Could not encode hotbar item: {}", error))
+				.map(nbt -> new Dynamic<>(NBT_OPS, nbt));
+
+		// Sets the entry
+		final List<Dynamic<?>> copy = new ArrayList<>(stacks);
+		copy.set(column, converted.orElse(EMPTY_STACK));
+		stacks = copy;
+	}
+
+	@Override
+	public ItemStack librarian$getItem(int column)
+	{
+		// Fetch from cache
+		return cache[column];
 	}
 
 	@Unique
