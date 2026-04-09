@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Video
+ * Copyright (C) 2026 Video
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,24 +17,16 @@
 
 package me.videogamesm12.librarian.v1_21_11.mixin;
 
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
+import org.spongepowered.asm.mixin.gen.Invoker;
 
-@Mixin(HandledScreen.class)
-public interface HandledScreenAccessor
+@Mixin(CreativeInventoryScreen.CreativeScreenHandler.class)
+public interface CreativeScreenHandlerMixin
 {
-	@Accessor(value = "x")
-	int getX();
+	@Invoker(value = "getRow")
+	int invokeGetRow(float f);
 
-	@Accessor(value = "y")
-	int getY();
-
-	@Accessor(value = "handler")
-	<T extends ScreenHandler> T getHandler();
-
-	@Accessor(value = "focusedSlot")
-	Slot getFocusedSlot();
+	@Invoker(value = "getOverflowRows")
+	int invokeGetOverflowRows();
 }

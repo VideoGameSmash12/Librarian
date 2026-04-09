@@ -62,6 +62,7 @@ public class FabricAPIAddon implements IAddon
 	private KeyBinding nextKey = null;
 	private KeyBinding previousKey = null;
 	private KeyBinding backupKey = null;
+	private KeyBinding deleteKey = null;
 
 	@Override
 	public void init()
@@ -81,6 +82,11 @@ public class FabricAPIAddon implements IAddon
 				InputUtil.Type.KEYSYM,
 				GLFW.GLFW_KEY_B,
 				actionsCategory));
+		deleteKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("librarian.key.delete_item",
+				InputUtil.Type.KEYSYM,
+				GLFW.GLFW_KEY_DELETE,
+				actionsCategory));
+
 
 		ClientTickEvents.END_CLIENT_TICK.register(client ->
 		{

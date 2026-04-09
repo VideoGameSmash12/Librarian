@@ -22,10 +22,7 @@ import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.*;
-import me.videogamesm12.librarian.api.event.AsyncPageLoadEvent;
-import me.videogamesm12.librarian.api.event.CacheClearEvent;
-import me.videogamesm12.librarian.api.event.NavigationEvent;
-import me.videogamesm12.librarian.api.event.ReloadPageEvent;
+import me.videogamesm12.librarian.api.event.*;
 import me.videogamesm12.librarian.util.ComponentProcessor;
 import me.videogamesm12.librarian.v1_21_11.addon.FabricAPIAddon;
 import net.fabricmc.fabric.impl.client.itemgroup.FabricCreativeGuiComponents;
@@ -392,7 +389,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Inject(method = "keyPressed", at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/client/gui/screen/ingame/HandledScreen;keyPressed(Lnet/minecraft/client/input/KeyInput;)Z",
 			shift = At.Shift.BEFORE), cancellable = true)
-	public void handleNavigationKeys(KeyInput input, CallbackInfoReturnable<Boolean> cir)
+	public void handleActionKeys(KeyInput input, CallbackInfoReturnable<Boolean> cir)
 	{
 		// Librarian-specific keybinds
 		if (tabIsHotbar(getSelectedTab()))
@@ -414,6 +411,62 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			else if (fabric.getBackupKey().matchesKey(input))
 			{
 				librarian.queue(() -> librarian.getCurrentPage().librarian$backup());
+				cir.setReturnValue(true);
+				return;
+			}
+			else if (fabric.getDeleteKey().matchesKey(input))
+			{
+				final Slot focusedSlot = ((HandledScreenAccessor) this).getFocusedSlot();
+				if (focusedSlot == null
+						|| !isCreativeInventorySlot(focusedSlot)
+						|| focusedSlot.getStack().isEmpty()
+						|| librarian.getCurrentPage().librarian$getLoadStatus() != LoadStatus.LOADED)
+				{
+					return;
+				}
+
+				final CreativeInventoryScreen.CreativeScreenHandler handler = ((HandledScreenAccessor) this).getHandler();
+
+				final int row = (((CreativeScreenHandlerMixin) handler).invokeGetRow(scrollPosition) + (focusedSlot.getIndex() / 9));
+				final int column = focusedSlot.getIndex() % 9;
+
+				final IWrappedHotbarStorage wrappedStorage = librarian.getCurrentPage();
+				final HotbarStorage storage = (HotbarStorage) wrappedStorage;
+				final IWrappedHotbarStorageEntry<ItemStack> entry = wrappedStorage.librarian$get(row);
+
+
+				float scroll = scrollPosition;
+
+				checkBeforeOperation(storage,
+						entry,
+						Collections.singletonList(ItemStack.EMPTY),
+						() -> {
+							entry.librarian$setItem(column, ItemStack.EMPTY);
+							storage.save();
+
+							// If we weren't prompted, update the current screen
+							if (client.currentScreen instanceof CreativeInventoryScreen)
+							{
+								setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
+								handler.scrollItems(scroll);
+								scrollPosition = scroll;
+							}
+						},
+						(value) -> {
+							final CreativeInventoryScreen screen = new CreativeInventoryScreen(Objects.requireNonNull(client.player),
+									Objects.requireNonNull(client.getNetworkHandler()).getEnabledFeatures(),
+									operatorTabEnabled);
+
+							client.setScreen(screen);
+
+							((CreativeInventoryScreen.CreativeScreenHandler) ((HandledScreenAccessor) screen).getHandler()).scrollItems(scroll);
+							// https://www.youtube.com/watch?v=oiZ3VFCIUy0
+							((CreativeInventoryScreenAccessor) screen).setScrollPosition(scroll);
+						},
+						column,
+						"nonmatching");
+
+
 				cir.setReturnValue(true);
 				return;
 			}
@@ -569,16 +622,16 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 		final CreativeInventoryScreen.CreativeScreenHandler handler = ((HandledScreenAccessor) this).getHandler();
 
+		// Get everything related to the current hotbar page
+		final HotbarStorage page = (HotbarStorage) Librarian.getInstance().getCurrentPage();
+		final IWrappedHotbarStorage wrapped = (IWrappedHotbarStorage) page;
+
 		// Determine row and column
-		int row = slot.getIndex() / 9 + (Math.round(4 * scrollPosition));
+		int row = (((CreativeScreenHandlerMixin) handler).invokeGetRow(scrollPosition) + (slot.getIndex() / 9));
 		int column = slot.getIndex() % 9;
 
 		// Get the item stack in their cursor
 		final ItemStack cursor = handler.getCursorStack().copy();
-
-		// Get everything related to the current hotbar page
-		final HotbarStorage page = (HotbarStorage) Librarian.getInstance().getCurrentPage();
-		final IWrappedHotbarStorage wrapped = (IWrappedHotbarStorage) page;
 
 		// If the item in their cursor isn't air and the action they are trying to do is related to adding/swapping them...
 		if (cursor.getItem() != Items.AIR
@@ -651,7 +704,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					// Found an empty slot!
 					if (entry.librarian$getItem(column).getItem() == Items.AIR)
 					{
-						// Store a hash of
+						// Store a hash of the menu so we can determine if we need to update it later
 						final int screenCode = Objects.requireNonNull(client.currentScreen).hashCode();
 
 						float scroll = scrollPosition;
@@ -740,11 +793,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 	@Unique
 	private static void checkBeforeOperation(HotbarStorage storage, IWrappedHotbarStorageEntry<ItemStack> row,
-											 List<ItemStack> items, Runnable ifYes, Consumer<Boolean> cleanup, int columnIfSingular)
+											 List<ItemStack> items, Runnable ifYes, Consumer<Boolean> cleanup,
+											 int columnIfSingular, String... ignored)
 	{
 		final MinecraftClient client = MinecraftClient.getInstance();
 		final IWrappedHotbarStorage wrapped = (IWrappedHotbarStorage) storage;
 		final boolean backgroundSaving = librarian.getConfig().optimizations().backgroundSaving();
+		final List<String> ignoredIssues = Arrays.stream(ignored).toList();
 
 		Runnable scanner = () ->
 		{
@@ -752,6 +807,11 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 			downgradeCheck:
 			{
+				if (ignoredIssues.contains("downgrade"))
+				{
+					break downgradeCheck;
+				}
+
 				if (wrapped.librarian$dataVersion() > SharedConstants.getGameVersion().dataVersion().id())
 				{
 					issues.add("downgrade");
@@ -761,6 +821,11 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 			overwriteCheck:
 			{
+				if (ignoredIssues.contains("nonmatching"))
+				{
+					break overwriteCheck;
+				}
+
 				final List<ItemStack> storageEntry = ((HotbarStorageEntry) row).deserialize(Objects.requireNonNull(client.world)
 						.getRegistryManager());
 

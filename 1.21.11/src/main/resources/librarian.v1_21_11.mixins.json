@@ -11,6 +11,7 @@
     "ClientPlayNetworkHandlerMixin",
     "CreativeInventoryScreenAccessor",
     "CreativeInventoryScreenMixin",
+    "CreativeScreenHandlerMixin",
     "HandledScreenAccessor",
     "HotbarStorageEntryMixin",
     "HotbarStorageMixin",
