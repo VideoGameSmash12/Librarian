@@ -82,6 +82,8 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 	@Unique
 	private static ItemGroup lastGroup = null;
+	@Unique
+	private static boolean readyToSave = true;
 
 	@Shadow
 	private TextFieldWidget searchBox;
@@ -693,6 +695,12 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			// Prevent items from being lost accidentally
 			ci.cancel();
 
+			// Avoid saving until we are flagged as ready to do so
+			if (!readyToSave)
+			{
+				return;
+			}
+
 			// Scan for empty slots
 			scan:
 			for (row = 0; row < wrapped.librarian$getRowCount(); row++)
@@ -716,8 +724,12 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 								entry,
 								Collections.singletonList(entry.librarian$getItem(column)),
 								() -> {
+									// Prevent accidentally
+									readyToSave = false;
 									entry.librarian$setItem(fuckOffIntellij, slot.getStack().copy());
 									page.save();
+
+									readyToSave = true;
 
 									// Remove the item from their inventory
 									Objects.requireNonNull(client.player).getInventory().setStack(slot.getIndex(), ItemStack.EMPTY);
