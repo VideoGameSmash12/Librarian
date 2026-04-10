@@ -4,16 +4,6 @@ capacity with a page system. It is the successor to Hotbars+, a mod by the same 
 
 ## Features
 
-### Accidental overwrite protection
-A common problem people experience with the saved hotbar system is the potential to unintentionally overwrite existing
-hotbars by pressing the wrong key, losing many items by complete accident in the process. Librarian tries to help 
-prevent this from happening by comparing the data of the items being saved to that of the items already saved. If it
-doesn't exactly match, a prompt will come up asking for confirmation before continuing, potentially saving you and your
-items.
-
-![b0120207262c68c7d534e96f0cdfa54a51d7940b](https://github.com/user-attachments/assets/88248d39-27a7-47c1-bae5-e29e09e50dcc)
-
-
 ### Infinite saved hotbar capacity
 Never run out of space in your hotbars again. Librarian introduces a page system which allows you to store as many items
 as you could possibly ever want or need.
@@ -22,6 +12,23 @@ as you could possibly ever want or need.
 
 Since this system is vanilla-compatible, you won't need to worry about having to convert or do any transfers should you
 decide to not use the mod anymore.
+
+### Better saved hotbar performance
+
+Got a lot of data in your saved hotbars? Not a problem. Librarian optimizes the way the game loads and saved hotbars to
+run entirely in the background, completely eliminating some notorious lagspikes many have experienced while working with
+saved hotbars in the process.
+
+![38rCmKWN3qbQ](https://github.com/user-attachments/assets/a75b8895-2aab-4874-aa11-65c50057fccd)
+
+### Accidental overwrite protection
+A common problem people experience with the saved hotbar system is the potential to unintentionally overwrite existing
+hotbars by pressing the wrong key, losing many items by complete accident in the process. Librarian tries to help
+prevent this from happening by comparing the data of the items being saved to that of the items already saved. If it
+doesn't exactly match, a prompt will come up asking for confirmation before continuing, potentially saving you and your
+items.
+
+![b0120207262c68c7d534e96f0cdfa54a51d7940b](https://github.com/user-attachments/assets/88248d39-27a7-47c1-bae5-e29e09e50dcc)
 
 ### Renamable saved hotbars
 To help facilitate distribution and organization, Librarian introduces a new vanilla-compatible hotbar metadata system
@@ -40,7 +47,7 @@ this purpose.
 
 ### Multi-version support
 To account for those holding out on specifics game versions, Librarian supports a wide range of Minecraft versions as
-recent as 26.1 and as old as 1.12.2 (with the help of [Legacy Fabric](https://legacyfabric.net/) and
+recent as 26.1.1 and as old as 1.12.2 (with the help of [Legacy Fabric](https://legacyfabric.net/) and
 [Ornithe](https://ornithemc.net/)). I am committed to supporting as many versions as reasonably possible. The foundation
 of Librarian, while similar to its predecessor, is written with the goal of not relying on any particular
 version-specific code. This helps make it more future-proof in the long run.
@@ -67,7 +74,7 @@ Currently supported versions:
 * 1.21.8
 * 1.21.10
 * 1.21.11
-* 26.1
+* 26.1.x
 
 ## Installing
 Download the mod JAR and copy it to your 'mods' folder. Depending on the version of Minecraft you are running, you may
@@ -99,7 +106,7 @@ need to install some extra mods as well. Here is a table explaining exactly that
 | 1.21.8  | Fabric        | Fabric API                 |
 | 1.21.10 | Fabric        | Fabric API                 |
 | 1.21.11 | Fabric        | Fabric API                 |
-| 26.1    | Fabric        | Fabric API                 |
+| 26.1.x  | Fabric        | Fabric API                 |
 
 ## Building
 Librarian requires at least JDK 21 to be compiled. You can compile it by running `gradlew build` (or, if you are running
