@@ -104,7 +104,7 @@ public class FNF
 	 */
 	public static String getBackupFileName(BigInteger page)
 	{
-		return String.format("%s [%s].nbt", getPageFileName(page), dateFormat.format(new Date()).replace(":", "-"));
+		return String.format("%s [%s].nbt", getPageFileName(page), dateFormat.format(new Date()));
 	}
 
 	/**
