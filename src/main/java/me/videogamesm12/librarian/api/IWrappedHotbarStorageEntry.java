@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Video
+ * Copyright (C) 2026 Video
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,26 +15,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.videogamesm12.librarian.v1_21_11.mixin;
+package me.videogamesm12.librarian.api;
 
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
-
-@Mixin(HandledScreen.class)
-public interface HandledScreenAccessor
+/**
+ * <h1>IWrappedHotbarStorageEntry</h1>
+ * <p>Wrapper class for HotbarStorageEntry (or, depending on the mappings being used, Hotbar) instances with extra code
+ * 	for Librarian-specific functions.</p>
+ * @param <C>	ItemStack
+ */
+public interface IWrappedHotbarStorageEntry<C>
 {
-	@Accessor(value = "x")
-	int getX();
+	void librarian$setItem(int column, C value);
 
-	@Accessor(value = "y")
-	int getY();
-
-	@Accessor(value = "handler")
-	<T extends ScreenHandler> T getHandler();
-
-	@Accessor(value = "focusedSlot")
-	Slot getFocusedSlot();
+	C librarian$getItem(int column);
 }

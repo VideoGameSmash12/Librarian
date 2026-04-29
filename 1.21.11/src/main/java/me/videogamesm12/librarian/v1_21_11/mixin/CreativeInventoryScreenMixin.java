@@ -21,14 +21,8 @@ import com.google.common.eventbus.Subscribe;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import me.videogamesm12.librarian.Librarian;
-import me.videogamesm12.librarian.api.HotbarPageMetadata;
-import me.videogamesm12.librarian.api.IMechanicFactory;
-import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
-import me.videogamesm12.librarian.api.LoadStatus;
-import me.videogamesm12.librarian.api.event.AsyncPageLoadEvent;
-import me.videogamesm12.librarian.api.event.CacheClearEvent;
-import me.videogamesm12.librarian.api.event.NavigationEvent;
-import me.videogamesm12.librarian.api.event.ReloadPageEvent;
+import me.videogamesm12.librarian.api.*;
+import me.videogamesm12.librarian.api.event.*;
 import me.videogamesm12.librarian.util.ComponentProcessor;
 import me.videogamesm12.librarian.v1_21_11.addon.FabricAPIAddon;
 import net.fabricmc.fabric.impl.client.itemgroup.FabricCreativeGuiComponents;
@@ -47,16 +41,20 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.CharInput;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.option.HotbarStorage;
+import net.minecraft.client.option.HotbarStorageEntry;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -69,9 +67,10 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.io.IOException;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 @Mixin(CreativeInventoryScreen.class)
 public abstract class CreativeInventoryScreenMixin extends Screen
@@ -83,6 +82,8 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 	@Unique
 	private static ItemGroup lastGroup = null;
+	@Unique
+	private static boolean readyToSave = true;
 
 	@Shadow
 	private TextFieldWidget searchBox;
@@ -91,6 +92,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 	@Shadow
 	private @Nullable List<Slot> slots;
+
+	@Shadow
+	protected abstract boolean isCreativeInventorySlot(@Nullable Slot slot);
+
+	@Shadow
+	@Final
+	private boolean operatorTabEnabled;
 	@Unique
 	private IMechanicFactory mechanic;
 
@@ -383,7 +391,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Inject(method = "keyPressed", at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/client/gui/screen/ingame/HandledScreen;keyPressed(Lnet/minecraft/client/input/KeyInput;)Z",
 			shift = At.Shift.BEFORE), cancellable = true)
-	public void handleNavigationKeys(KeyInput input, CallbackInfoReturnable<Boolean> cir)
+	public void handleActionKeys(KeyInput input, CallbackInfoReturnable<Boolean> cir)
 	{
 		// Librarian-specific keybinds
 		if (tabIsHotbar(getSelectedTab()))
@@ -405,6 +413,62 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			else if (fabric.getBackupKey().matchesKey(input))
 			{
 				librarian.queue(() -> librarian.getCurrentPage().librarian$backup());
+				cir.setReturnValue(true);
+				return;
+			}
+			else if (fabric.getDeleteKey().matchesKey(input))
+			{
+				final Slot focusedSlot = ((HandledScreenAccessor) this).getFocusedSlot();
+				if (focusedSlot == null
+						|| !isCreativeInventorySlot(focusedSlot)
+						|| focusedSlot.getStack().isEmpty()
+						|| librarian.getCurrentPage().librarian$getLoadStatus() != LoadStatus.LOADED)
+				{
+					return;
+				}
+
+				final CreativeInventoryScreen.CreativeScreenHandler handler = ((HandledScreenAccessor) this).getHandler();
+
+				final int row = (((CreativeScreenHandlerMixin) handler).invokeGetRow(scrollPosition) + (focusedSlot.getIndex() / 9));
+				final int column = focusedSlot.getIndex() % 9;
+
+				final IWrappedHotbarStorage wrappedStorage = librarian.getCurrentPage();
+				final HotbarStorage storage = (HotbarStorage) wrappedStorage;
+				final IWrappedHotbarStorageEntry<ItemStack> entry = wrappedStorage.librarian$get(row);
+
+
+				float scroll = scrollPosition;
+
+				checkBeforeOperation(storage,
+						entry,
+						Collections.singletonList(ItemStack.EMPTY),
+						() -> {
+							entry.librarian$setItem(column, ItemStack.EMPTY);
+							storage.save();
+
+							// If we weren't prompted, update the current screen
+							if (client.currentScreen instanceof CreativeInventoryScreen)
+							{
+								setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
+								handler.scrollItems(scroll);
+								scrollPosition = scroll;
+							}
+						},
+						(value) -> {
+							final CreativeInventoryScreen screen = new CreativeInventoryScreen(Objects.requireNonNull(client.player),
+									Objects.requireNonNull(client.getNetworkHandler()).getEnabledFeatures(),
+									operatorTabEnabled);
+
+							client.setScreen(screen);
+
+							((CreativeInventoryScreen.CreativeScreenHandler) ((HandledScreenAccessor) screen).getHandler()).scrollItems(scroll);
+							// https://www.youtube.com/watch?v=oiZ3VFCIUy0
+							((CreativeInventoryScreenAccessor) screen).setScrollPosition(scroll);
+						},
+						column,
+						"nonmatching");
+
+
 				cir.setReturnValue(true);
 				return;
 			}
@@ -522,93 +586,13 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 		if (save)
 		{
-			boolean backgroundSaving = librarian.getConfig().optimizations().backgroundSaving();
-
-			Runnable operation = () ->
-			{
-				final List<String> issues = new ArrayList<>();
-
-				downgradeCheck:
-				{
-					if (wrappedStorage.librarian$dataVersion() > SharedConstants.getGameVersion().dataVersion().id())
-					{
-						issues.add("downgrade");
-						break downgradeCheck;
-					}
-				}
-
-				overwriteCheck:
-				{
-					final List<ItemStack> storageEntry = storage.getSavedHotbar(index).deserialize(Objects.requireNonNull(client.world)
-							.getRegistryManager());
-
-					if (storageEntry.isEmpty())
-					{
-						break overwriteCheck;
-					}
-
-					for (int i = 0; i < PlayerInventory.getHotbarSize(); i++)
-					{
-						ItemStack inventoryStack = Objects.requireNonNull(client.player).getInventory().getStack(i);
-						ItemStack hotbarEntry = storageEntry.get(i);
-
-						if (!hotbarEntry.isEmpty() && !ItemStack.areItemsAndComponentsEqual(inventoryStack, hotbarEntry))
-						{
-							issues.add("nonmatching");
-							break overwriteCheck;
-						}
-					}
-				}
-
-				if (!issues.isEmpty())
-				{
-					final MutableText title;
-					final MutableText description;
-
-					// Only one issue found, use more specific message for that
-					if (issues.size() == 1)
-					{
-						title = Text.translatable("librarian.messages.issues." + issues.getFirst() + ".title");
-						description = Text.translatable("librarian.messages.issues." + issues.getFirst() + ".description");
-					}
-					// Otherwise, use more brief versions instead
-					else
-					{
-						title = Text.translatable("librarian.messages.possible_loss_scenario_detected.title");
-						description = Text.translatable("librarian.messages.possible_loss_scenario_detected.description");
-						issues.forEach(issue -> description.append(Text.translatable("librarian.messages.issues." + issue + ".summary")).append("\n\n"));
-						description.append(Text.translatable("librarian.messages.possible_loss_scenario_detected.footer"));
-					}
-
-					// This is unbelievably bad for an optimization hack, but if I don't run setScreen() on the game
-					// 	thread, the entire game crashes. If I don't account for background saving in the nested block,
-					// 	then the game runs the "save" code on the game thread when it shouldn't, causing lagspikes
-					client.execute(() -> client.setScreen(new ConfirmScreen((value) ->
-					{
-						if (value)
-						{
-							if (backgroundSaving)
-								librarian.queue(() -> original.call(client, index, restore, save));
-							else
-								original.call(client, index, restore, save);
-						}
-						MinecraftClient.getInstance().setScreen(null);
-					}, title, description)));
-				}
-				else
-				{
-					original.call(client, index, restore, save);
-				}
-			};
-
-			if (backgroundSaving)
-			{
-				librarian.queue(operation);
-			}
-			else
-			{
-				operation.run();
-			}
+			checkBeforeOperation(storage,
+					wrappedStorage.librarian$get(index),
+					IntStream.range(0, PlayerInventory.getHotbarSize()).mapToObj(column ->
+							Objects.requireNonNull(client.player).getInventory().getStack(column)).toList(),
+					() -> original.call(client, index, restore, save),
+					(value) -> MinecraftClient.getInstance().setScreen(null),
+					-1337);
 		}
 		else
 		{
@@ -626,6 +610,154 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		}
 
 		return stack;
+	}
+
+	@Inject(method = "onMouseClick", at = @At("HEAD"), cancellable = true)
+	public void directlyModifyHotbar(Slot slot, int slotId, int button, SlotActionType actionType, CallbackInfo ci)
+	{
+		if (!tabIsHotbar(getSelectedTab())
+				|| slot == null
+				|| Librarian.getInstance().getCurrentPage().librarian$getLoadStatus() != LoadStatus.LOADED)
+		{
+			return;
+		}
+
+		final CreativeInventoryScreen.CreativeScreenHandler handler = ((HandledScreenAccessor) this).getHandler();
+
+		// Get everything related to the current hotbar page
+		final HotbarStorage page = (HotbarStorage) Librarian.getInstance().getCurrentPage();
+		final IWrappedHotbarStorage wrapped = (IWrappedHotbarStorage) page;
+
+		// Determine row and column
+		int row = (((CreativeScreenHandlerMixin) handler).invokeGetRow(scrollPosition) + (slot.getIndex() / 9));
+		int column = slot.getIndex() % 9;
+
+		// Get the item stack in their cursor
+		final ItemStack cursor = handler.getCursorStack().copy();
+
+		// If the item in their cursor isn't air and the action they are trying to do is related to adding/swapping them...
+		if (cursor.getItem() != Items.AIR
+				&& isCreativeInventorySlot(slot)
+				&& (actionType == SlotActionType.PICKUP || actionType == SlotActionType.SWAP))
+		{
+			final IWrappedHotbarStorageEntry<ItemStack> wrappedStorageEntry = wrapped.librarian$get(row);
+			final ItemStack original = wrappedStorageEntry.librarian$getItem(column).copy();
+			float scroll = scrollPosition;
+
+			final int fuckOffIntellij = column;
+
+			checkBeforeOperation(page,
+					wrappedStorageEntry,
+					Collections.singletonList(cursor.copy()),
+					() -> {
+						wrappedStorageEntry.librarian$setItem(fuckOffIntellij, cursor.copy());
+						page.save();
+
+						// If we weren't prompted, update the current screen
+						if (client.currentScreen instanceof CreativeInventoryScreen screen)
+						{
+							setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
+							handler.scrollItems(scroll);
+							scrollPosition = scroll;
+
+							if (!original.isEmpty())
+							{
+								((HandledScreenAccessor) screen).getHandler().setCursorStack(original);
+							}
+						}
+					},
+					(value) -> {
+						final CreativeInventoryScreen screen = new CreativeInventoryScreen(Objects.requireNonNull(client.player),
+								Objects.requireNonNull(client.getNetworkHandler()).getEnabledFeatures(),
+								operatorTabEnabled);
+
+						client.setScreen(screen);
+
+						((CreativeInventoryScreen.CreativeScreenHandler) ((HandledScreenAccessor) screen).getHandler()).scrollItems(scroll);
+						// What the hell do you mean "it'll throw a class cast exception"? No it won't?
+						((CreativeInventoryScreenAccessor) screen).setScrollPosition(scroll);
+						((HandledScreenAccessor) screen).getHandler().setCursorStack(value ? original : cursor);
+					},
+					column);
+
+			ci.cancel();
+		}
+		// If the item they're clicking isn't air, is in their inventory, and the user shift-clicked...
+		else if (slot.getStack().getItem() != Items.AIR
+				&& !isCreativeInventorySlot(slot)
+				&& actionType == SlotActionType.QUICK_MOVE)
+		{
+			// Basic idea for functionality: upon shift-clicking the item from your inventory, we look for a spot for
+			// 	empty space and if we find one, we use that. Otherwise, we simply do nothing.
+
+			// Prevent items from being lost accidentally
+			ci.cancel();
+
+			// Avoid saving until we are flagged as ready to do so
+			if (!readyToSave)
+			{
+				return;
+			}
+
+			// Scan for empty slots
+			scan:
+			for (row = 0; row < wrapped.librarian$getRowCount(); row++)
+			{
+				final IWrappedHotbarStorageEntry<ItemStack> entry = wrapped.librarian$get(row);
+
+				for (column = 0; column < PlayerInventory.getHotbarSize(); column++)
+				{
+					// Found an empty slot!
+					if (entry.librarian$getItem(column).getItem() == Items.AIR)
+					{
+						// Store a hash of the menu so we can determine if we need to update it later
+						final int screenCode = Objects.requireNonNull(client.currentScreen).hashCode();
+
+						float scroll = scrollPosition;
+						final int fuckOffIntellij = column;
+
+						// We're not concerned about accidentally overwriting a row since that isn't possible, but we
+						// 	are concerned about other checks like accidental downgrades.
+						checkBeforeOperation(page,
+								entry,
+								Collections.singletonList(entry.librarian$getItem(column)),
+								() -> {
+									// Prevent accidentally
+									readyToSave = false;
+									entry.librarian$setItem(fuckOffIntellij, slot.getStack().copy());
+									page.save();
+
+									readyToSave = true;
+
+									// Remove the item from their inventory
+									Objects.requireNonNull(client.player).getInventory().setStack(slot.getIndex(), ItemStack.EMPTY);
+									Objects.requireNonNull(client.interactionManager).clickCreativeStack(ItemStack.EMPTY, slotId);
+
+									if (client.currentScreen != null && client.currentScreen.hashCode() == screenCode)
+									{
+										setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR));
+										handler.scrollItems(scroll);
+										scrollPosition = scroll;
+									}
+								},
+								(value) -> {
+									final CreativeInventoryScreen screen = new CreativeInventoryScreen(Objects.requireNonNull(client.player),
+											Objects.requireNonNull(client.getNetworkHandler()).getEnabledFeatures(),
+											operatorTabEnabled);
+
+									client.setScreen(screen);
+
+									((CreativeInventoryScreen.CreativeScreenHandler) ((HandledScreenAccessor) screen).getHandler()).scrollItems(scroll);
+									// It is literally impossible for it to throw that exception, shut up Intellij
+									((CreativeInventoryScreenAccessor) screen).setScrollPosition(scroll);
+								},
+								column);
+
+						break scan;
+					}
+				}
+			}
+		}
 	}
 
 	@Subscribe
@@ -666,6 +798,139 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		if (tabIsHotbar(getSelectedTab()) && event.getPage().librarian$getPageNumber().equals(librarian.getCurrentPageNumber()))
 		{
 			MinecraftClient.getInstance().execute(() -> setSelectedTab(Registries.ITEM_GROUP.get(ItemGroups.HOTBAR)));
+		}
+	}
+
+	@Unique
+	private static void checkBeforeOperation(HotbarStorage storage, IWrappedHotbarStorageEntry<ItemStack> row,
+											 List<ItemStack> items, Runnable ifYes, Consumer<Boolean> cleanup,
+											 int columnIfSingular, String... ignored)
+	{
+		final MinecraftClient client = MinecraftClient.getInstance();
+		final IWrappedHotbarStorage wrapped = (IWrappedHotbarStorage) storage;
+		final boolean backgroundSaving = librarian.getConfig().optimizations().backgroundSaving();
+		final List<String> ignoredIssues = Arrays.stream(ignored).toList();
+
+		Runnable scanner = () ->
+		{
+			final List<String> issues = new ArrayList<>();
+
+			downgradeCheck:
+			{
+				if (ignoredIssues.contains("downgrade"))
+				{
+					break downgradeCheck;
+				}
+
+				if (wrapped.librarian$dataVersion() > SharedConstants.getGameVersion().dataVersion().id())
+				{
+					issues.add("downgrade");
+					break downgradeCheck;
+				}
+			}
+
+			overwriteCheck:
+			{
+				if (ignoredIssues.contains("nonmatching"))
+				{
+					break overwriteCheck;
+				}
+
+				final List<ItemStack> storageEntry = ((HotbarStorageEntry) row).deserialize(Objects.requireNonNull(client.world)
+						.getRegistryManager());
+
+				if (storageEntry.isEmpty())
+				{
+					break overwriteCheck;
+				}
+
+				if (items.size() == 1)
+				{
+					final ItemStack inventoryStack = items.getFirst();
+					final ItemStack hotbarEntry = storageEntry.get(columnIfSingular);
+
+					if (!hotbarEntry.isEmpty() && !ItemStack.areItemsAndComponentsEqual(inventoryStack, hotbarEntry))
+					{
+						issues.add("nonmatching");
+						break overwriteCheck;
+					}
+				}
+				else
+				{
+					for (int i = 0; i < PlayerInventory.getHotbarSize(); i++)
+					{
+						ItemStack inventoryStack = items.get(i);
+						ItemStack hotbarEntry = storageEntry.get(i);
+
+						if (!hotbarEntry.isEmpty() && !ItemStack.areItemsAndComponentsEqual(inventoryStack, hotbarEntry))
+						{
+							issues.add("nonmatching");
+							break overwriteCheck;
+						}
+					}
+				}
+			}
+
+			if (!issues.isEmpty())
+			{
+				final MutableText title;
+				final MutableText description;
+
+				// Only one issue found, use more specific message for that
+				if (issues.size() == 1)
+				{
+					title = Text.translatable("librarian.messages.issues." + issues.getFirst() + ".title");
+					description = Text.translatable("librarian.messages.issues." + issues.getFirst() + ".description");
+				}
+				// Otherwise, use more brief versions instead
+				else
+				{
+					title = Text.translatable("librarian.messages.possible_loss_scenario_detected.title");
+					description = Text.translatable("librarian.messages.possible_loss_scenario_detected.description");
+					issues.forEach(issue -> description.append(Text.translatable("librarian.messages.issues." + issue + ".summary")).append("\n\n"));
+					description.append(Text.translatable("librarian.messages.possible_loss_scenario_detected.footer"));
+				}
+
+				// This is unbelievably bad for an optimization hack, but if I don't run setScreen() on the game
+				// 	thread, the entire game crashes. If I don't account for background saving in the nested block,
+				// 	then the game runs the "save" code on the game thread when it shouldn't, causing lagspikes
+				client.execute(() -> client.setScreen(new ConfirmScreen((value) ->
+				{
+					if (value)
+					{
+						if (backgroundSaving)
+						{
+							Librarian.getInstance().queue(ifYes);
+						}
+						else
+						{
+							ifYes.run();
+						}
+					}
+
+					cleanup.accept(value);
+				}, title, description)));
+			}
+			else
+			{
+				if (backgroundSaving)
+				{
+					Librarian.getInstance().queue(ifYes);
+				}
+				else
+				{
+					ifYes.run();
+				}
+			}
+		};
+
+		if (backgroundSaving)
+		{
+			Librarian.getInstance().queue(scanner);
+		}
+		else
+		{
+			scanner.run();
 		}
 	}
 

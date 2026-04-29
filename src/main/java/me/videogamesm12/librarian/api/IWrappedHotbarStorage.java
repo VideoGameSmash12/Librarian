@@ -34,7 +34,7 @@ import java.util.concurrent.CompletableFuture;
  * <p>Wrapper class for HotbarStorage (or, depending on the mappings being used, HotbarManager) instances with extra
  * code for Librarian-specific functions.</p>
  * <p>Because it is impossible to create constructors in classes through mixins, often times this will be implemented
- * into wrapper classes that extend the </p>
+ * into mixin classes for HotbarStorage/HotbarManager.</p>
  */
 public interface IWrappedHotbarStorage
 {
@@ -135,5 +135,10 @@ public interface IWrappedHotbarStorage
 	default void librarian$setMetadata(HotbarPageMetadata metadata)
 	{
 		// Do nothing
+	}
+
+	default <T> IWrappedHotbarStorageEntry<T> librarian$get(int row)
+	{
+		return null;
 	}
 }

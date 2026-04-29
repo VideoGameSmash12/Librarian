@@ -22,6 +22,7 @@ import com.mojang.serialization.DataResult;
 import me.videogamesm12.librarian.Librarian;
 import me.videogamesm12.librarian.api.HotbarPageMetadata;
 import me.videogamesm12.librarian.api.IWrappedHotbarStorage;
+import me.videogamesm12.librarian.api.IWrappedHotbarStorageEntry;
 import me.videogamesm12.librarian.api.LoadStatus;
 import me.videogamesm12.librarian.api.event.LoadFailureEvent;
 import me.videogamesm12.librarian.api.event.SaveFailureEvent;
@@ -32,6 +33,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.HotbarStorage;
 import net.minecraft.client.option.HotbarStorageEntry;
 import net.minecraft.datafixer.DataFixTypes;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.gen.Accessor;
@@ -328,6 +330,13 @@ public abstract class HotbarStorageMixin implements IWrappedHotbarStorage
 	{
 		Arrays.stream(entries).forEach(entry ->
 				entry.deserialize(Objects.requireNonNull(MinecraftClient.getInstance().world).getRegistryManager()));
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public IWrappedHotbarStorageEntry<ItemStack> librarian$get(int row)
+	{
+		return (IWrappedHotbarStorageEntry<ItemStack>) getSavedHotbar(row);
 	}
 
 	@Unique
