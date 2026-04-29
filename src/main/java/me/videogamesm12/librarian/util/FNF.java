@@ -35,7 +35,7 @@ public class FNF
 	/**
 	 * Date format for use in backups.
 	 */
-	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd 'at' HH.mm.ss.SSS z");
+	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd 'at' HH.mm.ss.SSS Z");
 	/**
 	 * Regex pattern for file names for use in figuring out a hotbar page number from a file.
 	 */
