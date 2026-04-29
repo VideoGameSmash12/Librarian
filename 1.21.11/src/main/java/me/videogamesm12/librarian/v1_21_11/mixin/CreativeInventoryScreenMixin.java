@@ -640,8 +640,6 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 				&& isCreativeInventorySlot(slot)
 				&& (actionType == SlotActionType.PICKUP || actionType == SlotActionType.SWAP))
 		{
-			Librarian.getLogger().warn("Detected click relevant to us!");
-
 			final IWrappedHotbarStorageEntry<ItemStack> wrappedStorageEntry = wrapped.librarian$get(row);
 			final ItemStack original = wrappedStorageEntry.librarian$getItem(column).copy();
 			float scroll = scrollPosition;
