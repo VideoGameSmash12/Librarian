@@ -218,7 +218,7 @@ public abstract class CreativeModeInventoryScreenMixin extends Screen
 	public void unregisterOnRemoval(CallbackInfo ci)
 	{
 		// Unregisters us as an event listener when the menu is closed
-		if (librarian != null)
+		if (mechanic != null)
 		{
 			librarian.getEventBus().unregister(this);
 		}
