@@ -165,8 +165,11 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	@Inject(method = "removed", at = @At(value = "RETURN"))
 	public void unregisterOnRemoval(CallbackInfo ci)
 	{
-		// Unregisters us as an event listener when the menu is closed
-		librarian.getEventBus().unregister(this);
+		// Unregisters us as an event listener when the menu is closed if we were initialized in the first place
+		if (mechanic != null)
+		{
+			librarian.getEventBus().unregister(this);
+		}
 	}
 
 	@Inject(method = "setSelectedTab", at = @At("HEAD"))
