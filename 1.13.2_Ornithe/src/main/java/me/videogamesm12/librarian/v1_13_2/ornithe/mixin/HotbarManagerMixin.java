@@ -55,7 +55,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 
 	@Shadow @Final private Hotbar[] hotbars;
 
-	@Shadow @Final private DataFixer f_7546488;
+	@Shadow @Final private DataFixer dataFixer;
 
 	@Unique
 	private static final GsonComponentSerializer librarian$serializer = GsonComponentSerializer.colorDownsamplingGson();
@@ -124,7 +124,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 
 			// Get and update the page's data version
 			this.dataVersion = tag.getInt("DataVersion") != 0 ? tag.getInt("DataVersion") : 1343;
-			tag = NbtUtils.fix(this.f_7546488, DataFixTypes.HOTBAR, tag, dataVersion);
+			tag = NbtUtils.fix(this.dataFixer, DataFixTypes.HOTBAR, tag, dataVersion);
 
 			// Fetch our metadata
 			NbtCompound meta = tag.getCompound("librarian");
@@ -327,7 +327,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	@Accessor
 	public abstract void setFile(File file);
 
-	@Accessor("f_2733121")
+	@Accessor("loaded")
 	public abstract void setLoaded(boolean loaded);
 
 	@Accessor

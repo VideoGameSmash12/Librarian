@@ -30,7 +30,7 @@ import net.minecraft.SharedConstants;
 import net.minecraft.client.Hotbar;
 import net.minecraft.client.HotbarManager;
 import net.minecraft.nbt.*;
-import net.minecraft.unmapped.C_2536913;
+import net.minecraft.unmapped.C_49339849;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
@@ -56,7 +56,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 
 	@Shadow @Final private Hotbar[] hotbars;
 
-	@Shadow @Final private DataFixer f_7546488;
+	@Shadow @Final private DataFixer dataFixer;
 
 	@Unique
 	private static final GsonComponentSerializer librarian$serializer = GsonComponentSerializer.colorDownsamplingGson();
@@ -125,7 +125,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 
 			// Get and update the page's data version
 			this.dataVersion = tag.getInt("DataVersion") != 0 ? tag.getInt("DataVersion") : 1343;
-			tag = NbtUtils.fix(this.f_7546488, C_2536913.HOTBAR, tag, dataVersion);
+			tag = NbtUtils.fix(this.dataFixer, C_49339849.HOTBAR, tag, dataVersion);
 
 			// Fetch our metadata
 			NbtCompound meta = tag.getCompound("librarian");
@@ -196,7 +196,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 		}
 
 		// Update the data version
-		dataVersion = SharedConstants.m_0171173().getWorldVersion();
+		dataVersion = SharedConstants.getVersion().getWorldVersion();
 
 		// Actual operation, specified here as a Runnable so to avoid duplicate code
 		final Runnable operation = () ->
@@ -328,7 +328,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 	@Accessor
 	public abstract void setFile(File file);
 
-	@Accessor("f_2733121")
+	@Accessor("loaded")
 	public abstract void setLoaded(boolean loaded);
 
 	@Accessor

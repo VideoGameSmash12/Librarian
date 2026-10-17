@@ -1,8 +1,11 @@
-plugins {
-    id "legacy-looming" version '1.15-SNAPSHOT'
+repositories {
+    maven {
+        name = "legacy-fabric"
+        url = "https://maven.legacyfabric.net/"
+    }
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:1.13.2"
-    mappings legacy.yarn("1.13.2", 541)
+    mappings "net.legacyfabric:yarn:1.13.2+build.604:v2"
 }

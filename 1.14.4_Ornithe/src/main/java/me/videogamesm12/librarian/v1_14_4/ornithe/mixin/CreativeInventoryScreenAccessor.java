@@ -17,7 +17,7 @@
 
 package me.videogamesm12.librarian.v1_14_4.ornithe.mixin;
 
-import net.minecraft.client.gui.screen.inventory.menu.CreativeInventoryScreen;
+import net.minecraft.client.gui.screen.game.inventory.CreativeInventoryScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 

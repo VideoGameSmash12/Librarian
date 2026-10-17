@@ -39,10 +39,10 @@ import net.minecraft.client.Hotbar;
 import net.minecraft.client.HotbarManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.inventory.menu.CreativeInventoryScreen;
+import net.minecraft.client.gui.screen.game.inventory.CreativeInventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.living.player.PlayerInventory;
 import net.minecraft.inventory.slot.InventorySlot;
 import net.minecraft.item.CreativeModeTab;
 import net.minecraft.item.ItemStack;
@@ -127,7 +127,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 			}
 
 			@Override
-			public void onRelease(double mouseX, double mouseY)
+			public void release(double mouseX, double mouseY)
 			{
 				setFocused(true);
 			}
@@ -228,7 +228,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		if (previousButton != null) previousButton.visible = shouldShowElements;
 	}
 
-	@Inject(method = "setSelectedTab", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;m_7202825()Lnet/minecraft/client/HotbarManager;", shift = At.Shift.AFTER), cancellable = true)
+	@Inject(method = "setSelectedTab", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getHotbarManager()Lnet/minecraft/client/HotbarManager;", shift = At.Shift.AFTER), cancellable = true)
 	private void insertEmptyLoadingScreen(CreativeModeTab group, CallbackInfo ci)
 	{
 		if (tabIsHotbar(group))
@@ -249,7 +249,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 				}
 				case LOADING:
 				{
-					((CreativeInventoryScreen.CreativePlayerMenu) ((InventoryMenuScreenAccessor) this).getMenu()).tabs.clear();
+					((CreativeInventoryScreen.CreativePlayerMenu) ((InventoryMenuScreenAccessor) this).getMenu()).items.clear();
 
 					if (renameHotbarField != null)
 					{
@@ -290,7 +290,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		return librarian.getCurrentPage().librarian$getRowCount();
 	}
 
-	@Inject(method = "drawForeground", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/CreativeModeTab;hasTooltips()Z", shift = At.Shift.AFTER), cancellable = true)
+	@Inject(method = "renderLabels", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/CreativeModeTab;hasTooltips()Z", shift = At.Shift.AFTER), cancellable = true)
 	public void cancelForegroundTextRendering(int mouseX, int mouseY, CallbackInfo ci)
 	{
 		if (tabIsHotbar(selectedTab))
@@ -354,7 +354,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	}
 
 	@Inject(method = "keyPressed", at = @At(value = "INVOKE",
-			target = "Lnet/minecraft/client/gui/screen/inventory/menu/PlayerInventoryScreen;keyPressed(III)Z",
+			target = "Lnet/minecraft/client/gui/screen/game/inventory/PlayerInventoryScreen;keyPressed(III)Z",
 			shift = At.Shift.BEFORE), cancellable = true)
 	public void handleNavigationKeys(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir)
 	{
@@ -469,7 +469,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	{
 		if (librarian == null) librarian = Librarian.getInstance();
 
-		final HotbarManager storage = client.m_7202825();
+		final HotbarManager storage = client.getHotbarManager();
 		final IWrappedHotbarStorage wrappedStorage = (IWrappedHotbarStorage) storage;
 
 		if (librarian.getConfig().optimizations().backgroundLoading())
@@ -503,7 +503,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 				downgradeCheck:
 				{
-					if (wrappedStorage.librarian$dataVersion() > SharedConstants.m_0171173().getWorldVersion())
+					if (wrappedStorage.librarian$dataVersion() > SharedConstants.getVersion().getWorldVersion())
 					{
 						issues.add("downgrade");
 						break downgradeCheck;
@@ -521,7 +521,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 					for (int i = 0; i < PlayerInventory.getHotbarSize(); i++)
 					{
-						ItemStack inventoryStack = Objects.requireNonNull(client.player).inventory.getStack(i);
+						ItemStack inventoryStack = Objects.requireNonNull(client.player).inventory.getItem(i);
 						ItemStack hotbarEntry = storageEntry.get(i);
 
 						if (!hotbarEntry.isEmpty() && !inventoryStack.matchesItem(hotbarEntry))

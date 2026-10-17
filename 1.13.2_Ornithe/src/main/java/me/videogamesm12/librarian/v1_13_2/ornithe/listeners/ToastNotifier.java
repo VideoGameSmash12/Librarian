@@ -18,8 +18,6 @@
 package me.videogamesm12.librarian.v1_13_2.ornithe.listeners;
 
 import com.google.common.eventbus.Subscribe;
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.platform.Lighting;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -31,6 +29,8 @@ import net.minecraft.client.gui.GuiElement;
 import net.minecraft.client.gui.toast.Toast;
 import net.minecraft.client.gui.toast.ToastGui;
 import net.minecraft.client.render.TextRenderer;
+import net.minecraft.client.render.platform.GlStateManager;
+import net.minecraft.client.render.platform.Lighting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.resource.Identifier;
 import net.minecraft.text.LiteralText;

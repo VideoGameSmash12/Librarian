@@ -38,11 +38,11 @@ import net.minecraft.client.Hotbar;
 import net.minecraft.client.HotbarManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.inventory.menu.CreativeInventoryScreen;
+import net.minecraft.client.gui.screen.game.inventory.CreativeInventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.resource.language.I18n;
-import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.living.player.PlayerInventory;
 import net.minecraft.inventory.slot.InventorySlot;
 import net.minecraft.item.CreativeModeTab;
 import net.minecraft.item.ItemStack;
@@ -230,7 +230,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 				}
 				case LOADING:
 				{
-					((CreativeInventoryScreen.CreativePlayerMenu) ((InventoryMenuScreenAccessor) this).getMenu()).tabs.clear();
+					((CreativeInventoryScreen.CreativePlayerMenu) ((InventoryMenuScreenAccessor) this).getMenu()).items.clear();
 
 					if (renameHotbarField != null)
 					{
@@ -270,7 +270,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		return librarian.getCurrentPage().librarian$getRowCount();
 	}
 
-	@Inject(method = "drawForeground", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/CreativeModeTab;hasTooltips()Z", shift = At.Shift.AFTER), cancellable = true)
+	@Inject(method = "renderLabels", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/CreativeModeTab;hasTooltips()Z", shift = At.Shift.AFTER), cancellable = true)
 	public void cancelForegroundTextRendering(int mouseX, int mouseY, CallbackInfo ci)
 	{
 		if (tabIsHotbar(selectedTab))
@@ -279,7 +279,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		}
 	}
 
-	@Inject(method = "drawBackground", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;render()V", shift = At.Shift.AFTER))
+	@Inject(method = "renderMenuBackground", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;render()V", shift = At.Shift.AFTER))
 	public void renderOurText(float tickDelta, int mouseX, int mouseY, CallbackInfo ci)
 	{
 		if (tabIsHotbar(selectedTab))
@@ -288,7 +288,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 		}
 	}
 
-	@Inject(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/inventory/menu/PlayerInventoryScreen;mouseClicked(III)V", shift = At.Shift.BEFORE))
+	@Inject(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/game/inventory/PlayerInventoryScreen;mouseClicked(III)V", shift = At.Shift.BEFORE))
 	public void makeTextFieldClickable(int mouseX, int mouseY, int mouseButton, CallbackInfo ci)
 	{
 		if (tabIsHotbar(selectedTab))
@@ -389,7 +389,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	}
 
 	@Inject(method = "keyPressed", at = @At(value = "INVOKE",
-			target = "Lnet/minecraft/client/gui/screen/inventory/menu/PlayerInventoryScreen;keyPressed(CI)V",
+			target = "Lnet/minecraft/client/gui/screen/game/inventory/PlayerInventoryScreen;keyPressed(CI)V",
 			shift = At.Shift.BEFORE), cancellable = true)
 	public void handleNavigationKeys(char chr, int key, CallbackInfo ci)
 	{
@@ -470,7 +470,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 
 					for (int i = 0; i < PlayerInventory.getHotbarSize(); i++)
 					{
-						ItemStack inventoryStack = Objects.requireNonNull(client.player).inventory.getStack(i);
+						ItemStack inventoryStack = Objects.requireNonNull(client.player).inventory.getItem(i);
 						ItemStack hotbarEntry = storageEntry.get(i);
 
 						if (!hotbarEntry.isEmpty() && !inventoryStack.equals(hotbarEntry))
@@ -507,7 +507,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 					// This is unbelievably bad for an optimization hack, but if I don't run setScreen() on the game
 					// 	thread, the entire game crashes. If I don't account for background saving in the nested block,
 					// 	then the game runs the "save" code on the game thread when it shouldn't, causing lagspikes
-					client.submit(() ->
+					client.executeTask(() ->
 					{
 						client.openScreen(new FixedConfirmScreen((value, id) ->
 						{
@@ -581,7 +581,7 @@ public abstract class CreativeInventoryScreenMixin extends Screen
 	{
 		if (tabIsHotbar(selectedTab) && event.getPage().librarian$getPageNumber().equals(librarian.getCurrentPageNumber()))
 		{
-			Minecraft.getInstance().submit(() ->
+			Minecraft.getInstance().executeTask(() ->
 			{
 				setSelectedTab(CreativeModeTab.HOTBAR);
 				return null;

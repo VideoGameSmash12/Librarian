@@ -232,7 +232,7 @@ public abstract class HotbarManagerMixin implements IWrappedHotbarStorage
 					if (!metadata.getAuthors().isEmpty())
 					{
 						final NbtList list = new NbtList();
-						metadata.getAuthors().forEach(author -> list.add(new NbtString(author)));
+						metadata.getAuthors().forEach(author -> list.addElement(new NbtString(author)));
 						meta.put("authors", list);
 					}
 

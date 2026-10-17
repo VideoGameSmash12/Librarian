@@ -50,6 +50,11 @@ public class FormattedTextFieldWidget extends TextFieldWidget
 		}
 	}
 
+	public boolean isFocused()
+	{
+		return m_17837825();
+	}
+
 	@Override
 	public void setFocused(boolean focused)
 	{

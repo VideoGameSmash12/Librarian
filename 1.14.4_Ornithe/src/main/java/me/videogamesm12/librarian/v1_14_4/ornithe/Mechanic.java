@@ -48,7 +48,7 @@ public class Mechanic implements IMechanicFactory
 		return new ButtonWidget(x, y, width, height, PLAIN_COMPONENT_SERIALIZER.serialize(label))
 		{
 			@Override
-			public void onClick(double mouseX, double mouseY)
+			public void m_15978786(double mouseX, double mouseY)
 			{
 				onClick.run();
 			}

@@ -24,6 +24,7 @@ import me.videogamesm12.librarian.api.addon.IAddon;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.options.KeyBinding;
 import net.ornithemc.osl.keybinds.api.KeyBindingEvents;
+import net.ornithemc.osl.keybinds.api.KeybindEvents;
 import net.ornithemc.osl.lifecycle.api.client.MinecraftClientEvents;
 import org.lwjgl.glfw.GLFW;
 

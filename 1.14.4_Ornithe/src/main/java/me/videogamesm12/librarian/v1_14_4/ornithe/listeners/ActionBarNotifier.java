@@ -24,7 +24,7 @@ import me.videogamesm12.librarian.api.event.*;
 import me.videogamesm12.librarian.util.FNF;
 import me.videogamesm12.librarian.v1_14_4.ornithe.mixin.CreativeInventoryScreenAccessor;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.inventory.menu.CreativeInventoryScreen;
+import net.minecraft.client.gui.screen.game.inventory.CreativeInventoryScreen;
 import net.minecraft.item.CreativeModeTab;
 import net.minecraft.text.Formatting;
 import net.minecraft.text.Style;

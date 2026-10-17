@@ -129,8 +129,8 @@ public class ToastNotifier extends AbstractEventListener
 		{
 			// Background comes first
 			Minecraft.getInstance().getTextureManager().bind(BACKGROUND);
-			GlStateManager.color3f(1.0F, 1.0F, 1.0F);
-			toasts.blit(0, 0, 0, 0, 160, 32);
+			GlStateManager.color(1.0F, 1.0F, 1.0F);
+			toasts.drawTexture(0, 0, 0, 0, 160, 32);
 
 			// Icons come second
 			type.draw(toasts);
@@ -172,7 +172,7 @@ public class ToastNotifier extends AbstractEventListener
 				if (hasIcon)
 				{
 					GlStateManager.enableBlend();
-					element.blit(6, 6, 176 + gridX * 20, gridY * 20, 20, 20);
+					element.drawTexture(6, 6, 176 + gridX * 20, gridY * 20, 20, 20);
 					GlStateManager.enableBlend();
 				}
 				else

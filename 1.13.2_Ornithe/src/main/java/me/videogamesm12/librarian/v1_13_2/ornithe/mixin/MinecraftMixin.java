@@ -28,7 +28,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Minecraft.class)
 public class MinecraftMixin
 {
-	@Inject(method = "m_7202825", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "getHotbarManager", at = @At("HEAD"), cancellable = true)
 	public void redirect(CallbackInfoReturnable<HotbarManager> cir)
 	{
 		cir.setReturnValue((HotbarManager) Librarian.getInstance().getCurrentPage());

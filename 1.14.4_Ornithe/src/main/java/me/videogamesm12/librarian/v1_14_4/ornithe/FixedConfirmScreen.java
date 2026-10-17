@@ -19,10 +19,9 @@ package me.videogamesm12.librarian.v1_14_4.ornithe;
 
 import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import net.minecraft.client.gui.screen.ConfirmScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.Text;
-import net.minecraft.unmapped.C_0818095;
+import net.minecraft.unmapped.C_01559903;
 import net.minecraft.util.math.MathHelper;
 
 import java.util.ArrayList;
@@ -52,24 +51,24 @@ public class FixedConfirmScreen extends ConfirmScreen
 		buttons.clear();
 
 		messageSplit.clear();
-		messageSplit.addAll(this.font.split(message.getFormattedString(), this.width - 50));
+		messageSplit.addAll(this.textRenderer.split(message.getFormattedString(), this.width - 50));
 
 		int buttonY = MathHelper.clamp(getButtonY(), this.height / 6 + 96, this.height - 24);
-		addButton(new C_0818095(this.width / 2 - 155, buttonY, 150, 20, I18n.translate("gui.yes"), (button) -> callback.accept(true)));
-		addButton(new C_0818095(this.width / 2 - 155 + 160, buttonY, 150, 20, I18n.translate("gui.no"), (button) -> callback.accept(false)));
+		addButton(new C_01559903(this.width / 2 - 155, buttonY, 150, 20, I18n.translate("gui.yes"), (button) -> callback.accept(true)));
+		addButton(new C_01559903(this.width / 2 - 155 + 160, buttonY, 150, 20, I18n.translate("gui.no"), (button) -> callback.accept(false)));
 	}
 
 	@Override
 	public void render(int mouseX, int mouseY, float tickDelta)
 	{
 		this.renderBackground();
-		this.drawCenteredString(this.font, this.title.getFormattedString(), this.width / 2, getTitleY(), 16777215);
+		this.drawCenteredString(this.textRenderer, this.title.getFormattedString(), this.width / 2, getTitleY(), 16777215);
 		int i = getMessageY();
 
 		for (String string : messageSplit)
 		{
-			this.drawCenteredString(this.font, string, this.width / 2, i, 16777215);
-			i += this.font.fontHeight;
+			this.drawCenteredString(this.textRenderer, string, this.width / 2, i, 16777215);
+			i += this.textRenderer.fontHeight;
 		}
 
 		buttons.forEach(b -> b.render(mouseX, mouseY, tickDelta));
@@ -94,6 +93,6 @@ public class FixedConfirmScreen extends ConfirmScreen
 
 	private int getButtonY()
 	{
-		return getMessageY() + (this.font.fontHeight * messageSplit.size()) + 20;
+		return getMessageY() + (this.textRenderer.fontHeight * messageSplit.size()) + 20;
 	}
 }
